@@ -1,0 +1,40 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.12.35521.163
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KEDA_Receiver", "KEDA_Receiver.csproj", "{BBCCEF88-2744-431B-AA56-1410ED85E200}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KEDA_Share", "..\KEDA_Share\KEDA_Share.csproj", "{7AB5487D-F543-4ECC-9ED6-49D20CAAAA39}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KEDA_Share.Test", "..\KEDA_Share.Test\KEDA_Share.Test.csproj", "{277A7611-6705-4179-8A2F-57A73ED70D39}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KEDA_Receiver.Test", "..\KEDA_Receiver.Test\KEDA_Receiver.Test.csproj", "{F20065F0-B174-4A57-874F-443DC1233A43}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BBCCEF88-2744-431B-AA56-1410ED85E200}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BBCCEF88-2744-431B-AA56-1410ED85E200}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BBCCEF88-2744-431B-AA56-1410ED85E200}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BBCCEF88-2744-431B-AA56-1410ED85E200}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7AB5487D-F543-4ECC-9ED6-49D20CAAAA39}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7AB5487D-F543-4ECC-9ED6-49D20CAAAA39}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7AB5487D-F543-4ECC-9ED6-49D20CAAAA39}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7AB5487D-F543-4ECC-9ED6-49D20CAAAA39}.Release|Any CPU.Build.0 = Release|Any CPU
+		{277A7611-6705-4179-8A2F-57A73ED70D39}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{277A7611-6705-4179-8A2F-57A73ED70D39}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{277A7611-6705-4179-8A2F-57A73ED70D39}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{277A7611-6705-4179-8A2F-57A73ED70D39}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F20065F0-B174-4A57-874F-443DC1233A43}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F20065F0-B174-4A57-874F-443DC1233A43}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F20065F0-B174-4A57-874F-443DC1233A43}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F20065F0-B174-4A57-874F-443DC1233A43}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

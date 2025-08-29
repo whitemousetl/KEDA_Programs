@@ -1,0 +1,40 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.12.35521.163 d17.12
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KEDA_Receiver", "KEDA_Receiver\KEDA_Receiver.csproj", "{F8F18E0A-9404-4AC2-8DED-2A72894593EF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KEDA_Receiver.Test", "KEDA_Receiver.Test\KEDA_Receiver.Test.csproj", "{6DA71D1F-F8B0-443E-B370-43DD9BE5F2EF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KEDA_Share", "KEDA_Share\KEDA_Share.csproj", "{EB5DB1E0-7FAE-42CE-81C1-52FCF1CD2730}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KEDA_Share.Test", "KEDA_Share.Test\KEDA_Share.Test.csproj", "{6F695481-624C-4FB6-84A9-0A2EB4CA5EC9}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F8F18E0A-9404-4AC2-8DED-2A72894593EF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F8F18E0A-9404-4AC2-8DED-2A72894593EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F8F18E0A-9404-4AC2-8DED-2A72894593EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F8F18E0A-9404-4AC2-8DED-2A72894593EF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6DA71D1F-F8B0-443E-B370-43DD9BE5F2EF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6DA71D1F-F8B0-443E-B370-43DD9BE5F2EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6DA71D1F-F8B0-443E-B370-43DD9BE5F2EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6DA71D1F-F8B0-443E-B370-43DD9BE5F2EF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EB5DB1E0-7FAE-42CE-81C1-52FCF1CD2730}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EB5DB1E0-7FAE-42CE-81C1-52FCF1CD2730}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EB5DB1E0-7FAE-42CE-81C1-52FCF1CD2730}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EB5DB1E0-7FAE-42CE-81C1-52FCF1CD2730}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6F695481-624C-4FB6-84A9-0A2EB4CA5EC9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6F695481-624C-4FB6-84A9-0A2EB4CA5EC9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6F695481-624C-4FB6-84A9-0A2EB4CA5EC9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6F695481-624C-4FB6-84A9-0A2EB4CA5EC9}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
