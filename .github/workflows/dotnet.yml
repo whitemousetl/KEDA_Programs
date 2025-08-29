@@ -1,77 +1,25 @@
-name: .NET CI with Stryker
+name: .NET
 
 on:
   push:
     branches: [ "master" ]
   pull_request:
     branches: [ "master" ]
-  workflow_dispatch:
 
 jobs:
-  build-and-test:
+  build:
+
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Setup .NEThttps://github.com/whitemousetl/KEDA_Programs/blob/master/.github/workflows/dotnet.yml
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 8.0.x
-        cache: true
-
-    - name: Restore dependencies
-      run: dotnet restore KEDA_Programs.sln --use-lock-file
-
-    - name: Build
-      run: dotnet build KEDA_Programs.sln --no-restore -c Release
-
-    - name: Test
-      run: dotnet test KEDA_Programs.sln --no-build -c Release --verbosity normal
-
-    - name: Upload test results
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: test-results
-        path: |
-          **/TestResults/*.trx
-          **/TestResults/*/coverage.cobertura.xml
-        if-no-files-found: ignore
-
-  stryker-mutation-test:
-    runs-on: ubuntu-latest
-    needs: [build-and-test]
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
+    - uses: actions/checkout@v4
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 8.0.x
-        cache: true
-
     - name: Restore dependencies
-      run: dotnet restore KEDA_Programs.sln --use-lock-file
-
-    - name: Install Stryker
-      run: dotnet tool restore
-
-    - name: Run Stryker Mutation Test
-      working-directory: KEDA_Share.Test
-      run: |
-        dotnet stryker \
-          --config-file stryker-config.json \
-          --verbosity info
-
-    - name: Upload Stryker reports
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: stryker-report
-        path: |
-          KEDA_Share.Test/StrykerOutput/**/reports/*
-        if-no-files-found: warn
+      run: dotnet restore
+    - name: Build
+      run: dotnet build --no-restore
+    - name: Test
+      run: dotnet test --no-build --verbosity normal
