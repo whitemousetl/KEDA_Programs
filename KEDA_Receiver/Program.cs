@@ -8,6 +8,7 @@ using KEDA_Share.Repository.Mongo;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
+using MongoDB.Driver;
 using Serilog;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
@@ -39,18 +40,19 @@ public class Program
         });
 
         builder.Services.Configure<MongoSettings>(builder.Configuration.GetSection("Mongo"));
-        builder.Services.AddSingleton<MongoDbContext>(sp =>
+        builder.Services.AddSingleton<IMongoDbContext<Workstation>>(sp =>
         {
             var config = sp.GetRequiredService<IOptions<MongoSettings>>();
             var connStr = config.Value.ConnectionString ?? "mongodb://keda:keda_admin_2024@localhost:27017/StationConfiguration/?authSource=admin&replicaSet=rs0&authMechanism=SCRAM-SHA-256&readPreference=primary&directConnection=true";
-            return new MongoDbContext(connStr);
+            var client = new MongoClient(connStr);
+            var db = client.GetDatabase(config.Value.ConfigDb);
+            var collection = db.GetCollection<Workstation>(config.Value.ConfigCollection);
+            return new MongoDbContext<Workstation>(collection);
         });
         builder.Services.AddSingleton<IWorkstationRepository>(sp =>
         {
-            var mongoSettings = sp.GetRequiredService<MongoSettings>();
-            var dbContext = sp.GetRequiredService<MongoDbContext>();
-            var collection = dbContext.GetCollection<Workstation>(mongoSettings.ConfigDb, mongoSettings.ConfigCollection);
-            return new WorkstationRepository(collection);
+            var context = sp.GetRequiredService<IMongoDbContext<Workstation>>();
+            return new WorkstationRepository(context);
         });
         builder.Services.AddScoped<IValidator<Protocol>, ProtocolValidator>();
         builder.Services.AddScoped<IValidator<Device>, DeviceValidator>();

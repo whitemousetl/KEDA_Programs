@@ -1,7 +1,8 @@
 ﻿using KEDA_Share.Entity;
+using KEDA_Share.Repository.Interfaces;
 using KEDA_Share.Repository.Mongo;
-using Mongo2Go;
 using MongoDB.Driver;
+using Moq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,39 +10,58 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace KEDA_Share.Test.Repository.Mongo;
-public class MongoDbContextTest : IDisposable
+public class MongoDbContextTest 
 {
-    private readonly MongoDbRunner _runner;
-
-    public MongoDbContextTest()
+    [Fact]
+    public async Task InsertAsync_ShouldBeCalled()
     {
-        _runner = MongoDbRunner.Start();
+        //Arrange
+        var mockContext = new Mock<IMongoDbContext<Workstation>>();
+        var workstation = new Workstation
+        {
+            EdgeID = "test",
+            EdgeName = "test",
+            Timestamp = 1,
+            Time = "2024-01-01",
+            Protocols = []
+        };
+
+        mockContext.Setup(x => x.InsertAsync(It.IsAny<Workstation>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask); 
+
+        //Act
+        await mockContext.Object.InsertAsync(workstation);
+
+        //Assert
+        mockContext.Verify(
+            x => x.InsertAsync(
+                It.Is<Workstation>(w => w.EdgeID == "test" && w.EdgeName == "test"), It.IsAny<CancellationToken>()),
+            Times.Once());
     }
 
-    public void Dispose() => _runner.Dispose();
-
     [Fact]
-    public void GetCollection_ReturnWorkstation()
+    public async Task FindLatestByAsync_ShouldReturnExceptedWorkstation()
     {
-        var connStr = _runner.ConnectionString;
-        var context = new MongoDbContext(connStr);
-        var collection = context.GetCollection<Workstation>("TestDb", "Workstation");
+        // Arrange
+        var expected = new Workstation
+        {
+            EdgeID = "test",
+            EdgeName = "test",
+            Timestamp = 1,
+            Time = "2024-01-01",
+            Protocols = []
+        };
 
-        // 插入一条数据
-        var workstation = new Workstation { EdgeID = "test", EdgeName = "test", Timestamp = 1, Time = "2024-01-01", Protocols = [] };
-        collection.InsertOne(workstation);
+        var mockContext = new Mock<IMongoDbContext<Workstation>>();
+        mockContext.Setup(x => x.FindLatestByAsync(It.IsAny<Func<Workstation, long>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expected);
 
-        var filter = Builders<Workstation>.Filter.Eq(x => x.EdgeID, "test");
-        var projection = Builders<Workstation>.Projection.Exclude("_id");
+        // Act
+        var result = await mockContext.Object.FindLatestByAsync(x => x.Timestamp);
 
-        var result = collection
-            .Find(filter)
-            .Project<Workstation>(projection)
-            .FirstOrDefault();
-
-        Assert.NotNull(collection);
-        Assert.IsType<IMongoCollection<Workstation>>(collection, false);
+        // Assert
         Assert.NotNull(result);
         Assert.Equal("test", result.EdgeID);
+        Assert.Equal("test", result.EdgeName);
     }
 }
