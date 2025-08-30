@@ -24,10 +24,9 @@ jobs:
     - name: Test
       run: dotnet test --no-build --verbosity normal
     # Stryker
-    - name: Restore dotnet tools
-      run: dotnet tool restore
-      working-directory: KEDA_Programs
-
+    - name: Install Stryker
+      run: |
+          dotnet tool install -g dotnet-stryker
     - name: Run Stryker
       run: dotnet stryker --config-file KEDA_Share.Test/stryker-config.json
       working-directory: KEDA_Programs
