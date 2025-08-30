@@ -23,3 +23,10 @@ jobs:
       run: dotnet build --no-restore
     - name: Test
       run: dotnet test --no-build --verbosity normal
+    # Stryker
+    - name: Install Stryker
+      run: |
+          dotnet tool install -g dotnet-stryker
+          echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
+    - name: Run Stryker
+      run: dotnet stryker --config-file KEDA_Share.Test/stryker-config.json
