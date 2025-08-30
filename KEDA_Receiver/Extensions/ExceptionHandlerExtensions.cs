@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Diagnostics;
+﻿using KEDA_Share.Model;
+using Microsoft.AspNetCore.Diagnostics;
 using Serilog;
 
 namespace KEDA_Receiver.Extensions;
@@ -16,42 +17,43 @@ public static class ExceptionHandlerExtensions
 
                 if (exception == null)
                 {
-                    context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-                    await context.Response.WriteAsJsonAsync(new { Message = "未知错误" });
+                    var msg = $"未知错误(Path={context.Request.Path})";
+                    Log.Error(msg);
+                    context.Response.StatusCode = StatusCodes.Status200OK;
+                    await context.Response.WriteAsJsonAsync(ApiResponse<string>.FromException(msg));
                     return;
                 }
 
-                var errorId = Guid.NewGuid().ToString("N");
-
-                var statusCode = StatusCodes.Status500InternalServerError;
+                var statusCode = StatusCodes.Status200OK;
                 var clientMessage = "服务器内部错误，请联系管理员";
 
                 switch (exception)
                 {
                     case ArgumentException:
                     case InvalidOperationException:
-                        statusCode = StatusCodes.Status400BadRequest;
-                        clientMessage = exception.Message; // 业务异常直接把 Message 给前端
+                        clientMessage = exception.Message;
                         break;
 
                     case UnauthorizedAccessException:
-                        statusCode = StatusCodes.Status401Unauthorized;
                         clientMessage = "未授权访问";
+                        break;
+
+
+                    case MongoDB.Driver.MongoException mongoEx:
+                        clientMessage = "Mongo数据库操作异常";
+                        // 可选：你可以记录 mongoEx.Message 或其他详细信息
                         break;
                 }
 
-                Log.Error(exception, $"请求处理异常 (ErrorId={errorId}, Path={context.Request.Path}, StatusCode={statusCode})");
+                var extraMessage = $"([{clientMessage}]Path={context.Request.Path})";
+
+                // 🔥 这里把额外信息写入日志
+                Log.Error(exception, "全局异常捕获 {Extra}", extraMessage);
 
                 context.Response.StatusCode = statusCode;
                 context.Response.ContentType = "application/json";
 
-                await context.Response.WriteAsJsonAsync(new
-                {
-                    ErrorId = errorId,     // 返回前端一个ID，方便查日志
-                    StatusCode = statusCode,
-                    Message = clientMessage,
-                    Detail = exception is ArgumentException ? exception.Message : null // 只在业务异常时给前端细节
-                });
+                await context.Response.WriteAsJsonAsync(ApiResponse<string>.FromException(exception, extraMessage));
             });
         });
     }

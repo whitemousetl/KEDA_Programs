@@ -23,6 +23,7 @@ public class Program
         {
             configuration
                 .MinimumLevel.Information()
+                .MinimumLevel.Override("Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddleware", Serilog.Events.LogEventLevel.Fatal) 
                 .MinimumLevel.Override("Microsoft.AspNetCore", Serilog.Events.LogEventLevel.Warning)
                 .MinimumLevel.Override("System.Net.Http.HttpClient", Serilog.Events.LogEventLevel.Warning)
                 .WriteTo.File(
@@ -54,6 +55,7 @@ public class Program
             var context = sp.GetRequiredService<IMongoDbContext<Workstation>>();
             return new WorkstationRepository(context);
         });
+        builder.Services.AddScoped<IValidator<Workstation>, WorkstationValidator>();
         builder.Services.AddScoped<IValidator<Protocol>, ProtocolValidator>();
         builder.Services.AddScoped<IValidator<Device>, DeviceValidator>();
         builder.Services.AddScoped<IValidator<Point>, PointValidator>();

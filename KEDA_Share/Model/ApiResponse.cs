@@ -106,15 +106,32 @@ public class ApiResponse<T>()
     /// </summary>
     /// <param name="ex">异常对象</param>
     /// <param name="statusCode">HTTP状态码，默认500</param>
-    public static ApiResponse<T> FromException(Exception ex, HttpStatusCode statusCode = HttpStatusCode.InternalServerError)
+    public static ApiResponse<T> FromException(Exception ex, string message = "", HttpStatusCode statusCode = HttpStatusCode.InternalServerError)
     {
         return new ApiResponse<T>
         {
             IsSuccess = false,
             Data = default,
-            Message = ex.Message,
+            Message = ex.Message + message,
             code = statusCode,
             Errors = [ex.ToString()]
+        };
+    }
+
+    /// <summary>
+    /// 根据异常生成失败响应,服务器内部错误。
+    /// </summary>
+    /// <param name="ex">异常对象</param>
+    /// <param name="statusCode">HTTP状态码，默认500</param>
+    public static ApiResponse<T> FromException(string message, HttpStatusCode statusCode = HttpStatusCode.InternalServerError)
+    {
+        return new ApiResponse<T>
+        {
+            IsSuccess = false,
+            Data = default,
+            Message = message,
+            code = statusCode,
+            Errors = []
         };
     }
 }

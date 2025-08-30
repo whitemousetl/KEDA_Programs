@@ -5,6 +5,7 @@ using KEDA_Share.Repository.Implementations;
 using KEDA_Share.Repository.Interfaces;
 using KEDA_Share.Repository.Mongo;
 using Microsoft.Extensions.Options;
+using MongoDB.Driver;
 
 namespace KEDA_Receiver.Services;
 
@@ -22,7 +23,7 @@ public class WorkstationConfigService
 
 	public async Task<IResult> HandleAsync(Workstation? ws)
 	{
-		var res = _validator.Validate(ws);
+        var res = _validator.Validate(ws);
 
 		if (!res.IsValid) return Results.Ok(ApiResponse<string>.Fial(res.ErrorMessage ?? "服务器无返回错误信息"));
 
