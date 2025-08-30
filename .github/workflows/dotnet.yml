@@ -28,5 +28,4 @@ jobs:
       run: dotnet tool restore
 
     - name: Run Stryker
-      working-directory: KEDA_Programs
       run: dotnet stryker --config-file KEDA_Share.Test/stryker-config.json
