@@ -6,6 +6,7 @@ using System.IO.Ports;
 using System.Net;
 
 namespace KEDA_Share.Repository.Implementations;
+
 public class ProtocolValidator : IValidator<Protocol>
 {
     private readonly int[] _validBaudRates =

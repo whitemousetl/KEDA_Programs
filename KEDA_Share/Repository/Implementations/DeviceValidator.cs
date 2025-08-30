@@ -1,13 +1,9 @@
 ﻿using KEDA_Share.Entity;
 using KEDA_Share.Model;
 using KEDA_Share.Repository.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace KEDA_Share.Repository.Implementations;
+
 public class DeviceValidator : IValidator<Device>
 {
     private readonly IValidator<Point> _pointValidator;
@@ -16,6 +12,7 @@ public class DeviceValidator : IValidator<Device>
     {
         _pointValidator = pointValidator;
     }
+
     public ValidationResult Validate(Device? device)
     {
         var result = new ValidationResult() { IsValid = true };
@@ -50,7 +47,7 @@ public class DeviceValidator : IValidator<Device>
             return result;
         }
 
-        foreach(var point in device.Points)
+        foreach (var point in device.Points)
         {
             var pointValidateRes = _pointValidator.Validate(point);
             if (!pointValidateRes.IsValid) return pointValidateRes;

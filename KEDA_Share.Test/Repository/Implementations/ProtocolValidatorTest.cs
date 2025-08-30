@@ -4,13 +4,9 @@ using KEDA_Share.Model;
 using KEDA_Share.Repository.Implementations;
 using KEDA_Share.Repository.Interfaces;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace KEDA_Share.Test.Repository.Implementations;
+
 public class ProtocolValidatorTest
 {
     private readonly Mock<IValidator<Device>> _deviceValidatorMock;
@@ -42,7 +38,6 @@ public class ProtocolValidatorTest
         // 断言不会因为StationNo为空而报错
         result.ErrorMessage.Should().NotContain("站号StationNo为空");
     }
-
 
     [Fact]
     public void Validate_ShouleReturnInvalid_WhenProtocolTypeIsEmptyString()
@@ -111,8 +106,8 @@ public class ProtocolValidatorTest
 
     [Theory]
     [InlineData("DLT6452007OverTcp")]
-    [InlineData("DLT6452007Serial")] 
-    [InlineData("CJT188OverTcp_2004")] 
+    [InlineData("DLT6452007Serial")]
+    [InlineData("CJT188OverTcp_2004")]
     public void Validate_ShouldReturnInvalid_WhenDLT6452007StationNoIsEmpty(string protocolType)
     {
         var protocol = new Protocol
@@ -538,7 +533,6 @@ public class ProtocolValidatorTest
         result.IsValid.Should().BeFalse();
         result.ErrorMessage.Should().Contain("数据位DataBits格式不正确");
     }
-
 
     [Fact]
     public void Validate_ShouldReturnInvalid_WhenComStopBitsIsInvalid()

@@ -4,9 +4,9 @@ using KEDA_Share.Model;
 using KEDA_Share.Repository.Implementations;
 using KEDA_Share.Repository.Interfaces;
 using Moq;
-using System.Collections.Generic;
 
 namespace KEDA_Share.Test.Repository.Implementations;
+
 public class WorkstationValidatorTest
 {
     private readonly Mock<IValidator<Protocol>> _protocolValidatorMock;

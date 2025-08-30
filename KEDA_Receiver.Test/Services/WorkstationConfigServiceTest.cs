@@ -3,15 +3,10 @@ using KEDA_Receiver.Services;
 using KEDA_Share.Entity;
 using KEDA_Share.Model;
 using KEDA_Share.Repository.Interfaces;
-using Microsoft.AspNetCore.Http;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace KEDA_Receiver.Test.Services;
+
 public class WorkstationConfigServiceTest
 {
     private readonly Mock<IWorkstationRepository> _repoMock = new();

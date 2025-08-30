@@ -38,7 +38,6 @@ public static class ExceptionHandlerExtensions
                         clientMessage = "未授权访问";
                         break;
 
-
                     case MongoDB.Driver.MongoException mongoEx:
                         clientMessage = "Mongo数据库操作异常";
                         // 可选：你可以记录 mongoEx.Message 或其他详细信息

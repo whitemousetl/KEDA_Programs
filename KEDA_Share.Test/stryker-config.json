@@ -7,6 +7,6 @@
       "low": 60,
       "break": 50
     },
-    "mutate": ["Repository/Implementations/*.cs", "Repository/Mongo/*.cs"]
+    "mutate": [ "Repository/Implementations/*.cs", "Repository/Mongo/*.cs" ]
   }
 }

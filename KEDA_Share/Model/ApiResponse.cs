@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Net;
 
 namespace KEDA_Share.Model;
+
 /// <summary>
 /// 通用API响应模型，封装接口返回的标准结构。
 /// </summary>

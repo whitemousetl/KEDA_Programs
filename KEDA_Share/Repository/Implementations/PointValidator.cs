@@ -2,18 +2,14 @@
 using KEDA_Share.Enums;
 using KEDA_Share.Model;
 using KEDA_Share.Repository.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace KEDA_Share.Repository.Implementations;
+
 public class PointValidator : IValidator<Point>
 {
     public ValidationResult Validate(Point? point)
     {
-        var result = new ValidationResult {  IsValid = true };
+        var result = new ValidationResult { IsValid = true };
 
         if (point == null)
         {

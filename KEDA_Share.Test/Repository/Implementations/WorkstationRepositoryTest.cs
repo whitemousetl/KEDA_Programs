@@ -2,25 +2,18 @@
 using KEDA_Share.Entity;
 using KEDA_Share.Repository.Implementations;
 using KEDA_Share.Repository.Interfaces;
-using KEDA_Share.Repository.Mongo;
-using MongoDB.Driver;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace KEDA_Share.Test.Repository.Implementations;
-public class WorkstationRepositoryTest 
+
+public class WorkstationRepositoryTest
 {
     [Fact]
     public async Task AddAsync_ShouldInsertWorkstation()
     {
         // Arrange
         var mockContext = new Mock<IMongoDbContext<Workstation>>();
-        mockContext.Setup(x => x .InsertAsync(It.IsAny<Workstation>(), It.IsAny<CancellationToken>()))
+        mockContext.Setup(x => x.InsertAsync(It.IsAny<Workstation>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         var repo = new WorkstationRepository(mockContext.Object);

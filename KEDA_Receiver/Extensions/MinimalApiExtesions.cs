@@ -9,6 +9,7 @@ public static class MinimalApiExtesions
     public static void MapReceiverApis(this WebApplication app)
     {
         #region 测试用
+
         app.MapGet("/test", () => new { message = "Hello Receiver!" });
 
         app.MapGet("/test-argument", () =>
@@ -35,9 +36,9 @@ public static class MinimalApiExtesions
         {
             throw new MongoException("mongo异常示例");
         });
-        #endregion
+
+        #endregion 测试用
 
         app.MapPost("/send_collector_task", (WorkstationConfigService service, Workstation? ws) => service.HandleAsync(ws));
-
     }
 }

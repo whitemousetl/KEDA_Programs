@@ -1,18 +1,16 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace KEDA_Share.Entity;
+
 public class Workstation
 {
     #region 额外增加的两个属性，用于排序
+
     public string Time { get; set; } = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
     public long Timestamp { get; set; } = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-    #endregion
+
+    #endregion 额外增加的两个属性，用于排序
+
     public string EdgeID { get; set; } = string.Empty;
     public string EdgeName { get; set; } = string.Empty;
     public List<Protocol> Protocols { get; set; } = [];
@@ -42,8 +40,10 @@ public class Protocol
     public string RemoteRemark { get; set; } = string.Empty;
     public string EdgeID { get; set; } = string.Empty;
     public List<Device> Devices { get; set; } = [];
+
     [BsonIgnore]
     public bool ResetConnection { get; set; } = false;
+
     [BsonIgnore]
     public bool IsLogPoints { get; set; } = false;
 }
@@ -84,6 +84,7 @@ public class Point
     public string IsWrite { get; set; } = string.Empty;
     public string IsControl { get; set; } = string.Empty;
     public string NodeId { get; set; } = string.Empty;
+
     [BsonIgnore]
     public string WriteValue { get; set; } = string.Empty;
 }

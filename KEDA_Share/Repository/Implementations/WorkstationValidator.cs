@@ -1,13 +1,9 @@
 ﻿using KEDA_Share.Entity;
 using KEDA_Share.Model;
 using KEDA_Share.Repository.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace KEDA_Share.Repository.Implementations;
+
 public class WorkstationValidator : IValidator<Workstation>
 {
     private readonly IValidator<Protocol> _protocolValidator;
@@ -16,6 +12,7 @@ public class WorkstationValidator : IValidator<Workstation>
     {
         _protocolValidator = protocolValidator;
     }
+
     public ValidationResult Validate(Workstation? ws)
     {
         var result = new ValidationResult() { IsValid = true };
@@ -43,7 +40,6 @@ public class WorkstationValidator : IValidator<Workstation>
 
         foreach (var protocol in ws.Protocols)
         {
-
             var validateProtocolRes = _protocolValidator.Validate(protocol);
             if (!validateProtocolRes.IsValid) return validateProtocolRes;
         }

@@ -1,13 +1,8 @@
-﻿using KEDA_Share.Entity;
-using KEDA_Share.Repository.Interfaces;
+﻿using KEDA_Share.Repository.Interfaces;
 using MongoDB.Driver;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace KEDA_Share.Repository.Mongo;
+
 public class MongoDbContext<T> : IMongoDbContext<T>
 {
     private readonly IMongoCollection<T> _collection;

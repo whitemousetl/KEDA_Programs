@@ -5,29 +5,30 @@ using KEDA_Share.Entity;
 using KEDA_Share.Repository.Implementations;
 using KEDA_Share.Repository.Interfaces;
 using KEDA_Share.Repository.Mongo;
-using Microsoft.AspNetCore.Diagnostics;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using Serilog;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Reflection;
 
 namespace KEDA_Receiver;
+
 public class Program
 {
     public static void Main(string[] args)
     {
+        var projectNmae = Assembly.GetExecutingAssembly().GetName().Name;
+
         var builder = WebApplication.CreateBuilder(args);
 
         builder.Host.UseSerilog((context, services, configuration) =>
         {
             configuration
                 .MinimumLevel.Information()
-                .MinimumLevel.Override("Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddleware", Serilog.Events.LogEventLevel.Fatal) 
+                .MinimumLevel.Override("Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddleware", Serilog.Events.LogEventLevel.Fatal)
                 .MinimumLevel.Override("Microsoft.AspNetCore", Serilog.Events.LogEventLevel.Warning)
                 .MinimumLevel.Override("System.Net.Http.HttpClient", Serilog.Events.LogEventLevel.Warning)
                 .WriteTo.File(
-                    path: Path.Combine(AppContext.BaseDirectory, "Logs", "log-receiver-.txt"),
+                    path: Path.Combine(AppContext.BaseDirectory, "Logs", $"log-{projectNmae}-.txt"),
                     rollingInterval: RollingInterval.Day,
                     retainedFileCountLimit: 7,
                     outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}")

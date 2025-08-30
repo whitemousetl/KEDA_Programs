@@ -4,13 +4,9 @@ using KEDA_Share.Model;
 using KEDA_Share.Repository.Implementations;
 using KEDA_Share.Repository.Interfaces;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace KEDA_Share.Test.Repository.Implementations;
+
 public class DeviceValidatorTest
 {
     private readonly Mock<IValidator<Point>> _pointValidatorMock;

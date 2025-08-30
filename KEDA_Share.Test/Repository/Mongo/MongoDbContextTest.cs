@@ -1,16 +1,10 @@
 ﻿using KEDA_Share.Entity;
 using KEDA_Share.Repository.Interfaces;
-using KEDA_Share.Repository.Mongo;
-using MongoDB.Driver;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace KEDA_Share.Test.Repository.Mongo;
-public class MongoDbContextTest 
+
+public class MongoDbContextTest
 {
     [Fact]
     public async Task InsertAsync_ShouldBeCalled()
@@ -27,7 +21,7 @@ public class MongoDbContextTest
         };
 
         mockContext.Setup(x => x.InsertAsync(It.IsAny<Workstation>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask); 
+            .Returns(Task.CompletedTask);
 
         //Act
         await mockContext.Object.InsertAsync(workstation);
