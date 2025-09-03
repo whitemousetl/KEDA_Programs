@@ -1,11 +1,11 @@
 ﻿using FluentAssertions;
-using KEDA_Receiver.Services;
+using KEDA_Receiver.Services.Implementtations;
 using KEDA_Share.Entity;
 using KEDA_Share.Model;
 using KEDA_Share.Repository.Interfaces;
 using Moq;
 
-namespace KEDA_Receiver.Test.Services;
+namespace KEDA_Receiver.Test.Services.Implementations;
 
 public class WorkstationConfigServiceTest
 {

@@ -1,10 +1,11 @@
-﻿using KEDA_Share.Entity;
+﻿using KEDA_Receiver.Services.Interfaces;
+using KEDA_Share.Entity;
 using KEDA_Share.Model;
 using KEDA_Share.Repository.Interfaces;
 
-namespace KEDA_Receiver.Services;
+namespace KEDA_Receiver.Services.Implementtations;
 
-public class WorkstationConfigService
+public class WorkstationConfigService : IWorkstationConfigService
 {
     private readonly IWorkstationRepository _workstationRepo;
     private readonly IValidator<Workstation> _validator;

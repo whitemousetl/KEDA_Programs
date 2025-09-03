@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.12.35521.163 d17.12
+VisualStudioVersion = 17.12.35521.163
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KEDA_Receiver", "KEDA_Receiver\KEDA_Receiver.csproj", "{F8F18E0A-9404-4AC2-8DED-2A72894593EF}"
 EndProject
@@ -10,6 +10,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KEDA_Share", "KEDA_Share\KEDA_Share.csproj", "{EB5DB1E0-7FAE-42CE-81C1-52FCF1CD2730}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KEDA_Share.Test", "KEDA_Share.Test\KEDA_Share.Test.csproj", "{6F695481-624C-4FB6-84A9-0A2EB4CA5EC9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IoTBridge", "IoTBridge\IoTBridge.csproj", "{65BC791B-6CFF-475D-90FF-083536C3E23F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IoTBridge.Test", "IoTBridge.Test\IoTBridge.Test.csproj", "{E93C4802-A9BF-4997-8F6B-E5E807AC8D93}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +37,14 @@ Global
 		{6F695481-624C-4FB6-84A9-0A2EB4CA5EC9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6F695481-624C-4FB6-84A9-0A2EB4CA5EC9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6F695481-624C-4FB6-84A9-0A2EB4CA5EC9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{65BC791B-6CFF-475D-90FF-083536C3E23F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{65BC791B-6CFF-475D-90FF-083536C3E23F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{65BC791B-6CFF-475D-90FF-083536C3E23F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{65BC791B-6CFF-475D-90FF-083536C3E23F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E93C4802-A9BF-4997-8F6B-E5E807AC8D93}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E93C4802-A9BF-4997-8F6B-E5E807AC8D93}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E93C4802-A9BF-4997-8F6B-E5E807AC8D93}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E93C4802-A9BF-4997-8F6B-E5E807AC8D93}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

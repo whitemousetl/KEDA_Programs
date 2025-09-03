@@ -1,4 +1,4 @@
-﻿using KEDA_Receiver.Services;
+﻿using KEDA_Receiver.Services.Interfaces;
 using KEDA_Share.Entity;
 using MongoDB.Driver;
 
@@ -39,6 +39,6 @@ public static class MinimalApiExtesions
 
         #endregion 测试用
 
-        app.MapPost("/send_collector_task", (WorkstationConfigService service, Workstation? ws) => service.HandleAsync(ws));
+        app.MapPost("/send_collector_task", (IWorkstationConfigService service, Workstation? ws) => service.HandleAsync(ws));
     }
 }

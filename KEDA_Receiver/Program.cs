@@ -1,6 +1,7 @@
 using KEDA_Receiver.Extensions;
 using KEDA_Receiver.Models;
-using KEDA_Receiver.Services;
+using KEDA_Receiver.Services.Implementtations;
+using KEDA_Receiver.Services.Interfaces;
 using KEDA_Share.Entity;
 using KEDA_Share.Repository.Implementations;
 using KEDA_Share.Repository.Interfaces;
@@ -60,7 +61,7 @@ public class Program
         builder.Services.AddScoped<IValidator<Protocol>, ProtocolValidator>();
         builder.Services.AddScoped<IValidator<Device>, DeviceValidator>();
         builder.Services.AddScoped<IValidator<Point>, PointValidator>();
-        builder.Services.AddScoped<WorkstationConfigService>();
+        builder.Services.AddScoped<IWorkstationConfigService, WorkstationConfigService>();
 
         builder.Services.AddAuthorization();
 

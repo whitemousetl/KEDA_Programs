@@ -3,8 +3,8 @@
 public enum DataType
 {
     Bool,
-    Short,
     UShort,
+    Short,
     UInt,
     Int,
     Float,
