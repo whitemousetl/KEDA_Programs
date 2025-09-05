@@ -4,5 +4,3 @@ public interface IModbusRtuWebSocketHandler
 {
     Task<string> HandleRequestAsync(string jsonRequest);
 }
-
-

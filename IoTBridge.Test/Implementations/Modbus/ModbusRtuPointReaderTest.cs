@@ -1,23 +1,23 @@
-﻿using FluentAssertions;
+﻿#if WINDOWS
+using FluentAssertions;
 using HslCommunication;
 using HslCommunication.Core;
-using HslCommunication.Core.Device;
 using HslCommunication.Core.Device.Fakes;
 using HslCommunication.Core.Net.Fakes;
-using HslCommunication.ModBus;
 using HslCommunication.ModBus.Fakes;
 using IoTBridge.Models.ProtocolParams;
 using IoTBridge.Models.ProtocolResponses;
 using IoTBridge.Services.Implementations.Modbus;
 using KEDA_Share.Enums;
 using Microsoft.QualityTools.Testing.Fakes;
-using Moq;
 
 namespace IoTBridge.Test.Implementations.Modbus;
+
 [Collection("ModbusShimTests")]
 public class ModbusRtuPointReaderTest
 {
     #region bool类型
+
     [Fact]
     public async Task ReadAsync_BoolType_ReturnSuccess()
     {
@@ -59,9 +59,9 @@ public class ModbusRtuPointReaderTest
         {
             var shimModbusRtu = new ShimModbusRtu
             {
-                 DataFormatSetDataFormat = (instance) => { },
-                 AddressStartWithZeroSetBoolean = (instance) => { },
-                 StationSetByte = (instance) => { },
+                DataFormatSetDataFormat = (instance) => { },
+                AddressStartWithZeroSetBoolean = (instance) => { },
+                StationSetByte = (instance) => { },
             };
 
             ShimBinaryCommunication.AllInstances.ReceiveTimeOutSetInt32 = (instance, value) => { /* 可忽略 */ };
@@ -121,9 +121,11 @@ public class ModbusRtuPointReaderTest
             res.Value.Should().BeNull();
         }
     }
-    #endregion
+
+    #endregion bool类型
 
     #region ushort类型
+
     [Fact]
     public async Task ReadAsync_UShortType_ReturnSuccess()
     {
@@ -213,9 +215,11 @@ public class ModbusRtuPointReaderTest
             res.Value.Should().BeNull();
         }
     }
-    #endregion
+
+    #endregion ushort类型
 
     #region short类型
+
     [Fact]
     public async Task ReadAsync_ShortType_ReturnSuccess()
     {
@@ -304,9 +308,11 @@ public class ModbusRtuPointReaderTest
             res.Value.Should().BeNull();
         }
     }
-    #endregion
+
+    #endregion short类型
 
     #region uint类型
+
     [Fact]
     public async Task ReadAsync_UIntType_ReturnSuccess()
     {
@@ -395,9 +401,11 @@ public class ModbusRtuPointReaderTest
             res.Value.Should().BeNull();
         }
     }
-    #endregion
+
+    #endregion uint类型
 
     #region int类型
+
     [Fact]
     public async Task ReadAsync_IntType_ReturnSuccess()
     {
@@ -486,9 +494,11 @@ public class ModbusRtuPointReaderTest
             res.Value.Should().BeNull();
         }
     }
-    #endregion
+
+    #endregion int类型
 
     #region float类型
+
     [Fact]
     public async Task ReadAsync_FloatType_ReturnSuccess()
     {
@@ -577,9 +587,11 @@ public class ModbusRtuPointReaderTest
             res.Value.Should().BeNull();
         }
     }
-    #endregion
+
+    #endregion float类型
 
     #region double类型
+
     [Fact]
     public async Task ReadAsync_DoubleType_ReturnSuccess()
     {
@@ -668,9 +680,11 @@ public class ModbusRtuPointReaderTest
             res.Value.Should().BeNull();
         }
     }
-    #endregion
+
+    #endregion double类型
 
     #region string类型
+
     [Fact]
     public async Task ReadAsync_StringType_ReturnSuccess()
     {
@@ -787,5 +801,7 @@ public class ModbusRtuPointReaderTest
             res.Value.Should().Be("cyr zha l");
         }
     }
-    #endregion
+
+    #endregion string类型
 }
+#endif

@@ -5,8 +5,6 @@ using IoTBridge.Models.ProtocolResponses;
 using IoTBridge.Services.Interfaces.Modbus;
 using KEDA_Share.Enums;
 using Serilog;
-using System.Collections;
-using System.Net;
 
 namespace IoTBridge.Services.Implementations.Modbus;
 
@@ -22,7 +20,7 @@ public class ModbusRtuPointReader : IModbusRtuPointReader
             modbusRtu.Station = point.SlaveAddress;
 
             ushort length;
-            if(point.Length.HasValue) length = point.Length.Value;
+            if (point.Length.HasValue) length = point.Length.Value;
             else length = 1;
 
             var result = point.DataType switch
@@ -34,8 +32,8 @@ public class ModbusRtuPointReader : IModbusRtuPointReader
                 DataType.Int => await ExecuteAsync(modbusRtu.ReadInt32Async, point.Address, length),
                 DataType.Float => await ExecuteAsync(modbusRtu.ReadFloatAsync, point.Address, length),
                 DataType.Double => await ExecuteAsync(modbusRtu.ReadDoubleAsync, point.Address, length),
-                DataType.String => length == 1 
-                ? await ExecuteAsync(modbusRtu.ReadStringAsync, point.Address,10)
+                DataType.String => length == 1
+                ? await ExecuteAsync(modbusRtu.ReadStringAsync, point.Address, 10)
                 : await ExecuteAsync(modbusRtu.ReadStringAsync, point.Address, length),
                 _ => new ReadValue<string>
                 {

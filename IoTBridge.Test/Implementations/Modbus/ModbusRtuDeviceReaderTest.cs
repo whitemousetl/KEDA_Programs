@@ -9,6 +9,7 @@ using KEDA_Share.Enums;
 using Moq;
 
 namespace IoTBridge.Test.Implementations.Modbus;
+
 public class ModbusRtuDeviceReaderTest
 {
     [Fact]
@@ -31,7 +32,6 @@ public class ModbusRtuDeviceReaderTest
                 ],
             null);
 
-
         // Mock每个点的读取结果
         coordinatorMock
             .Setup(x => x.ReadWithWritePrioritizeAsync(modbusRtu, deviceParams.ReadMap[0]))
@@ -52,7 +52,6 @@ public class ModbusRtuDeviceReaderTest
         coordinatorMock
             .Setup(x => x.ReadWithWritePrioritizeAsync(modbusRtu, deviceParams.ReadMap[4]))
             .ReturnsAsync(new ReadValue<int[]> { IsSuccess = true, Address = "500", Value = [-1_000_000] });
-
 
         coordinatorMock
             .Setup(x => x.ReadWithWritePrioritizeAsync(modbusRtu, deviceParams.ReadMap[5]))
@@ -106,7 +105,6 @@ public class ModbusRtuDeviceReaderTest
         intRes.IsSuccess.Should().BeTrue();
         intRes.Address.Should().Be("500");
         intRes.Value.Should().Equal([-1_000_000]);
-
 
         var floatRes = response.Values[5] as ReadValue<float[]>;
         floatRes.Should().NotBeNull();
@@ -302,7 +300,7 @@ public class ModbusRtuDeviceReaderTest
         var modbusRtu = new ModbusRtu();
         var unsupportedType = (DataType)999;
         var deviceParams = new ModbusRtuDeviceParams(
-            "D5", 
+            "D5",
             [new ReadMapItem(1, true, DataFormat.ABCD, 1000, unsupportedType, "999", null)],
             null);
 

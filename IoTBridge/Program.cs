@@ -1,7 +1,6 @@
 using IoTBridge.Extensions;
 using IoTBridge.Services.Implementations.Modbus;
 using IoTBridge.Services.Interfaces.Modbus;
-using Microsoft.Extensions.Logging;
 using Serilog;
 using System.Reflection;
 
@@ -43,8 +42,8 @@ public class Program
         builder.Services.AddScoped<IModbusRtuPointReader, ModbusRtuPointReader>();
         builder.Services.AddScoped<IModbusRtuDeviceReader, ModbusRtuDeviceReader>();
         builder.Services.AddScoped<IModbusRtuService, ModbusRtuService>();
-        builder.Services.AddScoped<IModbusRtuWebSocketHandler, ModbusRtuWebSocketHandler>(); 
-        builder.Services.AddScoped<IModbusRtuWriteNotifier, ModbusRtuWriteNotifier>(); 
+        builder.Services.AddScoped<IModbusRtuWebSocketHandler, ModbusRtuWebSocketHandler>();
+        builder.Services.AddScoped<IModbusRtuWriteNotifier, ModbusRtuWriteNotifier>();
 
         var app = builder.Build();
 

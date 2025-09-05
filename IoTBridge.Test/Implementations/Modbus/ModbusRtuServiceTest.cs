@@ -1,5 +1,4 @@
 ﻿using FluentAssertions;
-using HslCommunication.Core;
 using HslCommunication.ModBus;
 using IoTBridge.Models.ProtocolParams;
 using IoTBridge.Models.ProtocolResponses;
@@ -7,14 +6,10 @@ using IoTBridge.Services.Implementations.Modbus;
 using IoTBridge.Services.Interfaces.Modbus;
 using KEDA_Share.Enums;
 using Moq;
-using System;
-using System.Collections.Generic;
 using System.IO.Ports;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace IoTBridge.Test.Implementations.Modbus;
+
 public class ModbusRtuServiceTest
 {
     [Fact] // 1. 参数校验：参数为null
@@ -53,14 +48,14 @@ public class ModbusRtuServiceTest
         var deviceReaderMock = new Mock<IModbusRtuDeviceReader>();
         var param = new ModbusRtuParams(
             Operation.Read,
-            "COM1", 
-            9600, 
-            8, 
-            StopBits.One, 
-            Parity.None, 
+            "COM1",
+            9600,
+            8,
+            StopBits.One,
+            Parity.None,
             [
-            new ModbusRtuDeviceParams("D1",null,null),                                       
-            new ModbusRtuDeviceParams("D2",null,null)                                    
+            new ModbusRtuDeviceParams("D1",null,null),
+            new ModbusRtuDeviceParams("D2",null,null)
             ]);
         connMgrMock.Setup(m => m.GetConnection(param)).Returns((null, "串口打开失败", false));
         var service = new ModbusRtuService(connMgrMock.Object, deviceReaderMock.Object);
@@ -126,7 +121,7 @@ public class ModbusRtuServiceTest
     {
         var connMgrMock = new Mock<IModbusRtuConnectionManager>();
         var deviceReaderMock = new Mock<IModbusRtuDeviceReader>();
-        var param = new ModbusRtuParams(Operation.Read, "COM1", 9600, 8, StopBits.One, Parity.None,  [
+        var param = new ModbusRtuParams(Operation.Read, "COM1", 9600, 8, StopBits.One, Parity.None, [
             new ModbusRtuDeviceParams ("D1",  null,null),
             new ModbusRtuDeviceParams ("D2", null,null)
         ]);
@@ -151,7 +146,7 @@ public class ModbusRtuServiceTest
     {
         var connMgrMock = new Mock<IModbusRtuConnectionManager>();
         var deviceReaderMock = new Mock<IModbusRtuDeviceReader>();
-        var param = new ModbusRtuParams(Operation.Read, "COM1", 9600, 8, StopBits.One, Parity.None,  [
+        var param = new ModbusRtuParams(Operation.Read, "COM1", 9600, 8, StopBits.One, Parity.None, [
                new ModbusRtuDeviceParams ("D1", null,null),
             new ModbusRtuDeviceParams ("D2",  null,null)
         ]);

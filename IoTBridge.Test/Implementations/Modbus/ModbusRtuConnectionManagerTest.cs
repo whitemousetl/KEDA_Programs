@@ -1,20 +1,12 @@
-﻿using FluentAssertions;
+﻿#if WINDOWS
+using FluentAssertions;
 using HslCommunication;
 using HslCommunication.Core.Device.Fakes;
-using HslCommunication.ModBus;
-using HslCommunication.ModBus.Fakes;
 using IoTBridge.Models.ProtocolParams;
 using IoTBridge.Services.Implementations.Modbus;
 using KEDA_Share.Enums;
 using Microsoft.QualityTools.Testing.Fakes;
-using Moq;
-using System;
-using System.Collections.Generic;
 using System.IO.Ports;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace IoTBridge.Test.Implementations.Modbus;
 [Collection("ModbusShimTests")]
@@ -34,7 +26,7 @@ public class ModbusRtuConnectionManagerTest
             ShimDeviceSerialPort.AllInstances.IsOpen = (instance) => false;
 
             var manager = new ModbusRtuConnectionManager();
-            var param = new ModbusRtuParams(Operation.Read, "COM99", 9600, 8, StopBits.One, Parity.None,  []);
+            var param = new ModbusRtuParams(Operation.Read, "COM99", 9600, 8, StopBits.One, Parity.None, []);
             var (conn, msg, isSuccess) = manager.GetConnection(param);
 
             conn.Should().NotBeNull();
@@ -54,7 +46,7 @@ public class ModbusRtuConnectionManagerTest
             ShimDeviceSerialPort.AllInstances.IsOpen = (instance) => false;
 
             var manager = new ModbusRtuConnectionManager();
-            var param = new ModbusRtuParams(Operation.Read, "COM99", 9600, 8, StopBits.One, Parity.None,  []);
+            var param = new ModbusRtuParams(Operation.Read, "COM99", 9600, 8, StopBits.One, Parity.None, []);
             var (conn, msg, isSuccess) = manager.GetConnection(param);
 
             conn.Should().NotBeNull();
@@ -79,8 +71,8 @@ public class ModbusRtuConnectionManagerTest
             ShimDeviceSerialPort.AllInstances.IsOpen = (instance) => false;
 
             var manager = new ModbusRtuConnectionManager();
-            var param1 = new ModbusRtuParams(Operation.Read, "COM99", 9600, 8, StopBits.One, Parity.None,  []);
-            var param2 = new ModbusRtuParams(Operation.Read, "COM100", 9600, 8, StopBits.One, Parity.None,  []);
+            var param1 = new ModbusRtuParams(Operation.Read, "COM99", 9600, 8, StopBits.One, Parity.None, []);
+            var param2 = new ModbusRtuParams(Operation.Read, "COM100", 9600, 8, StopBits.One, Parity.None, []);
 
             var res1 = manager.GetConnection(param1);
             var res2 = manager.GetConnection(param2);
@@ -108,7 +100,7 @@ public class ModbusRtuConnectionManagerTest
             ShimDeviceSerialPort.AllInstances.IsOpen = (instance) => true;
 
             var manager = new ModbusRtuConnectionManager();
-            var param = new ModbusRtuParams(Operation.Read, "COM99", 9600, 8, StopBits.One, Parity.None,  []);
+            var param = new ModbusRtuParams(Operation.Read, "COM99", 9600, 8, StopBits.One, Parity.None, []);
 
             var res1 = manager.GetConnection(param);
             var res2 = manager.GetConnection(param);
@@ -134,7 +126,7 @@ public class ModbusRtuConnectionManagerTest
             ShimDeviceSerialPort.AllInstances.IsOpen = (instance) => false;
 
             var manager = new ModbusRtuConnectionManager();
-            var param = new ModbusRtuParams(Operation.Read, "COM99", 9600, 8, StopBits.One, Parity.None,  []);
+            var param = new ModbusRtuParams(Operation.Read, "COM99", 9600, 8, StopBits.One, Parity.None, []);
             var (conn, msg, isSuccess) = manager.GetConnection(param);
 
             conn.Should().NotBeNull();
@@ -143,3 +135,4 @@ public class ModbusRtuConnectionManagerTest
         }
     }
 }
+#endif

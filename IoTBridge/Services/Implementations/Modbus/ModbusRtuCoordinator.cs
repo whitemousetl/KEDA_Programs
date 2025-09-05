@@ -4,7 +4,6 @@ using IoTBridge.Models.ProtocolResponses;
 using IoTBridge.Services.Interfaces.Modbus;
 using KEDA_Share.Enums;
 using Serilog;
-using System.Net;
 
 namespace IoTBridge.Services.Implementations.Modbus;
 

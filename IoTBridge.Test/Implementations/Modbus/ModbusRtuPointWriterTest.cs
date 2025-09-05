@@ -1,4 +1,5 @@
-﻿using FluentAssertions;
+﻿#if WINDOWS
+using FluentAssertions;
 using HslCommunication.Core;
 using HslCommunication.Core.Device.Fakes;
 using HslCommunication.ModBus.Fakes;
@@ -6,17 +7,14 @@ using IoTBridge.Models.ProtocolParams;
 using IoTBridge.Services.Implementations.Modbus;
 using KEDA_Share.Enums;
 using Microsoft.QualityTools.Testing.Fakes;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace IoTBridge.Test.Implementations.Modbus;
+
 [Collection("ModbusShimTests")]
 public class ModbusRtuPointWriterTest
 {
     #region 写入成功
+
     [Fact]
     public async Task WriteAsync_BoolType_Success()
     {
@@ -168,9 +166,11 @@ public class ModbusRtuPointWriterTest
             msg.Should().BeNull();
         }
     }
-    #endregion
+
+    #endregion 写入成功
 
     #region 写入失败
+
     [Fact]
     public async Task WriteAsync_BoolType_Fail()
     {
@@ -314,9 +314,11 @@ public class ModbusRtuPointWriterTest
             msg.Should().Contain("zhqlysljscyrzhacrl");
         }
     }
-    #endregion
+
+    #endregion 写入失败
 
     #region 写入类型不匹配异常
+
     [Fact]
     public async Task WriteAsync_BoolType_ValueNotBool_ReturnsFalseWithInvalidCastMessage()
     {
@@ -437,9 +439,10 @@ public class ModbusRtuPointWriterTest
         }
     }
 
-    #endregion
+    #endregion 写入类型不匹配异常
 
     #region 不支持的数据类型异常
+
     [Fact]
     public async Task WriteAsync_UnsupportedDataType_ReturnsFalseWithNotSupportedMessage()
     {
@@ -457,9 +460,10 @@ public class ModbusRtuPointWriterTest
         }
     }
 
-    #endregion
+    #endregion 不支持的数据类型异常
 
     #region 写入过程中发生异常
+
     [Fact]
     public async Task WriteAsync_BoolType_ThrowsTimeoutException_ReturnsFalseWithExceptionMessage()
     {
@@ -498,7 +502,7 @@ public class ModbusRtuPointWriterTest
         }
     }
 
-    #endregion
+    #endregion 写入过程中发生异常
 
     #region Value为null类型不匹配
 
@@ -532,6 +536,6 @@ public class ModbusRtuPointWriterTest
         }
     }
 
-    #endregion
-
+    #endregion Value为null类型不匹配
 }
+#endif

@@ -22,7 +22,6 @@ public record ModbusRtuParams(
     Parity Parity,
     ModbusRtuDeviceParams[] Devices);
 
-
 /// <summary>
 /// ModbusRtu设备参数
 /// </summary>
@@ -72,4 +71,3 @@ public record WriteMapItem(
     string Address,
     object? Value
     );
-

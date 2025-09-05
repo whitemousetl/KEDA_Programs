@@ -1,10 +1,7 @@
-﻿using HslCommunication.ModBus;
-using IoTBridge.Models.ProtocolParams;
-using KEDA_Share.Enums;
+﻿using IoTBridge.Models.ProtocolParams;
 using IoTBridge.Models.ProtocolResponses;
-using System.Net;
-using System.Collections.Generic;
 using IoTBridge.Services.Interfaces.Modbus;
+using KEDA_Share.Enums;
 
 namespace IoTBridge.Services.Implementations.Modbus;
 

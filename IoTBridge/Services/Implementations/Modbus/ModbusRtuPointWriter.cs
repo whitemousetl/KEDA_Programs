@@ -1,7 +1,5 @@
-﻿using HslCommunication;
-using HslCommunication.ModBus;
+﻿using HslCommunication.ModBus;
 using IoTBridge.Models.ProtocolParams;
-using IoTBridge.Models.ProtocolResponses;
 using IoTBridge.Services.Interfaces.Modbus;
 using KEDA_Share.Enums;
 using Serilog;
@@ -134,6 +132,5 @@ public class ModbusRtuPointWriter : IModbusRtuPointWriter
             Log.Error(ex, $"[写入] ModbusRtu写入异常，地址:{writePoint.Address}，类型:{writePoint.DataType}，从站地址{writePoint.SlaveAddress}");
             return (false, ex + $"[写入] ModbusRtu写入异常，地址:{writePoint.Address}，类型:{writePoint.DataType}，从站地址{writePoint.SlaveAddress}");
         }
-       
     }
 }

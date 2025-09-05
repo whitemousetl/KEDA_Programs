@@ -1,15 +1,6 @@
-﻿using System.Net.WebSockets;
-using System.Text.Json;
+﻿using IoTBridge.Services.Interfaces.Modbus;
+using System.Net.WebSockets;
 using System.Text;
-using IoTBridge.Models.ProtocolParams;
-using HslCommunication.ModBus;
-using System.Data.Common;
-using KEDA_Share.Enums;
-using HslCommunication;
-using IoTBridge.Services.Implementations.Modbus;
-using IoTBridge.Services.Interfaces.Modbus;
-using IoTBridge.Models.ProtocolResponses;
-using Newtonsoft.Json;
 
 namespace IoTBridge.Extensions;
 

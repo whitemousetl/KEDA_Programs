@@ -4,7 +4,6 @@ using IoTBridge.Services.Interfaces.Modbus;
 using KEDA_Share.Enums;
 using Newtonsoft.Json;
 using Serilog;
-using System;
 
 namespace IoTBridge.Services.Implementations.Modbus;
 
@@ -18,6 +17,7 @@ public class ModbusRtuWebSocketHandler : IModbusRtuWebSocketHandler
         _modbusRtuService = modbusRtuService;
         _notifier = notifier;
     }
+
     public async Task<string> HandleRequestAsync(string jsonRequest)
     {
         if (string.IsNullOrWhiteSpace(jsonRequest))
@@ -43,7 +43,6 @@ public class ModbusRtuWebSocketHandler : IModbusRtuWebSocketHandler
                 DeviceResponses = []
             });
         }
-
 
         // 写入队列逻辑，带异常处理
         bool hasWrite = false;

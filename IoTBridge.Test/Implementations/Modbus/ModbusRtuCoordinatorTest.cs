@@ -7,13 +7,9 @@ using IoTBridge.Services.Implementations.Modbus;
 using IoTBridge.Services.Interfaces.Modbus;
 using KEDA_Share.Enums;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace IoTBridge.Test.Implementations.Modbus;
+
 public class ModbusRtuCoordinatorTest
 {
     [Fact]//仅读

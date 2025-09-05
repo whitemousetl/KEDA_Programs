@@ -22,7 +22,7 @@ public class ModbusRtuDeviceReader : IModbusRtuDeviceReader
             var result = new ModbusRtuDeviceResponse();
             result.DeviceId = device.DeviceId;
 
-            if(device.ReadMap == null || device.ReadMap.Length == 0)
+            if (device.ReadMap == null || device.ReadMap.Length == 0)
             {
                 result.IsSuccess = false;
                 result.IsOnline = false;
@@ -42,16 +42,16 @@ public class ModbusRtuDeviceReader : IModbusRtuDeviceReader
             if (!result.IsOnline) result.Message = "设备异常或离线，请检查";
             if (result.IsOnline && !result.IsSuccess) result.Message = "设备采集点部分异常，请检查";
 
-            if(!string.IsNullOrWhiteSpace(result.Message))
-            Log.Error(result.Message, $"[设备] ModbusRtu读取设备时发生异常，设备Id:{device.DeviceId}");
+            if (!string.IsNullOrWhiteSpace(result.Message))
+                Log.Error(result.Message, $"[设备] ModbusRtu读取设备时发生异常，设备Id:{device.DeviceId}");
 
             return result;
         }
         catch (Exception ex)
         {
             Log.Error(ex, $"[设备] ModbusRtu读取设备时发生异常，设备Id:{device.DeviceId}");
-            return new ModbusRtuDeviceResponse 
-            { 
+            return new ModbusRtuDeviceResponse
+            {
                 DeviceId = device.DeviceId,
                 IsSuccess = false,
                 IsOnline = false,

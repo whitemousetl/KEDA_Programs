@@ -9,6 +9,7 @@ public class ModbusRtuConnectionManager : IModbusRtuConnectionManager
 {
     private ModbusRtu _modbusRtu = null!;
     private ModbusRtuParams _currentParams = null!;
+
     public (ModbusRtu? conn, string? message, bool isSuccess) GetConnection(ModbusRtuParams modbusRtuParams)
     {
         bool isSuccess = false;

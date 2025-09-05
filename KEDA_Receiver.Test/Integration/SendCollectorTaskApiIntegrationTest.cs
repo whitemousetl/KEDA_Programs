@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using System.Net.Http.Json;
 
 namespace KEDA_Receiver.Test.Integration;
+
 public class SendCollectorTaskApiIntegrationTest : IClassFixture<WebApplicationFactory<Program>>
 {
     private readonly WebApplicationFactory<Program> _webAppFactory;

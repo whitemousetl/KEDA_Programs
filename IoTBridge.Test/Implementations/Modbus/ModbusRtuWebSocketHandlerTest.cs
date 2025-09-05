@@ -6,13 +6,9 @@ using IoTBridge.Services.Interfaces.Modbus;
 using KEDA_Share.Enums;
 using Moq;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace IoTBridge.Test.Implementations.Modbus;
+
 public class ModbusRtuWebSocketHandlerTest
 {
     [Fact] // 1. 空参数
