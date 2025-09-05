@@ -5,5 +5,5 @@ namespace IoTBridge.Services.Interfaces.Modbus;
 
 public interface IModbusRtuService
 {
-    Task<ModbusRtuResponse> ReadAsync(ModbusRtuParams modbusRtuParams);
+    Task<ModbusRtuResponse> ReadAsync(ModbusRtuParams? modbusRtuParams);
 }

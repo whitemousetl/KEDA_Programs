@@ -39,9 +39,12 @@ public class Program
         builder.Services.AddAuthorization();
 
         builder.Services.AddScoped<IModbusRtuConnectionManager, ModbusRtuConnectionManager>();
+        builder.Services.AddScoped<IModbusRtuPointWriter, ModbusRtuPointWriter>();
         builder.Services.AddScoped<IModbusRtuPointReader, ModbusRtuPointReader>();
         builder.Services.AddScoped<IModbusRtuDeviceReader, ModbusRtuDeviceReader>();
         builder.Services.AddScoped<IModbusRtuService, ModbusRtuService>();
+        builder.Services.AddScoped<IModbusRtuWebSocketHandler, ModbusRtuWebSocketHandler>(); 
+        builder.Services.AddScoped<IModbusRtuWriteNotifier, ModbusRtuWriteNotifier>(); 
 
         var app = builder.Build();
 

@@ -24,8 +24,8 @@ public static class WebSocketExtension
                 using var webSocket = await context.WebSockets.AcceptWebSocketAsync();
                 var buffer = new byte[1024 * 4];
 
-                // 获取服务实例
-                var modbusRtuService = context.RequestServices.GetRequiredService<IModbusRtuService>();
+                // 注入新的处理服务
+                var handler = context.RequestServices.GetRequiredService<IModbusRtuWebSocketHandler>();
 
                 while (webSocket.State == WebSocketState.Open)
                 {
@@ -37,9 +37,7 @@ public static class WebSocketExtension
                     }
 
                     var json = Encoding.UTF8.GetString(buffer, 0, result.Count);
-
-                    var modbusParams = JsonConvert.DeserializeObject<ModbusRtuParams>(json);
-                    var response = await HandleModbusRtuRequestAsync(modbusParams, modbusRtuService);
+                    var response = await handler.HandleRequestAsync(json);
 
                     var responseBytes = Encoding.UTF8.GetBytes(response);
                     await webSocket.SendAsync(responseBytes, WebSocketMessageType.Text, true, CancellationToken.None);
@@ -51,12 +49,4 @@ public static class WebSocketExtension
             }
         });
     }
-
-    private static async Task<string> HandleModbusRtuRequestAsync(ModbusRtuParams modbusRtuParams, IModbusRtuService modbusRtuService)
-    {
-        var response = await modbusRtuService.ReadAsync(modbusRtuParams);
-        var result =  JsonConvert.SerializeObject(response);
-        return result;
-    }
-
 }

@@ -5,6 +5,6 @@ namespace IoTBridge.Services.Interfaces.Modbus;
 
 public interface IModbusRtuConnectionManager
 {
-    ModbusRtu GetConnection(ModbusRtuParams parameters);
+    (ModbusRtu? conn, string? message, bool isSuccess) GetConnection(ModbusRtuParams parameters);
     void CloseConnection();
 }

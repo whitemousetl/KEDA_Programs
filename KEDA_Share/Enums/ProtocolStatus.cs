@@ -9,5 +9,7 @@ public enum ProtocolStatus
 {
     AllDeviceSuccess,
     PartialDeviceSuccess,
-    AllDeviceFailture
+    AllDeviceFailture,
+    WriteListEntered,
+    WriteListEnteredException,
 }

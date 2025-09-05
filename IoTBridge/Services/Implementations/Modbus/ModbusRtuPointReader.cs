@@ -16,6 +16,11 @@ public class ModbusRtuPointReader : IModbusRtuPointReader
     {
         try
         {
+            modbusRtu.ReceiveTimeOut = point.ReceiveTimeOut;
+            modbusRtu.AddressStartWithZero = point.ZeroBasedAddressing;
+            modbusRtu.DataFormat = point.DataFormat;
+            modbusRtu.Station = point.SlaveAddress;
+
             ushort length;
             if(point.Length.HasValue) length = point.Length.Value;
             else length = 1;
@@ -29,14 +34,9 @@ public class ModbusRtuPointReader : IModbusRtuPointReader
                 DataType.Int => await ExecuteAsync(modbusRtu.ReadInt32Async, point.Address, length),
                 DataType.Float => await ExecuteAsync(modbusRtu.ReadFloatAsync, point.Address, length),
                 DataType.Double => await ExecuteAsync(modbusRtu.ReadDoubleAsync, point.Address, length),
-                DataType.String => point.Length.HasValue
-                ? await ExecuteAsync(modbusRtu.ReadStringAsync, point.Address, point.Length.Value)
-                : new ReadValue<string>
-                {
-                    IsSuccess = false,
-                    Message = "String类型必须指定length",
-                    Address = point.Address
-                },
+                DataType.String => length == 1 
+                ? await ExecuteAsync(modbusRtu.ReadStringAsync, point.Address,10)
+                : await ExecuteAsync(modbusRtu.ReadStringAsync, point.Address, length),
                 _ => new ReadValue<string>
                 {
                     IsSuccess = false,
@@ -45,11 +45,13 @@ public class ModbusRtuPointReader : IModbusRtuPointReader
                 }
             };
 
+            if (!result.IsSuccess)
+                Log.Error($"[读取] ModbusRtu读取失败，地址:{point.Address}，类型:{point.DataType}，从站地址{point.SlaveAddress}，信息：{result.Message}");
             return result;
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "Modbus读取异常，地址:{Address}，类型:{DataType}", point.Address, point.DataType);
+            Log.Error(ex, $"[读取] ModbusRtu读取异常，地址:{point.Address}，类型:{point.DataType}，从站地址{point.SlaveAddress}");
             return ExceptionHandle(point.DataType, ex.Message, point.Address);
         }
     }

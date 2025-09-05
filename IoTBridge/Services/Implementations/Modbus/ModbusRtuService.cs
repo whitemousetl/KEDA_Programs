@@ -19,15 +19,66 @@ public class ModbusRtuService : IModbusRtuService
         _modbusRtuDeviceReader = modbusRtuDeviceReader;
     }
 
-    public async Task<ModbusRtuResponse> ReadAsync(ModbusRtuParams modbusRtuParams)
+    public async Task<ModbusRtuResponse> ReadAsync(ModbusRtuParams? modbusRtuParams)
     {
         var response = new ModbusRtuResponse();
-        var modbusRtu = _modbusRtuConnectionManager.GetConnection(modbusRtuParams);
 
-        foreach (var device in modbusRtuParams.Devices)
+        // 参数校验
+        if (modbusRtuParams == null || modbusRtuParams.Devices == null || modbusRtuParams.Devices.Length == 0)
         {
-            var result = await _modbusRtuDeviceReader.ReadDeviceAsync(device, modbusRtu);
-            response.DeviceResponses.Add(result);
+            response.ProtocolStatus = ProtocolStatus.AllDeviceFailture;
+            response.ErrorMessage = "ModbusRtu参数或设备列表为空";
+            response.DeviceResponses = [];
+            return response;
+        }
+
+        try
+        {
+            var (conn, message, isSuccess) = _modbusRtuConnectionManager.GetConnection(modbusRtuParams);
+
+            if (!isSuccess || conn == null)
+            {
+                response.DeviceResponses = modbusRtuParams.Devices
+                    .Select(dev => new ModbusRtuDeviceResponse
+                    {
+                        DeviceId = dev.DeviceId,
+                        IsSuccess = false,
+                        IsOnline = false,
+                        Message = $"ModbusRtu打开串口失败或返回null，请检查：{message}"
+                    })
+                    .ToList();
+                response.ProtocolStatus = ProtocolStatus.AllDeviceFailture;
+                response.ErrorMessage = message;
+                return response;
+            }
+
+            foreach (var device in modbusRtuParams.Devices)
+            {
+                var result = await _modbusRtuDeviceReader.ReadDeviceAsync(device, conn);
+                response.DeviceResponses.Add(result);
+            }
+
+            // 状态判断
+            if (response.DeviceResponses.All(d => d.IsSuccess))
+                response.ProtocolStatus = ProtocolStatus.AllDeviceSuccess;
+            else if (response.DeviceResponses.All(d => !d.IsSuccess))
+                response.ProtocolStatus = ProtocolStatus.AllDeviceFailture;
+            else
+                response.ProtocolStatus = ProtocolStatus.PartialDeviceSuccess;
+        }
+        catch (Exception ex)
+        {
+            response.DeviceResponses = modbusRtuParams.Devices
+                   .Select(dev => new ModbusRtuDeviceResponse
+                   {
+                       DeviceId = dev.DeviceId,
+                       IsSuccess = false,
+                       IsOnline = false,
+                       Message = "ModbusRtu打开串口时发生异常，请检查" + ex.Message
+                   })
+                   .ToList();
+            response.ProtocolStatus = ProtocolStatus.AllDeviceFailture;
+            response.ErrorMessage = ex.Message;
         }
 
         return response;
