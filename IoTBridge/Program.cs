@@ -44,6 +44,7 @@ public class Program
         builder.Services.AddScoped<IModbusRtuService, ModbusRtuService>();
         builder.Services.AddScoped<IModbusRtuWebSocketHandler, ModbusRtuWebSocketHandler>();
         builder.Services.AddScoped<IModbusRtuWriteNotifier, ModbusRtuWriteNotifier>();
+        builder.Services.AddScoped<IModbusRtuCoordinator, ModbusRtuCoordinator>();
 
         var app = builder.Build();
 

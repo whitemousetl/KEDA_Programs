@@ -7,7 +7,8 @@ using System.Text;
 
 namespace IoTBridge.Test.Integrations;
 
-public class ModbusRtuWebSocketIntegrationTest
+[Collection("Integration")]
+public class ModbusRtuWebSocketIntegrationTest : IClassFixture<WebApplicationFactory<Program>>
 {
     private readonly WebApplicationFactory<Program> _factory;
 
