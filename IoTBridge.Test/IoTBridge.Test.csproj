@@ -44,6 +44,11 @@
     <AdditionalDesignTimeBuildInput Remove="FakesAssemblies\**" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Implementations\" />
+    <Folder Include="Integrations\" />
+  </ItemGroup>
+
 	<PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
 		<DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
 	</PropertyGroup>

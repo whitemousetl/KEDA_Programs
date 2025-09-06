@@ -16,7 +16,7 @@ public static class WebSocketExtension
                 var buffer = new byte[1024 * 4];
 
                 // 注入新的处理服务
-                var handler = context.RequestServices.GetRequiredService<IModbusRtuWebSocketHandler>();
+                //var handler = context.RequestServices.GetRequiredService<IModbusRtuWebSocketHandler>();
 
                 while (webSocket.State == WebSocketState.Open)
                 {
@@ -28,10 +28,10 @@ public static class WebSocketExtension
                     }
 
                     var json = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                    var response = await handler.HandleRequestAsync(json);
+                    //var response = await handler.HandleRequestAsync(json);
 
-                    var responseBytes = Encoding.UTF8.GetBytes(response);
-                    await webSocket.SendAsync(responseBytes, WebSocketMessageType.Text, true, CancellationToken.None);
+                    //var responseBytes = Encoding.UTF8.GetBytes(response);
+                    //await webSocket.SendAsync(responseBytes, WebSocketMessageType.Text, true, CancellationToken.None);
                 }
             }
             else
