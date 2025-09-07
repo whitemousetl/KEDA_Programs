@@ -1,13 +1,13 @@
-﻿using IoTBridge.Models.ProtocolParams;
+﻿using HslCommunication.ModBus;
+using IoTBridge.Models.ProtocolParams;
+using System.Threading.Channels;
 
 namespace IoTBridge.Services.Interfaces.Modbus;
 
-public interface IModbusRtuQueue
+public interface IModbusQueue
 {
-    void EnqueueRead(List<ModbusReadPoint> points);
-    void EnqueueWrite(List<ModbusWritePoint> point);
-    bool TryDequeueWrite(out List<ModbusReadPoint>? points);
-    bool TryDequeueRead(out List<ModbusWritePoint>? points);
-    int WriteCount { get; }
-    int ReadCount { get; }
+    ChannelReader<ModbusReadPoint[]> ReadPointsReader { get; }
+    ChannelReader<ModbusWritePoint[]> WritePointsReader { get; }
+    void EnqueueRead(ModbusReadPoint[] readPoints); 
+    void EnqueueWrite(ModbusWritePoint[] writePoints);
 }
