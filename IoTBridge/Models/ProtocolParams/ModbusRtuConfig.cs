@@ -8,14 +8,14 @@ namespace IoTBridge.Models.ProtocolParams;
 /// </summary>
 /// <param name="PortConfig">通用串口参数</param>
 /// <param name="Devices">设备参数</param>
-public record ModbusRtuConfig<TPoint>(Operation Operation, SerialPortConfig PortConfig, ModbusDevice<TPoint>[] Devices);
+public record ModbusRtuConfig(Operation Operation, SerialPortConfig PortConfig, ModbusDevice[] Devices);
 
 /// <summary>
 /// ModbusRtu设备
 /// </summary>
 /// <param name="DeviceId">设备编号</param>
 /// <param name="ReadMap">读取列表</param>
-public record ModbusDevice<TPoint>(string DeviceId, TPoint[]? Points);
+public record ModbusDevice(string DeviceId, ModbusReadPoint[]? ReadPoints, ModbusWritePoint[]? WritePoints);
 
 /// <summary>
 /// Modbus读取点位

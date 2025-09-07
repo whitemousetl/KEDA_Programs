@@ -1,4 +1,9 @@
-﻿using IoTBridge.Services.Interfaces.Modbus;
+﻿using IoTBridge.Models.ProtocolParams;
+using IoTBridge.Services.Implementations.Modbus;
+using IoTBridge.Services.Interfaces.Modbus;
+using KEDA_Share.Enums;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System.Net.WebSockets;
 using System.Text;
 
@@ -15,8 +20,8 @@ public static class WebSocketExtension
                 using var webSocket = await context.WebSockets.AcceptWebSocketAsync();
                 var buffer = new byte[1024 * 4];
 
-                // 注入新的处理服务
-                //var handler = context.RequestServices.GetRequiredService<IModbusRtuWebSocketHandler>();
+                var scheduler = context.RequestServices.GetRequiredService<IModbusRtuScheduler>();
+                var queue = context.RequestServices.GetRequiredService<IModbusQueue>();
 
                 while (webSocket.State == WebSocketState.Open)
                 {
@@ -28,10 +33,31 @@ public static class WebSocketExtension
                     }
 
                     var json = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                    //var response = await handler.HandleRequestAsync(json);
+                    var config = JsonConvert.DeserializeObject<ModbusRtuConfig>(json);
 
-                    //var responseBytes = Encoding.UTF8.GetBytes(response);
-                    //await webSocket.SendAsync(responseBytes, WebSocketMessageType.Text, true, CancellationToken.None);
+                    if (config.Operation == Operation.Read)
+                    {
+                        foreach (var dev in config.Devices)
+                        {
+                            queue.EnqueueRead(dev.ReadPoints);
+                        }
+                    }
+                    else if (config.Operation == Operation.Write)
+                    {
+                        foreach (var dev in config.Devices)
+                        {
+                            queue.EnqueueWrite(dev.WritePoints);
+                        }
+                    }
+                    else
+                    {
+
+                    }
+
+                    scheduler.InitProvider(config.PortConfig);
+                    await scheduler.ScheduleAsync();
+
+                    
                 }
             }
             else

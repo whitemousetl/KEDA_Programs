@@ -1,4 +1,5 @@
 using IoTBridge.Extensions;
+using IoTBridge.Services.Implementations.Modbus;
 using IoTBridge.Services.Interfaces.Modbus;
 using Serilog;
 using System.Reflection;
@@ -36,6 +37,12 @@ public class Program
 
         builder.Services.AddAuthorization();
 
+        builder.Services.AddScoped<IModbusReader, ModbusReader>();
+        builder.Services.AddScoped<IModbusWriter, ModbusWriter>();
+        builder.Services.AddScoped<IModbusQueue, ModbusQueue>();
+        builder.Services.AddScoped<IModbusRtuScheduler, ModbusRtuScheduler>();
+        builder.Services.AddScoped<IModbusRtuProviderFactory, ModbusRtuProviderFactory>();
+
         var app = builder.Build();
 
         if (!ActiveHsl(builder.Configuration)) return;
@@ -56,12 +63,12 @@ public class Program
         var hslAuthCode = configuration["HslCommunication:Auth"];
         if (!HslCommunication.Authorization.SetAuthorizationCode(hslAuthCode))
         {
-            Log.Error("----------------------Hsl验证失败----------------------");
+            Log.Error("----------------------Hsl楠岃瘉澶辫触----------------------");
             return false;
         }
         else
         {
-            Log.Information("----------------------Hsl验证成功----------------------");
+            Log.Information("----------------------Hsl楠岃瘉鎴愬姛----------------------");
             return true;
         }
     }

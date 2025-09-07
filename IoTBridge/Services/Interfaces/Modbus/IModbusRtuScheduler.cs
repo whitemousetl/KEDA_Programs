@@ -4,5 +4,6 @@ namespace IoTBridge.Services.Interfaces.Modbus;
 
 public interface IModbusRtuScheduler
 {
-    Task ScheduleAsync<TPoint>(ModbusRtuConfig<TPoint> config);
+    Task ScheduleAsync();
+    void InitProvider(SerialPortConfig config);
 }
