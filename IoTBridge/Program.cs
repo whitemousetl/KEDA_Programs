@@ -37,8 +37,6 @@ public class Program
 
         builder.Services.AddAuthorization();
 
-        builder.Services.AddScoped<IModbusReader, ModbusReader>();
-        builder.Services.AddScoped<IModbusWriter, ModbusWriter>();
         builder.Services.AddScoped<IModbusQueue, ModbusQueue>();
         builder.Services.AddScoped<IModbusRtuScheduler, ModbusRtuScheduler>();
         builder.Services.AddScoped<IModbusRtuProviderFactory, ModbusRtuProviderFactory>();

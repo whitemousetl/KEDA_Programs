@@ -9,17 +9,13 @@ namespace IoTBridge.Services.Implementations.Modbus;
 
 public class ModbusRtuScheduler : IModbusRtuScheduler
 {
-    private readonly IModbusReader _reader;
-    private readonly IModbusWriter _writer;
     private readonly IModbusRtuProviderFactory _providerFactory;
     private IModbusRtuProvider _provider = null!;
     private readonly ChannelReader<ModbusReadPoint[]> _readPointsReader;
     private readonly ChannelReader<ModbusWritePoint[]> _writePointsReader;
 
-    public ModbusRtuScheduler(IModbusQueue queue, IModbusReader reader, IModbusWriter writer, IModbusRtuProviderFactory providerFactory)
+    public ModbusRtuScheduler(IModbusQueue queue, IModbusRtuProviderFactory providerFactory)
     {
-        _reader = reader;
-        _writer = writer;
         _providerFactory = providerFactory;
         _readPointsReader = queue.ReadPointsReader;
         _writePointsReader = queue.WritePointsReader;
@@ -73,28 +69,37 @@ public class ModbusRtuScheduler : IModbusRtuScheduler
 
     private async Task HandleWriteAsync(ModbusWritePoint point)
     {
+        var address = point.Address;
+        var value = point.Value;
         switch (point.DataType)
         {
             case DataType.Bool:
-                await _writer.WritePointAsync<bool>(_provider.WriteBoolAsync, point);
+                if(value is bool b)
+                    await _provider.WriteBoolAsync(address, b);
                 break;
             case DataType.UShort:
-                await _writer.WritePointAsync<ushort>(_provider.WriteUInt16Async, point);
+                if(value is ushort u16)
+                    await _provider.WriteUInt16Async(address, u16);
                 break;
             case DataType.Short:
-                await _writer.WritePointAsync<short>(_provider.WriteInt16Async, point);
+                if(value is short s16)
+                    await _provider.WriteInt16Async(address, s16);
                 break;
             case DataType.UInt:
-                await _writer.WritePointAsync<uint>(_provider.WriteUInt32Async, point);
+                if(value is uint u32)
+                    await _provider.WriteUInt32Async(address, u32);
                 break;
             case DataType.Int:
-                await _writer.WritePointAsync<int>(_provider.WriteInt32Async, point);
+                if(value is int i32)
+                    await _provider.WriteInt32Async(address, i32);
                 break;
             case DataType.Float:
-                await _writer.WritePointAsync<float>(_provider.WriteFloatAsync, point);
+                if(value is float f)
+                    await _provider.WriteFloatAsync(address, f);
                 break;
             case DataType.Double:
-                await _writer.WritePointAsync<double>(_provider.WriteDoubleAsync, point);
+                if(value is double d)
+                    await _provider.WriteDoubleAsync(address, d);
                 break;
             default:
                 break;
@@ -103,31 +108,36 @@ public class ModbusRtuScheduler : IModbusRtuScheduler
 
     private async Task HandleReadAsync(ModbusReadPoint point)
     {
+        var address = point.Address;
+        ushort length;
+        if(point.Length.HasValue) length = point.Length.Value;
+        else length = 1;
+
         switch (point.DataType)
         {
             case DataType.Bool:
-                await _reader.ReadPointAsync(_provider.ReadBoolAsync, point);
+                await _provider.ReadBoolAsync(address, length);
                 break;
             case DataType.UShort:
-                await _reader.ReadPointAsync(_provider.ReadUInt16Async, point);
+                await _provider.ReadUInt16Async(address, length);
                 break;
             case DataType.Short:
-                await _reader.ReadPointAsync(_provider.ReadInt16Async, point);
+                await _provider.ReadInt16Async(address, length);
                 break;
             case DataType.UInt:
-                await _reader.ReadPointAsync(_provider.ReadUInt32Async, point);
+                await _provider.ReadUInt32Async(address, length);
                 break;
             case DataType.Int:
-                await _reader.ReadPointAsync(_provider.ReadInt32Async, point);
+                await _provider.ReadInt32Async(address, length);
                 break;
             case DataType.Float:
-                await _reader.ReadPointAsync(_provider.ReadFloatAsync, point);
+                await _provider.ReadFloatAsync(address, length);
                 break;
             case DataType.Double:
-                await _reader.ReadPointAsync(_provider.ReadDoubleAsync, point);
+                await _provider.ReadDoubleAsync(address, length);
                 break;
             case DataType.String:
-                await _reader.ReadPointAsync(_provider.ReadStringAsync, point);
+                await _provider.ReadStringAsync(address, length);
                 break;
             default: 
                 break;
