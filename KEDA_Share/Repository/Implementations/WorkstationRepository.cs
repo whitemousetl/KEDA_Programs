@@ -14,7 +14,7 @@ public class WorkstationRepository : IWorkstationRepository
 
     public async Task AddAsync(Workstation entity, CancellationToken ct = default) => await _context.InsertAsync(entity, ct);
 
-    public async Task<Workstation?> GetLatestByTimestampAsync(CancellationToken ct = default) => await _context.FindLatestByAsync(x => x.Timestamp, ct);
+    public async Task<Workstation?> GetLatestByTimestampAsync(CancellationToken ct = default) => await _context.FindLatestByAsync("Timestamp", ct);
 
     #region 暂时不需要实现
 
@@ -34,6 +34,11 @@ public class WorkstationRepository : IWorkstationRepository
     }
 
     public Task<bool> UpdateAsync(Workstation entity, CancellationToken ct = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<bool> UpsertAsync(Workstation entity, CancellationToken ct = default)
     {
         throw new NotImplementedException();
     }

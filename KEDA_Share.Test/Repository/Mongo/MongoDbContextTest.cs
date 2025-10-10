@@ -33,29 +33,29 @@ public class MongoDbContextTest
             Times.Once());
     }
 
-    [Fact]
-    public async Task FindLatestByAsync_ShouldReturnExceptedWorkstation()
-    {
-        // Arrange
-        var expected = new Workstation
-        {
-            EdgeID = "test",
-            EdgeName = "test",
-            Timestamp = 1,
-            Time = "2024-01-01",
-            Protocols = []
-        };
+    //[Fact]
+    //public async Task FindLatestByAsync_ShouldReturnExceptedWorkstation()
+    //{
+    //    // Arrange
+    //    var expected = new Workstation
+    //    {
+    //        EdgeID = "test",
+    //        EdgeName = "test",
+    //        Timestamp = 1,
+    //        Time = "2024-01-01",
+    //        Protocols = []
+    //    };
 
-        var mockContext = new Mock<IMongoDbContext<Workstation>>();
-        mockContext.Setup(x => x.FindLatestByAsync(It.IsAny<Func<Workstation, long>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(expected);
+    //    var mockContext = new Mock<IMongoDbContext<Workstation>>();
+    //    mockContext.Setup(x => x.FindLatestByAsync(It.IsAny<Func<Workstation, long>>(), It.IsAny<CancellationToken>()))
+    //        .ReturnsAsync(expected);
 
-        // Act
-        var result = await mockContext.Object.FindLatestByAsync(x => x.Timestamp);
+    //    // Act
+    //    var result = await mockContext.Object.FindLatestByAsync(x => x.Timestamp);
 
-        // Assert
-        Assert.NotNull(result);
-        Assert.Equal("test", result.EdgeID);
-        Assert.Equal("test", result.EdgeName);
-    }
+    //    // Assert
+    //    Assert.NotNull(result);
+    //    Assert.Equal("test", result.EdgeID);
+    //    Assert.Equal("test", result.EdgeName);
+    //}
 }

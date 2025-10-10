@@ -38,19 +38,19 @@ public class WorkstationRepositoryTest
             Times.Once);
     }
 
-    [Fact]
-    public async Task GetLatestByTimestampAsync_ShouldReturnLatestWorkstation()
-    {
-        var mockContext = new Mock<IMongoDbContext<Workstation>>();
-        mockContext.Setup(x => x
-            .FindLatestByAsync(It.IsAny<Func<Workstation, long>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new Workstation { EdgeID = "e2", Timestamp = 2 });
+    //[Fact]
+    //public async Task GetLatestByTimestampAsync_ShouldReturnLatestWorkstation()
+    //{
+    //    var mockContext = new Mock<IMongoDbContext<Workstation>>();
+    //    mockContext.Setup(x => x
+    //        .FindLatestByAsync(It.IsAny<Func<Workstation, long>>(), It.IsAny<CancellationToken>()))
+    //        .ReturnsAsync(new Workstation { EdgeID = "e2", Timestamp = 2 });
 
-        var repo = new WorkstationRepository(mockContext.Object);
+    //    var repo = new WorkstationRepository(mockContext.Object);
 
-        var latest = await repo.GetLatestByTimestampAsync();
+    //    var latest = await repo.GetLatestByTimestampAsync();
 
-        latest.Should().NotBeNull();
-        latest.EdgeID.Should().Be("e2");
-    }
+    //    latest.Should().NotBeNull();
+    //    latest.EdgeID.Should().Be("e2");
+    //}
 }

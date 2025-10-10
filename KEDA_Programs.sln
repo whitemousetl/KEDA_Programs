@@ -15,6 +15,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IoTBridge", "IoTBridge\IoTB
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IoTBridge.Test", "IoTBridge.Test\IoTBridge.Test.csproj", "{E93C4802-A9BF-4997-8F6B-E5E807AC8D93}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CollectorService", "CollectorService\CollectorService.csproj", "{D6409869-532C-422C-92C0-2518416E9A56}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DeviceStatusNotifier", "DeviceStatusNotifier\DeviceStatusNotifier.csproj", "{87B3ACD7-8EDC-43F3-969C-C2CF82B1DEF7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +49,14 @@ Global
 		{E93C4802-A9BF-4997-8F6B-E5E807AC8D93}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E93C4802-A9BF-4997-8F6B-E5E807AC8D93}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E93C4802-A9BF-4997-8F6B-E5E807AC8D93}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D6409869-532C-422C-92C0-2518416E9A56}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D6409869-532C-422C-92C0-2518416E9A56}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D6409869-532C-422C-92C0-2518416E9A56}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D6409869-532C-422C-92C0-2518416E9A56}.Release|Any CPU.Build.0 = Release|Any CPU
+		{87B3ACD7-8EDC-43F3-969C-C2CF82B1DEF7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{87B3ACD7-8EDC-43F3-969C-C2CF82B1DEF7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{87B3ACD7-8EDC-43F3-969C-C2CF82B1DEF7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{87B3ACD7-8EDC-43F3-969C-C2CF82B1DEF7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

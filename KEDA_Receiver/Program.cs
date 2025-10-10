@@ -1,8 +1,8 @@
 using KEDA_Receiver.Extensions;
-using KEDA_Receiver.Models;
 using KEDA_Receiver.Services.Implementtations;
 using KEDA_Receiver.Services.Interfaces;
 using KEDA_Share.Entity;
+using KEDA_Share.Model;
 using KEDA_Share.Repository.Implementations;
 using KEDA_Share.Repository.Interfaces;
 using KEDA_Share.Repository.Mongo;
