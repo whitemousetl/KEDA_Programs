@@ -28,6 +28,7 @@ public enum ProtocolType
     IEC104,
 
     OPC,
+    OPCUA,
 
     S200Smart,
 

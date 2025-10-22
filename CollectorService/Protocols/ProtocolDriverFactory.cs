@@ -15,16 +15,30 @@ public static class ProtocolDriverFactory
             ProtocolType.Modbus => new ModbusProtocolDriver(),
             ProtocolType.ModbusTcp => new ModbusProtocolDriver(),
 
-            ProtocolType.Fins => new FinsTcpProtocolDriver(),
-            ProtocolType.FinsTcp => new FinsTcpProtocolDriver(),
-            ProtocolType.FinsUdp => new FinsUdpProtocolDriver(),
-
-            ProtocolType.S71500 => new SiemensS71500Driver(),
-            ProtocolType.S200Smart => new SiemensSmart200Driver(),
-
             ProtocolType.ModbusRtuOverTcp => new ModbusRtuOverTcpDriver(),
 
             ProtocolType.ModbusRtu => new ModbusRtuDriver(),
+
+            ProtocolType.Fins => new FinsTcpProtocolDriver(),
+            ProtocolType.FinsTcp => new FinsTcpProtocolDriver(),
+
+            ProtocolType.FinsUdp => new FinsUdpProtocolDriver(),
+
+            ProtocolType.CipNet => new FinsCipNetProtocolDriver(),
+            ProtocolType.FinsCipNet => new FinsCipNetProtocolDriver(),
+
+            ProtocolType.S71500 => new SiemensS71500Driver(),
+
+            ProtocolType.S200Smart => new SiemensSmart200Driver(),
+
+            ProtocolType.S71200 => new SiemensS71200Driver(),
+
+            ProtocolType.DLT6452007OverTcp => new DLT645_2007OverTcpDriver(),
+
+            ProtocolType.MySQL => new MySQLDevier(),
+
+            ProtocolType.OPC => new OpcUaDriver(),
+            ProtocolType.OPCUA => new OpcUaDriver(),
 
             _ => null
         };

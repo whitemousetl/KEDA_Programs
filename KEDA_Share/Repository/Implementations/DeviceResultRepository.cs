@@ -58,10 +58,17 @@ public class DeviceResultRepository : IDeviceResultRepository
         }
 
         // 添加time和timestamp字段
+        //var now = DateTime.Now;
+        //doc["time"] = now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+        //doc["timestamp"] = new BsonInt64(((DateTimeOffset)now).ToUnixTimeSeconds());
+        //doc["expireAt"] = now.AddDays(30); // 30天后过期，类型为DateTime
+
         var now = DateTime.Now;
+        var nowOffset = new DateTimeOffset(now);
         doc["time"] = now.ToString("yyyy-MM-dd HH:mm:ss.fff");
-        doc["timestamp"] = new BsonInt64(((DateTimeOffset)now).ToUnixTimeSeconds());
+        doc["timestamp"] = new BsonInt64(nowOffset.ToUnixTimeMilliseconds()); // 精确到毫秒
         doc["expireAt"] = now.AddDays(30); // 30天后过期，类型为DateTime
+
 
         var fieldCount = doc.ElementCount;
         if (fieldCount == 3 &&

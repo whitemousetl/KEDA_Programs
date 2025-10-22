@@ -347,6 +347,9 @@ public class Worker : BackgroundService
                 continue;
             }
 
+            if (protocol.Remark == "¿ØÖÆ")
+                continue;
+
             var task = Task.Run(async () =>
             {
                 var driver = ProtocolDriverFactory.Create(protocolType);
