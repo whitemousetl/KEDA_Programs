@@ -251,6 +251,7 @@
 //}
 
 using CollectorService.CustomException;
+using CollectorService.Helper;
 using CollectorService.Protocols;
 using KEDA_Share.Entity;
 using KEDA_Share.Enums;
@@ -270,16 +271,18 @@ public class Worker : BackgroundService
 
     private CancellationTokenSource? _collectCts;
     private long _lastTimestamp = 0;
+    private readonly int _maxRetry;
 
     // 用于管理所有采集任务
     private readonly ConcurrentDictionary<string, Task> _collectorTasks = new();
 
-    public Worker(ILogger<Worker> logger, IWorkstationProvider workstationProvider, IDeviceStatusRepository deviceStatusRepository, IDeviceResultRepository deviceResultRepository)
+    public Worker(ILogger<Worker> logger, IWorkstationProvider workstationProvider, IDeviceStatusRepository deviceStatusRepository, IDeviceResultRepository deviceResultRepository, IConfiguration config)
     {
         _logger = logger;
         _workstationProvider = workstationProvider;
         _deviceStatusRepository = deviceStatusRepository;
         _deviceResultRepository = deviceResultRepository;
+        _maxRetry = config.GetValue<int>("Collector:MaxRetry", 1);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -397,9 +400,55 @@ public class Worker : BackgroundService
                                 };
                                 try
                                 {
+                                    //var result = await driver.ReadAsync(protocol, dev, point, token);
+
+                                    ////转换
+                                    //if (result?.Value != null && !string.IsNullOrWhiteSpace(point.Change) && ExpressionHelper.IsNumericType(result.Value))
+                                    //{
+                                    //    try
+                                    //    {
+                                    //        // 使用 ExpressionHelper 计算表达式
+                                    //        var x = Convert.ToDouble(result.Value);
+                                    //        pointResult.Result = ExpressionHelper.Eval(point.Change, x);
+                                    //    }
+                                    //    catch (Exception ex)
+                                    //    {
+                                    //        _logger.LogWarning(ex, $"表达式计算失败: {point.Change}, 原值: {result.Value}");
+                                    //        pointResult.Result = result.Value;
+                                    //    }
+                                    //}
+                                    //else
+                                    //{
+                                    //    pointResult.Result = result?.Value;
+                                    //}
+
                                     var result = await driver.ReadAsync(protocol, dev, point, token);
 
-                                    pointResult.Result = result?.Value;
+                                    int retryCount = 0;
+                                    while(result?.Value == null && retryCount < _maxRetry)
+                                    {
+                                        _logger.LogWarning($"{dev.EquipmentID}的{point.Label}第一次读取失败，进行第二次读取");
+                                        result = await driver.ReadAsync(protocol, dev, point, token);
+                                        retryCount++;
+                                    }
+
+                                    object? finalValue = result?.Value;
+                                    if(finalValue != null && !string.IsNullOrWhiteSpace(point.Change) && ExpressionHelper.IsNumericType(finalValue))
+                                    {
+                                        try
+                                        {
+                                            var x = Convert.ToDouble(finalValue);
+                                            finalValue = ExpressionHelper.Eval(point.Change, x);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            _logger.LogWarning(ex, $"表达式计算失败: {point.Change}, 原值: {result?.Value}");
+                                            finalValue = result?.Value;
+                                        }
+                                    }
+
+                                    pointResult.Result = finalValue;
+
                                     devResult?.PointResults?.Add(pointResult);
 
                                     pointStatus.Status = PointReadResult.Success;

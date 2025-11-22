@@ -73,18 +73,18 @@ public class Program
                 return new DeviceResultRepository(context);
             });
 
+            builder.Services.AddSingleton<IWorkstationProvider, WorkstationProvider>();
+
             builder.Logging.ClearProviders();
             builder.Logging.AddSerilog();
-
-            builder.Services.AddSingleton<IWorkstationProvider, WorkstationProvider>();
 
             if (!ActiveHsl(builder.Configuration))
                 return;
 
             var host = builder.Build();
+            Log.Information("程序开始执行！");
             host.Run();
 
-            Log.Information("程序开始执行！");
         }
         catch (Exception ex)
         {

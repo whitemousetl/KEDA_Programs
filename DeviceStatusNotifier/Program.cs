@@ -5,6 +5,8 @@ using KEDA_Share.Repository.Interfaces;
 using KEDA_Share.Repository.Mongo;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
+using Serilog.Events;
+using Serilog;
 
 namespace DeviceStatusNotifier;
 
@@ -12,6 +14,21 @@ public class Program
 {
     public static void Main(string[] args)
     {
+        var projectName = "DeviceStatusNotifier";
+
+        Log.Logger = new LoggerConfiguration()
+           .MinimumLevel.Information()
+           .MinimumLevel.Override("Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddleware", LogEventLevel.Fatal)
+           .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
+           .MinimumLevel.Override("System.Net.Http.HttpClient", LogEventLevel.Warning)
+           .WriteTo.File(
+               path: Path.Combine(AppContext.BaseDirectory, "Logs", $"log-{projectName}-.txt"),
+               rollingInterval: RollingInterval.Day,
+               retainedFileCountLimit: 7,
+               outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
+           .WriteTo.Console(outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
+           .CreateLogger();
+
         var builder = Host.CreateApplicationBuilder(args);
         builder.Services.Configure<MongoSettings>(builder.Configuration.GetSection("Mongo"));
 
@@ -50,7 +67,11 @@ public class Program
         builder.Services.AddSingleton<IWorkstationProvider, WorkstationProvider>();
         builder.Services.AddHostedService<Worker>();
 
+        builder.Logging.ClearProviders();
+        builder.Logging.AddSerilog();
+
         var host = builder.Build();
+        Log.Information("程序开始执行！");
         host.Run();
     }
 }

@@ -54,7 +54,7 @@ public class ModbusRtuOverTcpDriver : IProtocolDriver
                 Point = point,
                 DataType = dataType
             };
-
+            
             switch (dataType)
             {
                 case DataType.Bool:

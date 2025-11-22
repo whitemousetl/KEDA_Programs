@@ -25,4 +25,6 @@ public class DeviceStatus
     public string equipment_status { get; set; }
     public string msg { get; set; }
     public string desc {  get; set; }
+    public string dev_type {  get; set; }
+    public string time { get; set; }
 }

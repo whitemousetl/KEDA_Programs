@@ -58,6 +58,11 @@ public class ModbusProtocolDriver : IProtocolDriver
                 DataType = dataType
             };
 
+            if (!string.IsNullOrEmpty(point.Desc))
+                _conn.DataFormat = Enum.Parse<DataFormat>(point.Desc);
+            else
+                _conn.DataFormat = Enum.Parse<DataFormat>(protocol.Format);
+
             switch (dataType)
             {
                 case DataType.Bool:

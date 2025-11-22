@@ -34,6 +34,7 @@ public static class ProtocolDriverFactory
             ProtocolType.S71200 => new SiemensS71200Driver(),
 
             ProtocolType.DLT6452007OverTcp => new DLT645_2007OverTcpDriver(),
+            ProtocolType.DLT6452007Serial => new DLT645_2007SerialDriver(),
 
             ProtocolType.MySQL => new MySQLDevier(),
 
