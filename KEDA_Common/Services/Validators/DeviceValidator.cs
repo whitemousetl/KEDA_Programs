@@ -1,6 +1,7 @@
 ﻿using KEDA_Common.Interfaces;
 using KEDA_Common.Model;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -27,7 +28,7 @@ public class DeviceValidator : IValidator<Device>
             return result;
         }
 
-        var requiredFields = new List<(string value, string errorMsg)>
+        var requiredFields = new ConcurrentBag<(string value, string errorMsg)>
         {
             ( device.EquipmentID, "[设备]存在设备ID(EquipmentID)为空，请检查" ),
             ( device.EquipmentName, $"[设备]存在设备名称(EquipmentName)为空，请检查,设备id是{device.EquipmentID}" ),

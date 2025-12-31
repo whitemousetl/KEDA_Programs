@@ -1,4 +1,5 @@
 using KEDA_Common.Entity;
+using KEDA_Common.Helper;
 using KEDA_Common.Interfaces;
 using KEDA_Common.Model;
 using KEDA_Common.Services;
@@ -10,7 +11,10 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Data.Sqlite;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
+using Serilog.Events;
 using SqlSugar;
+using System.Net;
+using System.Net.Sockets;
 using System.Reflection;
 using System.Security.Claims;
 using System.Text;
@@ -21,10 +25,9 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        var projectNmae = Assembly.GetExecutingAssembly().GetName().Name;
+        var builder = WebApplication.CreateBuilder(args); //webapi建造者
 
-        var builder = WebApplication.CreateBuilder(args);
-
+        #region 身份认证
         //var jwtKey = "b7f8c2e1a9d4f6e3c5b8a1d2e4f7c9b0"; // 32字符
         //var tokenExpireMinutes = 30;
 
@@ -39,97 +42,57 @@ public class Program
         //            ValidateIssuerSigningKey = true,
         //            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
         //        };
-        //    });
+        //    }); 
+        #endregion
 
         builder.Services.AddAuthorization();
 
-
+        #region 配置Serilog日志
+        // 自动获取本机IP
+        var localIp = GetLocalIp();
         builder.Host.UseSerilog((context, services, configuration) =>
         {
             configuration
-                .MinimumLevel.Information()
-                .MinimumLevel.Override("Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddleware", Serilog.Events.LogEventLevel.Fatal)
-                .MinimumLevel.Override("Microsoft.AspNetCore", Serilog.Events.LogEventLevel.Warning)
-                .MinimumLevel.Override("System.Net.Http.HttpClient", Serilog.Events.LogEventLevel.Warning)
-                .WriteTo.File(
-                    path: Path.Combine(AppContext.BaseDirectory, "Logs", $"log-{projectNmae}-.txt"),
-                    rollingInterval: RollingInterval.Day,
-                    retainedFileCountLimit: 7,
-                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
-                .WriteTo.Console(outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}");
+                .ReadFrom.Configuration(context.Configuration)
+                .Enrich.WithProperty("LocalIp", localIp);
         });
+        #endregion
 
+        #region 配置默认服务器Kestrel
         builder.WebHost.ConfigureKestrel((context, options) =>
         {
             var kestrelConfig = context.Configuration.GetSection("Kestrel");
             options.Configure(kestrelConfig);
         });
-
-        #region 初始化Sqlite数据库
-        var connectionString = builder.Configuration.GetConnectionString("WorkstationDb");
-
-        // 只在应用启动时执行一次
-        using (var conn = new SqliteConnection(connectionString))
-        {
-            conn.Open();
-            using var cmd = conn.CreateCommand();
-            cmd.CommandText = "PRAGMA journal_mode;";
-            var currentMode = cmd.ExecuteScalar()?.ToString();
-            if (currentMode != "wal" && currentMode != "WAL")
-            {
-                cmd.CommandText = "PRAGMA journal_mode=WAL;";
-                cmd.ExecuteNonQuery();
-            }
-        }
-
-        // 表初始化
-        using var db = new SqlSugarClient(new ConnectionConfig
-        {
-            ConnectionString = connectionString,
-            DbType = DbType.Sqlite,
-            IsAutoCloseConnection = true
-        });
-        db.CodeFirst.InitTables<WorkstationConfig>();
-        db.CodeFirst.InitTables<ProtocolConfig>(); 
-        db.CodeFirst.InitTables<WritePointEntity>();
-        db.CodeFirst.InitTables<ProtocolData>();
         #endregion
 
-        //注入SqlSugarClient
-        builder.Services.AddTransient(sp =>
-        {
-            var config = sp.GetRequiredService<IConfiguration>();
-            var connStr = config.GetConnectionString("WorkstationDb") ?? "Data Source=workstation.db";
-            return new SqlSugarClient(new ConnectionConfig
-            {
-                ConnectionString = connStr,
-                DbType = DbType.Sqlite,
-                IsAutoCloseConnection = true
-            });
-        });
+        #region 配置并初始化MySql数据库
+        var connectionString = builder.Configuration.GetConnectionString("WorkstationDb");
+        if (string.IsNullOrWhiteSpace(connectionString))
+            throw new InvalidOperationException("未配置数据库连接字符串（WorkstationDb）。请检查 appsettings.json 或环境变量。");
+        DbInitializer.EnsureDatabaseAndTables(connectionString, DbType.MySql);
+        #endregion
 
-        builder.Services.AddScoped<IValidator<Workstation>, WorkstationValidator>();
-        builder.Services.AddScoped<IValidator<Protocol>, ProtocolValidator>();
-        builder.Services.AddScoped<IValidator<Device>, DeviceValidator>();
-        builder.Services.AddScoped<IValidator<Point>, PointValidator>();
-
-        //注入工作站配置服务
-        builder.Services.AddScoped<IWorkstationConfigService, WorkstationConfigService>();
-
-        //注入写入任务服务
-        builder.Services.AddScoped<IWriteTaskService, WriteTaskService>();
-
-        builder.Services.AddScoped<IProtocolConfigProvider, ProtocolConfigProvider>();
+        #region 依赖注入
+        builder.Services.AddSingleton<ISqlSugarClientFactory, SqlSugarClientFactory>();
+        builder.Services.AddSingleton<IValidator<Workstation>, WorkstationValidator>();
+        builder.Services.AddSingleton<IValidator<Protocol>, ProtocolValidator>();
+        builder.Services.AddSingleton<IValidator<Device>, DeviceValidator>();
+        builder.Services.AddSingleton<IValidator<Point>, PointValidator>();
         builder.Services.AddSingleton<IMqttPublishService, MqttPublishService>();
         builder.Services.AddSingleton<IMqttSubscribeService, MqttSubscribeService>();
-
+        builder.Services.AddScoped<IDeviceNotificationService, DeviceNotificationService>();
+        builder.Services.AddScoped<IWorkstationConfigService, WorkstationConfigService>();
+        builder.Services.AddScoped<IProtocolConfigProvider, ProtocolConfigProvider>();
         builder.Services.AddHostedService<DataProcessingWorker>();
+        #endregion
 
         var app = builder.Build();
 
         //app.UseAuthentication();
         app.UseAuthorization();
 
+        #region 身份认证
         //// 登录接口
         //app.MapPost("/login", (string username, string password) =>
         //{
@@ -186,11 +149,20 @@ public class Program
 
         //    // 处理PLC写任务
         //    return Results.Ok("写入成功");
-        //}).RequireAuthorization();
+        //}).RequireAuthorization(); 
+        #endregion
 
-        //扩展方法
-        app.MapProcessingCenterApis();
+        //接口扩展方法
+        //app.MapProcessingCenterApis();
 
         app.Run();
+    }
+
+    private static string GetLocalIp()
+    {
+        return Dns.GetHostEntry(Dns.GetHostName())
+            .AddressList
+            .FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork && !IPAddress.IsLoopback(ip))
+            ?.ToString() ?? "unknown";
     }
 }

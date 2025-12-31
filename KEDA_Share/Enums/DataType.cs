@@ -7,6 +7,8 @@ public enum DataType
     Short,
     UInt,
     Int,
+    Long,
+    ULong,
     Float,
     Double,
     String,

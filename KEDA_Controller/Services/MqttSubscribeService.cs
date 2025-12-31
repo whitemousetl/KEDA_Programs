@@ -2,6 +2,7 @@
 using KEDA_Common.Interfaces;
 using MQTTnet;
 using MQTTnet.Client;
+using System.Collections.Concurrent;
 using System.Text;
 using System.Text.Json;
 
@@ -31,7 +32,7 @@ public class MqttSubscribeService : IMqttSubscribeService
             .Build();
     }
 
-    public async Task StartAsync<T>(Dictionary<string, Func<T, CancellationToken, Task>> topicHandles, CancellationToken token)
+    public async Task StartAsync<T>(ConcurrentDictionary<string, Func<T, CancellationToken, Task>> topicHandles, CancellationToken token)
     {
         _client.ApplicationMessageReceivedAsync += async e =>
         {
@@ -39,8 +40,20 @@ public class MqttSubscribeService : IMqttSubscribeService
             {
                 try
                 {
+                    
                     var payload = Encoding.UTF8.GetString(e.ApplicationMessage.PayloadSegment);
                     var obj = JsonSerializer.Deserialize<T>(payload);
+
+                    // 校验UUID（仅对WritePointData类型做校验）
+                    if (obj is KEDA_Common.Model.WritePointData writePointData)
+                    {
+                        if (string.IsNullOrWhiteSpace(writePointData.UUID))
+                        {
+                            _logger.LogError("收到MQTT写任务数据缺少UUID，已拒绝处理。原始数据: {payload}", payload);
+                            return;
+                        }
+                    }
+
                     if (obj != null)
                     {
                         _logger.LogInformation("收到MQTT主题[{topic}]消息: {payload}", e.ApplicationMessage.Topic, payload);
@@ -54,13 +67,28 @@ public class MqttSubscribeService : IMqttSubscribeService
             }
         };
 
-        if (!_client.IsConnected)
-            await _client.ConnectAsync(_options, token);
+        await EnsureConnectedAsync(token);
 
         foreach (var topic in topicHandles.Keys)
         {
             await _client.SubscribeAsync(topic, MQTTnet.Protocol.MqttQualityOfServiceLevel.ExactlyOnce, token);
             _logger.LogInformation("已订阅MQTT主题: {topic}", topic);
+        }
+    }
+
+    private async Task EnsureConnectedAsync(CancellationToken token)
+    {
+        while (!_client.IsConnected && !token.IsCancellationRequested)
+        {
+            try
+            {
+                await _client.ConnectAsync(_options, token);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "MQTT连接失败，5秒后重试...");
+                await Task.Delay(5000, token);
+            }
         }
     }
 

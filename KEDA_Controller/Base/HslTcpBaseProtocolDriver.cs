@@ -1,20 +1,24 @@
 ﻿using HslCommunication.Core;
 using HslCommunication.Core.Device;
+using HslCommunication.Instrument.CJT;
 using HslCommunication.Instrument.DLT;
 using HslCommunication.ModBus;
 using KEDA_Common.CustomException;
 using KEDA_Common.Entity;
 using KEDA_Common.Enums;
+using KEDA_Common.Interfaces;
 using KEDA_Common.Model;
 using KEDA_Controller.Interfaces;
 using NetTaste;
+using System.Collections.Concurrent;
+using System.Net.Sockets;
 
 namespace KEDA_Controller.Base;
 public abstract class HslTcpBaseProtocolDriver<T> : IProtocolDriver where T : DeviceTcpNet
 {
     protected T? _conn;//协议连接对象
-    private readonly string _protocolName;//协议名称
-    private static readonly Dictionary<DataType, Func<HslTcpBaseProtocolDriver<T>, PointEntity, CancellationToken, Task<(bool IsSuccess, object? Content, string Message)>>> _readFuncs =
+    protected readonly string _protocolName;//协议名称
+    private static readonly ConcurrentDictionary<DataType, Func<HslTcpBaseProtocolDriver<T>, PointEntity, CancellationToken, Task<(bool IsSuccess, object? Content, string Message)>>> _readFuncs =
       new()
       {
           [DataType.Bool] = async (driver, point, token) => { var r = await driver._conn!.ReadBoolAsync(point.Address); return (r.IsSuccess, r.Content, r.Message); },
@@ -28,7 +32,7 @@ public abstract class HslTcpBaseProtocolDriver<T> : IProtocolDriver where T : De
           [DataType.Double] = async (driver, point, token) => { var r = await driver._conn!.ReadDoubleAsync(point.Address); return (r.IsSuccess, r.Content, r.Message); },
           [DataType.String] = async (driver, point, token) => { var r = await driver._conn!.ReadStringAsync(point.Address, point.Length); return (r.IsSuccess, r.Content, r.Message); },
       };
-    private static readonly Dictionary<DataType, Func<HslTcpBaseProtocolDriver<T>, WriteTaskEntity, CancellationToken, Task<bool>>> _writeFuncs =
+    protected static readonly ConcurrentDictionary<DataType, Func<HslTcpBaseProtocolDriver<T>, WritePoint, CancellationToken, Task<bool>>> _writeFuncs =
     new()
     {
         [DataType.Bool] = async (driver, point, token) =>
@@ -55,22 +59,27 @@ public abstract class HslTcpBaseProtocolDriver<T> : IProtocolDriver where T : De
             return res.IsSuccess;
         }
     };
+    protected readonly IMqttPublishService _mqttPublishService;
 
-    protected HslTcpBaseProtocolDriver() =>_protocolName = GetProtocolName();
+    protected HslTcpBaseProtocolDriver(IMqttPublishService mqttPublishService)
+    {
+        _protocolName = GetProtocolName();
+        _mqttPublishService = mqttPublishService;
+    }
 
     #region 读方法
-    public virtual async Task<PointResult?> ReadAsync(ProtocolEntity protocol, PointEntity point, CancellationToken token)//读取正常则正常返回，异常则抛出，让worker处理
+    public virtual async Task<ProtocolResult?> ReadAsync(WorkstationEntity protocol, string devId, PointEntity point, CancellationToken token)//读取正常则正常返回，异常则抛出，让worker处理
     {
         try
         {
             if (_conn == null)
             {
                 _conn = CreateConnection(protocol, token);//创建或获取协议类
-                await OnConnectionInitializedAsync(protocol, token);//初始化协议对象
+                await OnConnectionInitializedAsync( token);//初始化协议对象
             }
 
-            SetStationNoIfNeed(protocol, point);//根据协议类型来决定是否需要为协议连接对象的站号赋值
-            SetDataFormatNoIfNeed(protocol, point);//设置字节序
+            SetStationNoIfNeed(point.StationNo);//根据协议类型来决定是否需要为协议连接对象的站号赋值
+            SetDataFormatNoIfNeed(point.Format);//设置字节序
 
             var result = await ReadPointAsync(point, token);//读取
             return result;
@@ -90,9 +99,9 @@ public abstract class HslTcpBaseProtocolDriver<T> : IProtocolDriver where T : De
         }
     }
 
-    protected virtual async Task<PointResult> ReadPointAsync(PointEntity point, CancellationToken token)
+    protected virtual async Task<ProtocolResult> ReadPointAsync(PointEntity point, CancellationToken token)
     {
-        var result = new PointResult();
+        var result = new ProtocolResult();
         result.Address = point.Address;
         result.Label = point.Label;
         result.DataType = point.DataType;
@@ -111,14 +120,14 @@ public abstract class HslTcpBaseProtocolDriver<T> : IProtocolDriver where T : De
             throw new NotSupportedException($"{_protocolName}协议不支持的数据类型: {point.DataType}");
 
         return result;
-    } 
+    }
     #endregion
 
     #region 写方法
     public virtual async Task<bool> WriteAsync(WriteTaskEntity writeTask, CancellationToken token)
     {
         //初始化_conn
-        var protocol = new ProtocolEntity 
+        var protocol = new WorkstationEntity
         {
             ProtocolID = writeTask.ProtocolID,
             Interface = writeTask.Interface,
@@ -142,25 +151,18 @@ public abstract class HslTcpBaseProtocolDriver<T> : IProtocolDriver where T : De
             if (_conn == null)
             {
                 _conn = CreateConnection(protocol, token);
-                await OnConnectionInitializedAsync(protocol, token);
+                await OnConnectionInitializedAsync(token);
             }
 
-            var point = new PointEntity
+            if (writeTask.WriteDevice == null) return false;
+
+            foreach (var wp in writeTask.WriteDevice.WritePoints)
             {
-                DataType = writeTask.DataType,
-                Address = writeTask.Address,
-                StationNo = writeTask.StationNo,
-                Length = writeTask.Length,
-                Format = writeTask.Format,
-                AddressStartWithZero = writeTask.AddressStartWithZero,
-                InstrumentType = writeTask.InstrumentType,
-            };
+                SetStationNoIfNeed(wp.StationNo);//根据协议类型来决定是否需要为协议连接对象的站号赋值
+                SetDataFormatNoIfNeed(wp.Format);//根据协议类型来决定是否需要为协议连接对象的站号赋值
 
-            SetStationNoIfNeed(protocol, point);//根据协议类型来决定是否需要为协议连接对象的站号赋值
-            SetDataFormatNoIfNeed(protocol, point);//根据协议类型来决定是否需要为协议连接对象的站号赋值
-
-            var result = await WritePointAsync(writeTask, token);
-            return result;
+                return await WritePointAsync(wp, token);
+            }
         }
         catch (Exception ex) when (
         ex is ProtocolWhenConnFailedException ||//连接plc失败异常
@@ -175,9 +177,11 @@ public abstract class HslTcpBaseProtocolDriver<T> : IProtocolDriver where T : De
             // 统一处理未知异常
             throw new ProtocolDefaultException($"{_protocolName}协议操作失败", ex);//抛出默认异常
         }
+
+        return false;
     }
 
-    private async Task<bool> WritePointAsync(WriteTaskEntity point, CancellationToken token)
+    private async Task<bool> WritePointAsync(WritePoint point, CancellationToken token)
     {
         if (_conn == null)
             throw new ProtocolIsNullWhenWriteException($"{_protocolName}协议为空，请检查", new Exception($"{_protocolName}协议为空，请检查"));
@@ -189,35 +193,36 @@ public abstract class HslTcpBaseProtocolDriver<T> : IProtocolDriver where T : De
     #endregion
 
     #region 读写公共方法，设置站号和字节序
-    protected virtual void SetStationNoIfNeed(ProtocolEntity protocol, PointEntity point)
+    protected virtual void SetStationNoIfNeed(string statinNo)
     {
-        var stationNo = string.IsNullOrEmpty(point.StationNo) ? "1" : point.StationNo;
+        var station = string.IsNullOrEmpty(statinNo) ? "1" : statinNo;
 
         switch (_conn)
         {
             case ModbusTcpNet modbus:
-                modbus.Station = byte.TryParse(stationNo, out var modbusStation) ? modbusStation : (byte)1;
-                break;
-            case DLT645OverTcp dlt645:
-                dlt645.Station = stationNo;
+                modbus.Station = byte.TryParse(station, out var modbusStation) ? modbusStation : (byte)1;
                 break;
             case ModbusRtuOverTcp modbusRtuOverTcp:
-                modbusRtuOverTcp.Station = byte.TryParse(stationNo, out var rtuStation) ? rtuStation : (byte)1;
+                modbusRtuOverTcp.Station = byte.TryParse(station, out var rtuStation) ? rtuStation : (byte)1;
+                break;
+            case DLT645OverTcp dlt645:
+                dlt645.Station = station;
+                break;
+            case CJT188OverTcp cJT188OverTcp:
+                cJT188OverTcp.Station = station;
                 break;
         }
     }
 
-    protected virtual void SetDataFormatNoIfNeed(ProtocolEntity protocol, PointEntity point)
+    protected virtual void SetDataFormatNoIfNeed(DataFormat format)
     {
-        var stationNo = string.IsNullOrEmpty(point.StationNo) ? "1" : point.StationNo;
-
         switch (_conn)
         {
             case ModbusTcpNet modbus:
-                modbus.DataFormat = point.Format;
+                modbus.DataFormat = format;
                 break;
             case ModbusRtuOverTcp modbusRtuOverTcp:
-                modbusRtuOverTcp.DataFormat = point.Format;
+                modbusRtuOverTcp.DataFormat = format;
                 break;
         }
     }
@@ -225,10 +230,10 @@ public abstract class HslTcpBaseProtocolDriver<T> : IProtocolDriver where T : De
 
     #region 读写公共方法，创建协议对象和连接协议
     //子类实现：创建连接对象
-    protected abstract T CreateConnection(ProtocolEntity protocol, CancellationToken token);//一般不抛出异常
+    protected abstract T CreateConnection(WorkstationEntity protocol, CancellationToken token);//一般不抛出异常
 
     //子类可选实现：连接初始化后设置参数
-    protected virtual async Task OnConnectionInitializedAsync(ProtocolEntity protocol, CancellationToken token)
+    protected virtual async Task OnConnectionInitializedAsync(CancellationToken token)
     {
         if (_conn != null)
         {

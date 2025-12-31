@@ -105,6 +105,24 @@ public class ModbusProtocolDriver : IProtocolDriver
                         result.Value = res.Content;
                         break;
                     }
+
+                case DataType.Long:
+                    {
+                        var res = await _conn.ReadInt64Async(point.Address);
+                        if (!res.IsSuccess)
+                            throw new PointFailedException($"{_protocolName}协议读取采集点失败: {res.Message}", new Exception(res.Message));
+                        result.Value = res.Content;
+                        break;
+                    }
+
+                case DataType.ULong:
+                    {
+                        var res = await _conn.ReadUInt64Async(point.Address);
+                        if (!res.IsSuccess)
+                            throw new PointFailedException($"{_protocolName}协议读取采集点失败: {res.Message}", new Exception(res.Message));
+                        result.Value = res.Content;
+                        break;
+                    }
                 case DataType.Float:
                     {
                         var res = await _conn.ReadFloatAsync(point.Address);
@@ -152,5 +170,10 @@ public class ModbusProtocolDriver : IProtocolDriver
             _conn = null;
         }
         GC.SuppressFinalize(this);
+    }
+
+    public Task<DeviceResult> ReadAsync(Protocol protocol, Device device, CancellationToken token)
+    {
+        throw new NotImplementedException();
     }
 }

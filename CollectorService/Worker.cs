@@ -355,7 +355,8 @@ public class Worker : BackgroundService
 
             var task = Task.Run(async () =>
             {
-                var driver = ProtocolDriverFactory.Create(protocolType);
+                IProtocolDriver? driver = null;
+                driver = ProtocolDriverFactory.Create(protocolType);
                 try
                 {
                     if (driver == null)
@@ -384,130 +385,117 @@ public class Worker : BackgroundService
                             bool protocolFailed = false;
                             bool protocolException = false;
 
-                            var devResult = new DeviceResult { DevId = dev.EquipmentID, PointResults = [] };
+                            var devResult = new DeviceResult
+                            {
+                                DevId = dev.EquipmentID,
+                                PointResults = []
+                            };
 
                             var deviceStopwatch = Stopwatch.StartNew();
 
-                            foreach (var point in dev.Points)
+                            if(protocolType == ProtocolType.MySqlOnlyOneAddress || protocolType == ProtocolType.Api || protocolType == ProtocolType.ApiWithOnlyOneAddress)
+                                devResult = await driver.ReadAsync(protocol, dev, token);
+                            else
                             {
-                                var pointStatus = deviceStatus.PointStatuses.First(ps => ps.Label == point.Label);
-                                var pointStopwatch = Stopwatch.StartNew();
-
-                                var pointResult = new PointResult
+                                foreach (var point in dev.Points)
                                 {
-                                    Label = point.Label,
-                                    DataType = Enum.Parse<DataType>(point.DataType),
-                                };
-                                try
-                                {
-                                    //var result = await driver.ReadAsync(protocol, dev, point, token);
+                                    var pointStatus = deviceStatus.PointStatuses.First(ps => ps.Label == point.Label);
+                                    var pointStopwatch = Stopwatch.StartNew();
 
-                                    ////转换
-                                    //if (result?.Value != null && !string.IsNullOrWhiteSpace(point.Change) && ExpressionHelper.IsNumericType(result.Value))
-                                    //{
-                                    //    try
-                                    //    {
-                                    //        // 使用 ExpressionHelper 计算表达式
-                                    //        var x = Convert.ToDouble(result.Value);
-                                    //        pointResult.Result = ExpressionHelper.Eval(point.Change, x);
-                                    //    }
-                                    //    catch (Exception ex)
-                                    //    {
-                                    //        _logger.LogWarning(ex, $"表达式计算失败: {point.Change}, 原值: {result.Value}");
-                                    //        pointResult.Result = result.Value;
-                                    //    }
-                                    //}
-                                    //else
-                                    //{
-                                    //    pointResult.Result = result?.Value;
-                                    //}
-
-                                    var result = await driver.ReadAsync(protocol, dev, point, token);
-
-                                    int retryCount = 0;
-                                    while(result?.Value == null && retryCount < _maxRetry)
+                                    var pointResult = new PointResult
                                     {
-                                        _logger.LogWarning($"{dev.EquipmentID}的{point.Label}第一次读取失败，进行第二次读取");
-                                        result = await driver.ReadAsync(protocol, dev, point, token);
-                                        retryCount++;
-                                    }
-
-                                    object? finalValue = result?.Value;
-                                    if(finalValue != null && !string.IsNullOrWhiteSpace(point.Change) && ExpressionHelper.IsNumericType(finalValue))
+                                        Label = point.Label,
+                                        DataType = Enum.Parse<DataType>(point.DataType),
+                                    };
+                                    try
                                     {
-                                        try
+                                        var result = await driver.ReadAsync(protocol, dev, point, token);
+
+                                        int retryCount = 0;
+                                        while (result?.Value == null && retryCount < _maxRetry)
                                         {
-                                            var x = Convert.ToDouble(finalValue);
-                                            finalValue = ExpressionHelper.Eval(point.Change, x);
+                                            _logger.LogWarning($"{dev.EquipmentID}的{point.Label}第一次读取失败，进行第二次读取");
+                                            result = await driver.ReadAsync(protocol, dev, point, token);
+                                            retryCount++;
                                         }
-                                        catch (Exception ex)
+
+                                        object? finalValue = result?.Value;
+                                        if (finalValue != null && !string.IsNullOrWhiteSpace(point.Change) && ExpressionHelper.IsNumericType(finalValue))
                                         {
-                                            _logger.LogWarning(ex, $"表达式计算失败: {point.Change}, 原值: {result?.Value}");
-                                            finalValue = result?.Value;
+                                            try
+                                            {
+                                                var x = Convert.ToDouble(finalValue);
+                                                finalValue = ExpressionHelper.Eval(point.Change, x);
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                _logger.LogWarning(ex, $"表达式计算失败: {point.Change}, 原值: {result?.Value}");
+                                                finalValue = result?.Value;
+                                            }
                                         }
-                                    }
 
-                                    pointResult.Result = finalValue;
+                                        pointResult.Result = finalValue;
 
-                                    devResult?.PointResults?.Add(pointResult);
+                                        devResult?.PointResults?.Add(pointResult);
 
-                                    pointStatus.Status = PointReadResult.Success;
-                                    pointStatus.UpdateTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
-                                    pointStatus.Message = "采集成功";
-                                }
-                                catch (ProtocolFailedException ex)
-                                {
-                                    _logger.LogError(ex, $"协议连接失败: 协议={protocol.ProtocolType}, 设备={dev.EquipmentName}, 点={point.Label}");
-                                    protocolFailed = true;
-                                    deviceStatus.Status = DevStatus.Offline;
-                                    deviceStatus.Message = ex.Message;
-                                    foreach (var ps in deviceStatus.PointStatuses)
-                                    {
-                                        ps.Status = PointReadResult.Exception;
+                                        pointStatus.Status = PointReadResult.Success;
                                         pointStatus.UpdateTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
-                                        ps.Message = ex.Message;
+                                        pointStatus.Message = "采集成功";
                                     }
-                                    break;
-                                }
-                                catch (ProtocolException ex)
-                                {
-                                    _logger.LogError(ex, $"协议异常: 协议={protocol.ProtocolType}, 设备={dev.EquipmentName}, 点={point.Label}");
-                                    protocolException = true;
-                                    deviceStatus.Status = DevStatus.Exception;
-                                    deviceStatus.Message = ex.Message;
-                                    foreach (var ps in deviceStatus.PointStatuses)
+                                    catch (ProtocolFailedException ex)
                                     {
-                                        ps.Status = PointReadResult.Exception;
-                                        pointStatus.UpdateTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
-                                        ps.Message = ex.Message;
+                                        _logger.LogError(ex, $"协议连接失败: 协议={protocol.ProtocolType}, 设备={dev.EquipmentName}, 点={point.Label}");
+                                        protocolFailed = true;
+                                        deviceStatus.Status = DevStatus.Offline;
+                                        deviceStatus.Message = ex.Message;
+                                        foreach (var ps in deviceStatus.PointStatuses)
+                                        {
+                                            ps.Status = PointReadResult.Exception;
+                                            pointStatus.UpdateTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+                                            ps.Message = ex.Message;
+                                        }
+                                        break;
                                     }
-                                    break;
-                                }
-                                catch (PointFailedException ex)
-                                {
-                                    _logger.LogError(ex, $"点读取失败: 协议={protocol.ProtocolType}, 设备={dev.EquipmentName}, 点={point.Label}");
-                                    pointStatus.Status = PointReadResult.Failed;
-                                    pointStatus.UpdateTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
-                                    pointStatus.Message = ex.Message;
-                                }
-                                catch (PointException ex)
-                                {
-                                    _logger.LogError(ex, $"点异常: 协议={protocol.ProtocolType}, 设备={dev.EquipmentName}, 点={point.Label}");
-                                    pointStatus.Status = PointReadResult.Exception;
-                                    pointStatus.UpdateTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
-                                    pointStatus.Message = ex.Message;
-                                }
-                                catch (Exception ex)
-                                {
-                                    _logger.LogError(ex, $"未知异常: 协议={protocol.ProtocolType}, 设备={dev.EquipmentName}, 点={point.Label}");
-                                    pointStatus.Status = PointReadResult.Exception;
-                                    pointStatus.UpdateTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
-                                    pointStatus.Message = ex.Message;
-                                }
-                                finally
-                                {
-                                    pointStopwatch.Stop();
-                                    pointStatus.ElapsedMilliseconds = pointStopwatch.ElapsedMilliseconds;
+                                    catch (ProtocolException ex)
+                                    {
+                                        _logger.LogError(ex, $"协议异常: 协议={protocol.ProtocolType}, 设备={dev.EquipmentName}, 点={point.Label}");
+                                        protocolException = true;
+                                        deviceStatus.Status = DevStatus.Exception;
+                                        deviceStatus.Message = ex.Message;
+                                        foreach (var ps in deviceStatus.PointStatuses)
+                                        {
+                                            ps.Status = PointReadResult.Exception;
+                                            pointStatus.UpdateTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+                                            ps.Message = ex.Message;
+                                        }
+                                        break;
+                                    }
+                                    catch (PointFailedException ex)
+                                    {
+                                        _logger.LogError(ex, $"点读取失败: 协议={protocol.ProtocolType}, 设备={dev.EquipmentName}, 点={point.Label}");
+                                        pointStatus.Status = PointReadResult.Failed;
+                                        pointStatus.UpdateTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+                                        pointStatus.Message = ex.Message;
+                                    }
+                                    catch (PointException ex)
+                                    {
+                                        _logger.LogError(ex, $"点异常: 协议={protocol.ProtocolType}, 设备={dev.EquipmentName}, 点={point.Label}");
+                                        pointStatus.Status = PointReadResult.Exception;
+                                        pointStatus.UpdateTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+                                        pointStatus.Message = ex.Message;
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        _logger.LogError(ex, $"未知异常: 协议={protocol.ProtocolType}, 设备={dev.EquipmentName}, 点={point.Label}");
+                                        pointStatus.Status = PointReadResult.Exception;
+                                        pointStatus.UpdateTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+                                        pointStatus.Message = ex.Message;
+                                    }
+                                    finally
+                                    {
+                                        pointStopwatch.Stop();
+                                        pointStatus.ElapsedMilliseconds = pointStopwatch.ElapsedMilliseconds;
+                                    }
                                 }
                             }
 

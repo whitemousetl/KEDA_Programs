@@ -2,6 +2,7 @@
 using KEDA_Common.Enums;
 using KEDA_Common.Interfaces;
 using KEDA_Common.Model;
+using System.Collections.Concurrent;
 using System.IO.Ports;
 using System.Net;
 
@@ -33,7 +34,7 @@ public class ProtocolValidator : IValidator<Protocol>
             return result;
         }
 
-        var requiredFields = new List<(string value, string errorMsg)>
+        var requiredFields = new ConcurrentBag<(string value, string errorMsg)>
         {
             (protocol.ProtocolID, "[协议]存在id为空的协议，请检查"),
             (protocol.Interface, "[协议]存在接口类型Interface为空的协议，请检查"),

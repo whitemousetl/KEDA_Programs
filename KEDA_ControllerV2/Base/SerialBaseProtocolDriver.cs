@@ -1,0 +1,163 @@
+﻿using HslCommunication.Core.Device;
+using KEDA_CommonV2.CustomException;
+using KEDA_CommonV2.Model;
+using KEDA_Controller.Base;
+
+namespace KEDA_ControllerV2.Base;
+
+public abstract class SerialBaseProtocolDriver<T> : BaseProtocolDriver<T> where T : DeviceSerialPort
+{
+    protected override Task OnConnectionInitializedAsync(CancellationToken token)
+    {
+        if (_conn != null)
+        {
+            var connRes = _conn.Open();
+            if (!connRes.IsSuccess)
+                throw new ProtocolWhenConnFailedException($"{_protocolName}协议连接串口时异常: {connRes.Message}",
+                    new Exception(connRes.Message));
+        }
+
+        return Task.CompletedTask;
+    }
+
+    protected override Protocol? ExtractProtocolFromWriteTask(WriteTask writeTask)
+    {
+        if (writeTask.Protocol is not SerialProtocol serialProtocol)
+            return null;
+
+        return new SerialProtocol
+        {
+            ProtocolId = serialProtocol.ProtocolId,
+            ProtocolType = serialProtocol.ProtocolType,
+            Remark = serialProtocol.Remark,
+            CollectCycle = serialProtocol.CollectCycle,
+            ReceiveTimeOut = serialProtocol.ReceiveTimeOut,
+            ConnectTimeOut = serialProtocol.ConnectTimeOut,
+        };
+    }
+
+    protected override IEnumerable<Point>? GetPointsFromProtocol(Protocol protocol)
+    {
+        return (protocol as SerialProtocol)?.Devices[0]?.Points;
+    }
+
+    protected override void DisposeConnection()
+    {
+        _conn?.Dispose();
+    }
+
+    #region HSL读写实现
+
+    protected override async Task<(bool IsSuccess, object? Content, string Message)> ReadBoolAsync(string address)
+    {
+        var r = await _conn!.ReadBoolAsync(address);
+        return (r.IsSuccess, r.Content, r.Message);
+    }
+
+    protected override async Task<(bool IsSuccess, object? Content, string Message)> ReadInt16Async(string address)
+    {
+        var r = await _conn!.ReadInt16Async(address);
+        return (r.IsSuccess, r.Content, r.Message);
+    }
+
+    protected override async Task<(bool IsSuccess, object? Content, string Message)> ReadUInt16Async(string address)
+    {
+        var r = await _conn!.ReadUInt16Async(address);
+        return (r.IsSuccess, r.Content, r.Message);
+    }
+
+    protected override async Task<(bool IsSuccess, object? Content, string Message)> ReadInt32Async(string address)
+    {
+        var r = await _conn!.ReadInt32Async(address);
+        return (r.IsSuccess, r.Content, r.Message);
+    }
+
+    protected override async Task<(bool IsSuccess, object? Content, string Message)> ReadUInt32Async(string address)
+    {
+        var r = await _conn!.ReadUInt32Async(address);
+        return (r.IsSuccess, r.Content, r.Message);
+    }
+
+    protected override async Task<(bool IsSuccess, object? Content, string Message)> ReadInt64Async(string address)
+    {
+        var r = await _conn!.ReadInt64Async(address);
+        return (r.IsSuccess, r.Content, r.Message);
+    }
+
+    protected override async Task<(bool IsSuccess, object? Content, string Message)> ReadUInt64Async(string address)
+    {
+        var r = await _conn!.ReadUInt64Async(address);
+        return (r.IsSuccess, r.Content, r.Message);
+    }
+
+    protected override async Task<(bool IsSuccess, object? Content, string Message)> ReadFloatAsync(string address)
+    {
+        var r = await _conn!.ReadFloatAsync(address);
+        return (r.IsSuccess, r.Content, r.Message);
+    }
+
+    protected override async Task<(bool IsSuccess, object? Content, string Message)> ReadDoubleAsync(string address)
+    {
+        var r = await _conn!.ReadDoubleAsync(address);
+        return (r.IsSuccess, r.Content, r.Message);
+    }
+
+    protected override async Task<(bool IsSuccess, object? Content, string Message)> ReadStringAsync(string address, ushort length)
+    {
+        var r = await _conn!.ReadStringAsync(address, length);
+        return (r.IsSuccess, r.Content, r.Message);
+    }
+
+    protected override async Task<bool> WriteBoolAsync(string address, bool value)
+    {
+        return (await _conn!.WriteAsync(address, value)).IsSuccess;
+    }
+
+    protected override async Task<bool> WriteInt16Async(string address, short value)
+    {
+        return (await _conn!.WriteAsync(address, value)).IsSuccess;
+    }
+
+    protected override async Task<bool> WriteUInt16Async(string address, ushort value)
+    {
+        return (await _conn!.WriteAsync(address, value)).IsSuccess;
+    }
+
+    protected override async Task<bool> WriteInt32Async(string address, int value)
+    {
+        return (await _conn!.WriteAsync(address, value)).IsSuccess;
+    }
+
+    protected override async Task<bool> WriteUInt32Async(string address, uint value)
+    {
+        return (await _conn!.WriteAsync(address, value)).IsSuccess;
+    }
+
+    protected override async Task<bool> WriteInt64Async(string address, long value)
+    {
+        return (await _conn!.WriteAsync(address, value)).IsSuccess;
+    }
+
+    protected override async Task<bool> WriteUInt64Async(string address, ulong value)
+    {
+        return (await _conn!.WriteAsync(address, value)).IsSuccess;
+    }
+
+    protected override async Task<bool> WriteFloatAsync(string address, float value)
+    {
+        return (await _conn!.WriteAsync(address, value)).IsSuccess;
+    }
+
+    protected override async Task<bool> WriteDoubleAsync(string address, double value)
+    {
+        return (await _conn!.WriteAsync(address, value)).IsSuccess;
+    }
+
+    protected override async Task<bool> WriteStringAsync(string address, string value, ushort length)
+    {
+        var res = await _conn!.WriteAsync(address, value, length);
+        return res.IsSuccess;
+    }
+
+    #endregion HSL读写实现
+}

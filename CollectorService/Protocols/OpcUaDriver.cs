@@ -84,7 +84,14 @@ public class OpcUaDriver : IProtocolDriver
                 EndpointDescription endpointDescription = CoreClientUtils.SelectEndpoint(config, $"opc.tcp://{ip}:{port}", false);
                 EndpointConfiguration endpointConfiguration = EndpointConfiguration.Create(config);
                 ConfiguredEndpoint endpoint = new ConfiguredEndpoint(null, endpointDescription, endpointConfiguration);
-                _conn = await Session.Create(config, endpoint, false, false, "DataCollector", 60000, new UserIdentity(username, password), null);
+                UserIdentity userIdentity;
+                if (!string.IsNullOrWhiteSpace(username) && !string.IsNullOrWhiteSpace(password))
+                    userIdentity = new UserIdentity(username, password);
+                else
+                    userIdentity = new UserIdentity(); // 匿名
+
+                _conn = await Session.Create(config, endpoint, false, false, "DataCollector", 60000, userIdentity, null);
+
             }
         }
         catch (Exception ex)
@@ -184,5 +191,10 @@ public class OpcUaDriver : IProtocolDriver
             _conn = null;
         }
         GC.SuppressFinalize(this);
+    }
+
+    public Task<DeviceResult> ReadAsync(Protocol protocol, Device device, CancellationToken token)
+    {
+        throw new NotImplementedException();
     }
 }

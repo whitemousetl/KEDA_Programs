@@ -17,6 +17,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KEDA_Processing_Center", "K
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KEDA_Controller", "KEDA_Controller\KEDA_Controller.csproj", "{63B3E99E-3803-4C71-AD90-467A8B28B8F5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KEDA_Processing_CenterV2", "KEDA_Processing_CenterV2\KEDA_Processing_CenterV2.csproj", "{5EC1A17E-A2B0-44EA-93C2-988F84A8ED48}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KEDA_CommonV2", "KEDA_CommonV2\KEDA_CommonV2.csproj", "{F12F9907-7559-4504-B763-E63621274431}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KEDA_ControllerV2", "KEDA_ControllerV2\KEDA_ControllerV2.csproj", "{B531CD48-987D-4AAE-AA00-666CCDD0E60F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +57,18 @@ Global
 		{63B3E99E-3803-4C71-AD90-467A8B28B8F5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{63B3E99E-3803-4C71-AD90-467A8B28B8F5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{63B3E99E-3803-4C71-AD90-467A8B28B8F5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5EC1A17E-A2B0-44EA-93C2-988F84A8ED48}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5EC1A17E-A2B0-44EA-93C2-988F84A8ED48}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5EC1A17E-A2B0-44EA-93C2-988F84A8ED48}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5EC1A17E-A2B0-44EA-93C2-988F84A8ED48}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F12F9907-7559-4504-B763-E63621274431}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F12F9907-7559-4504-B763-E63621274431}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F12F9907-7559-4504-B763-E63621274431}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F12F9907-7559-4504-B763-E63621274431}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B531CD48-987D-4AAE-AA00-666CCDD0E60F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B531CD48-987D-4AAE-AA00-666CCDD0E60F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B531CD48-987D-4AAE-AA00-666CCDD0E60F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B531CD48-987D-4AAE-AA00-666CCDD0E60F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

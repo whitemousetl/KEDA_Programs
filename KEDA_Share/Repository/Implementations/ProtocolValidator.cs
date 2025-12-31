@@ -126,8 +126,8 @@ public class ProtocolValidator : IValidator<Protocol>
         if (string.IsNullOrWhiteSpace(protocol.IPAddress))
             return new ValidationResult { IsValid = false, ErrorMessage = $"[网口协议]{protocol.ProtocolType}的ip地址IPAddress为空，请检查" };
 
-        if (!IPAddress.TryParse(protocol.IPAddress, out _))
-            return new ValidationResult { IsValid = false, ErrorMessage = $"[网口协议]{protocol.ProtocolType}的ip地址IPAddress格式不正确，请检查" };
+        //if (!IPAddress.TryParse(protocol.IPAddress, out _))
+        //    return new ValidationResult { IsValid = false, ErrorMessage = $"[网口协议]{protocol.ProtocolType}的ip地址IPAddress格式不正确，请检查" };
 
         if (string.IsNullOrWhiteSpace(protocol.ProtocolPort))
             return new ValidationResult { IsValid = false, ErrorMessage = $"[网口协议]{protocol.ProtocolType}的端口号ProtocolPort为空，请检查" };

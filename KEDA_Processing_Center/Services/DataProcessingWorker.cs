@@ -1,5 +1,11 @@
-﻿using KEDA_Common.Interfaces;
+﻿using DynamicExpresso;
+using KEDA_Common.Helper;
+using KEDA_Common.Interfaces;
 using KEDA_Common.Model;
+using KEDA_Processing_Center.Interfaces;
+using SqlSugar;
+using System.Collections.Concurrent;
+using System.Linq.Expressions;
 using System.Text.Json;
 
 namespace KEDA_Processing_Center.Services;
@@ -65,12 +71,14 @@ public class DataProcessingWorker : BackgroundService
         _logger.LogInformation("后台数据处理服务已停止");
     }
 
+    private readonly ConcurrentDictionary<string, DateTime> _lastMonitorTimes = new();
     private async Task<bool> InitializeConfigurationAndSubscriptions(CancellationToken stoppingToken)
     {
         try
         {
             using var scope = _serviceProvider.CreateScope();
             var protocolConfigProvider = scope.ServiceProvider.GetRequiredService<IProtocolConfigProvider>();
+            var deviceNotification = scope.ServiceProvider.GetRequiredService<IDeviceNotificationService>();
 
             var config = await protocolConfigProvider.GetLatestConfigAsync(stoppingToken);
             if (config == null || string.IsNullOrWhiteSpace(config.ConfigJson))
@@ -79,21 +87,43 @@ public class DataProcessingWorker : BackgroundService
                 return false;
             }
 
-            var protocolEntityList = JsonSerializer.Deserialize<List<ProtocolEntity>>(config.ConfigJson);
+            var protocolEntityList = JsonSerializer.Deserialize<List<WorkstationEntity>>(config.ConfigJson);
             if (protocolEntityList == null || !protocolEntityList.Any())
             {
                 _logger.LogWarning("反序列化的协议配置为空");
                 return false;
             }
 
-            var topicHandles = new Dictionary<string, Func<ProtocolResult, CancellationToken, Task>>();
+            var topicHandles = new ConcurrentDictionary<string, Func<ProtocolResult, CancellationToken, Task>>();
             foreach (var protocol in protocolEntityList)
             {
                 if (!string.IsNullOrEmpty(protocol.ProtocolID))
-                    topicHandles["workstation/" + protocol.ProtocolID] = (protocolResult, token) => ProcessDataAsync(protocolResult, token, protocol);
+                {
+                    topicHandles["edge/" + protocol.ProtocolID] = async (protocolResult, token) =>
+                    {
+                        // 主处理流程，必须等待
+                        await ProcessDataAsync(protocolResult, protocol, token);
+
+                        // ======= 设备状态监控频率限制（每个 protocol 限制 1 分钟一次） =======
+                        var now = DateTime.UtcNow;
+
+                        if (!_lastMonitorTimes.TryGetValue(protocol.ProtocolID, out var lastTime) ||
+                            (now - lastTime).TotalSeconds >= 60)
+                        {
+                            // 更新执行时间，避免并发重复触发
+                            _lastMonitorTimes[protocol.ProtocolID] = now;
+
+                            _ = Task.Run(async () =>
+                            {
+                                await deviceNotification.MonitorDeviceStatusAsync([protocolResult], token);
+
+                            }, token);
+                        }
+                    };
+                }
             }
 
-            if (topicHandles.Any())
+            if (topicHandles.Count != 0)
             {
                 await _mqttSubscribeService.StartAsync(topicHandles, stoppingToken);
                 _logger.LogInformation("成功初始化 {Count} 个MQTT主题订阅", topicHandles.Count);
@@ -141,8 +171,14 @@ public class DataProcessingWorker : BackgroundService
                 _logger.LogInformation("检测到协议配置变更，正在重新初始化订阅...");
                 _lastConfigTime = latestConfig.SaveTime;
 
-                // 重新初始化订阅
-                await InitializeConfigurationAndSubscriptions(stoppingToken);
+                // 持续重试订阅直到成功或取消
+                while (!stoppingToken.IsCancellationRequested)
+                {
+                    if (await InitializeConfigurationAndSubscriptions(stoppingToken))
+                        break;
+                    _logger.LogError("配置变更后初始化订阅失败，10秒后重试...");
+                    await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+                }
             }
         }
         catch (Exception ex)
@@ -151,8 +187,8 @@ public class DataProcessingWorker : BackgroundService
         }
     }
 
-
-    private async Task ProcessDataAsync(ProtocolResult protocolResult, CancellationToken token, ProtocolEntity protocol)
+    private readonly ConcurrentDictionary<string, DateTime> _lastPublishTimes = new();
+    private async Task ProcessDataAsync(ProtocolResult protocolResult, WorkstationEntity protocol, CancellationToken token)
     {
         if (protocolResult?.DeviceResults == null)
         {
@@ -166,34 +202,138 @@ public class DataProcessingWorker : BackgroundService
             {
                 if (string.IsNullOrEmpty(deviceResult.EquipmentId) || deviceResult.PointResults == null) continue;
 
-                var forwardDeviceResult = new Dictionary<string, object?>()
-                {
-                    { "DeviceId",deviceResult.EquipmentId },
-                    { "Time", protocolResult.Time }
-                };
+                string timeStr = protocolResult.Time;
+                var dt = DateTime.ParseExact(timeStr, "yyyy-MM-dd HH:mm:ss.fff", null);
+                long timestamp = new DateTimeOffset(dt).ToUnixTimeMilliseconds();
+
+                var forwardDeviceResult = new ConcurrentDictionary<string, object?>();
+                forwardDeviceResult["DeviceId"] = deviceResult.EquipmentId;
+                forwardDeviceResult["timestamp"] = timestamp;
 
                 var device = protocol.Devices.FirstOrDefault(d => d.EquipmentId == deviceResult.EquipmentId);
 
                 if (device == null) continue;
+
+                // 收集虚拟点
+                var virtualPoints = new ConcurrentBag<PointEntity>();
 
                 foreach (var pointResult in deviceResult.PointResults)
                 {
                     var point = device.Points.FirstOrDefault(p => p.Label == pointResult.Label);
                     if (point == null) continue;
 
+                    if(pointResult.Value == null && point.Address != "VirtualPoint") continue;
 
+                    //如果point的地址是VirtualPoint，则这是一个虚拟点，先跳过，等所有实际点处理完，然后再执行虚拟点的逻辑
+                    // 判断是否为虚拟点
+                    if (point.Address == "VirtualPoint")
+                    {
+                        // 跳过虚拟点，后续统一处理
+                        virtualPoints.Add(point);
+                        continue;
+                    }
 
-                    if (!string.IsNullOrEmpty(pointResult.Label))
-                        forwardDeviceResult[pointResult.Label] = pointResult.Value;
+                    object? finalValue = pointResult?.Value;
+                    try
+                    {
+                        if (!string.IsNullOrEmpty(point.Change) && point.Change.Equals("HEX2DEC", StringComparison.OrdinalIgnoreCase))
+                        {
+                            Console.WriteLine("进入HEX转Decimal");
+                            // 处理HEX转换
+                            finalValue = ExpressionHelper.HexToDecimal(finalValue);
+                            Console.WriteLine($"{point.Address} {point.Change} {finalValue}");
+                        }
+                        else if (point.Change.Equals("DEC2HEX", StringComparison.OrdinalIgnoreCase))
+                        {
+                            finalValue = ExpressionHelper.DecimalToHex(finalValue, false); // 或true带0x前缀
+                            Console.WriteLine($"{point.Address} DEC2HEX {finalValue}");
+                        }
+                        else if (finalValue != null && ExpressionHelper.IsNumericType(finalValue))
+                        {
+                            double x;
+                            if (finalValue is JsonElement je && je.ValueKind == JsonValueKind.Number) x = je.GetDouble();
+                            else x = Convert.ToDouble(finalValue);
+                            finalValue = ExpressionHelper.Eval(point.Change, x);//转换或四舍五入保留两位小数
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, $"表达式计算失败: {point.Change}, 原值: {pointResult?.Value}");
+                        finalValue = pointResult?.Value;
+                    }
+
+                    if (!string.IsNullOrEmpty(pointResult?.Label))
+                        forwardDeviceResult[pointResult.Label] = finalValue;
                 }
 
-                if (forwardDeviceResult.Any())
+                if (forwardDeviceResult.Count > 2)
                 {
-                    var data = JsonSerializer.Serialize(forwardDeviceResult, _jsonOptions);
-                    var topic = $"workstation/{deviceResult.EquipmentId}";
+                    // 处理虚拟点
+                    foreach (var point in virtualPoints)
+                    {
+                        if (string.IsNullOrWhiteSpace(point.Change)) continue;
 
-                    await _mqttPublishService.PublishAsync(topic, data, token);
-                    _logger.LogDebug("已转发设备 {DeviceId} 的数据", deviceResult.EquipmentId);
+                        // 1. 提取表达式中的变量名（不使用正则）
+                        var expr = point.Change;
+                        var variables = new ConcurrentBag<string>();//变量列表
+                        int idx = 0;
+                        while ((idx = expr.IndexOf('{', idx)) != -1)
+                        {
+                            int endIdx = expr.IndexOf('}', idx + 1);
+                            if (endIdx == -1) break;
+                            var varName = expr.Substring(idx + 1, endIdx - idx - 1);
+                            if (!variables.Contains(varName))
+                                variables.Add(varName);
+                            idx = endIdx + 1;
+                        }
+
+                        // 2. 替换表达式中的{变量}为变量名
+                        string dynamicExpr = expr;
+                        foreach (var varName in variables)
+                        {
+                            dynamicExpr = dynamicExpr.Replace("{" + varName + "}", varName);
+                        }
+
+                        // 3. 构建解释器并传递变量
+                        var interpreter = new Interpreter();
+                        foreach (var varName in variables)
+                        {
+                            if (forwardDeviceResult.TryGetValue(varName, out var value))
+                                interpreter.SetVariable(varName, value ?? 0);
+                            else
+                                interpreter.SetVariable(varName, 0); // 未找到变量，默认0
+                        }
+
+                        object? result = null;
+                        try
+                        {
+                            result = interpreter.Eval(dynamicExpr);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, $"虚拟点表达式计算失败: {point.Change}");
+                        }
+
+                        if (!string.IsNullOrEmpty(point.Label))
+                            forwardDeviceResult[point.Label] = result;
+                    }
+
+                    var data = JsonSerializer.Serialize(forwardDeviceResult, _jsonOptions);
+
+                    // 实时发布到 control/{EquipmentId}
+                    var controlTopic = $"control/{deviceResult.EquipmentId}";
+                    await _mqttPublishService.PublishAsync(controlTopic, data, token);
+                    _logger.LogDebug("已实时转发设备 {DeviceId} 的数据到 {Topic}", deviceResult.EquipmentId, controlTopic);
+
+                    // 间隔一分钟发布到 workstation/{EquipmentId}
+                    var workstationTopic = $"workstation/{deviceResult.EquipmentId}";
+                    var now = DateTime.UtcNow;
+                    if (!_lastPublishTimes.TryGetValue(deviceResult.EquipmentId, out var lastTime) || (now - lastTime).TotalSeconds >= 60)
+                    {
+                        await _mqttPublishService.PublishAsync(workstationTopic, data, token);
+                        _lastPublishTimes.AddOrUpdate(deviceResult.EquipmentId, now, (_, old) => now);
+                        _logger.LogDebug("已定时转发设备 {DeviceId} 的数据到 {Topic}", deviceResult.EquipmentId, workstationTopic);
+                    }
                 }
             }
         }
@@ -203,71 +343,3 @@ public class DataProcessingWorker : BackgroundService
         }
     }
 }
-//using KEDA_Common.Interfaces;
-//using KEDA_Common.Model;
-//using Microsoft.Extensions.Options;
-//using System.Text.Json;
-
-//namespace KEDA_Processing_Center.Services;
-
-//public class DataProcessingWorker : BackgroundService
-//{
-//    private readonly ILogger<DataProcessingWorker> _logger;
-//    private readonly IServiceProvider _serviceProvider;
-//    private readonly IMqttPublishService _mqttPublishService;
-//    private readonly IMqttSubscribeService _mqttSubscribeService;
-//    private readonly JsonSerializerOptions options = new() { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
-//    public DataProcessingWorker (ILogger<DataProcessingWorker> logger, IServiceProvider serviceProvider, IMqttPublishService mqttPublishService, IMqttSubscribeService mqttSubscribeService)
-//    {
-//        _logger = logger;
-//        _serviceProvider = serviceProvider;
-//        _mqttPublishService = mqttPublishService;
-//        _mqttSubscribeService = mqttSubscribeService;
-//    }
-
-//    protected async override Task ExecuteAsync(CancellationToken stoppingToken)
-//    {
-//        _logger.LogInformation("后台数据处理服务已启动");
-
-//        using var scope = _serviceProvider.CreateScope();
-//        var protocolConfigProvider = scope.ServiceProvider.GetRequiredService<IProtocolConfigProvider>();
-
-//        var config = await protocolConfigProvider.GetLatestConfigAsync(stoppingToken);
-
-//        var protocolEntityList = JsonSerializer.Deserialize<List<ProtocolEntity>>(config.ConfigJson);
-
-//        var topicHandles = new Dictionary<string, Func<ProtocolResult, CancellationToken, Task>>();
-
-//        foreach (var protocol in protocolEntityList)
-//        {
-//            topicHandles[protocol.ProtocolID] = ProcessingData;
-//        }
-//        await _mqttSubscribeService.StartAsync(topicHandles, stoppingToken);
-
-//        while (!stoppingToken.IsCancellationRequested)
-//        {
-//            _logger.LogInformation("正在处理数据...");
-//            await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
-//        }
-//        _logger.LogInformation("后台数据处理服务已停止");
-//    }
-
-//    private async Task ProcessingData(ProtocolResult protocolResult, CancellationToken token)
-//    {
-//        foreach(var deviceResult in protocolResult.DeviceResults)
-//        {
-//            var deviceId = deviceResult.EquipmentId;
-//            var forwardDeviceResult = new ForwardDeviceResult { DeviceId = deviceId, };
-
-//            foreach (var pointResult in deviceResult.PointResults)
-//            {
-//                var forwardPointResult = new ForwardPointResult { Value = pointResult.Value, Label = pointResult.Label };
-//                forwardDeviceResult.ForwardPoints.Add(forwardPointResult);
-//            }
-
-//            var data = JsonSerializer.Serialize(forwardDeviceResult, options);
-
-//            await _mqttPublishService.PublishAsync("workstation/" + deviceId, data, token);
-//        }
-//    }
-//}

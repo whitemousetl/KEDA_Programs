@@ -7,29 +7,15 @@ using System.Threading.Tasks;
 namespace KEDA_Common.Enums;
 public enum ProtocolType
 {
+    //Tcp
     Modbus,
     ModbusTcp,
-
-    ModbusRtu,
-    ModbusRtuSerial,
-
-    ModbusRtuOverTcp,
-
-    DLT6452007OverTcp,
-
-    DLT6452007Serial,
 
     Fins,
     FinsTcp,
 
-    FinsUdp,
-
     CipNet,
     FinsCipNet,
-
-    CJT188OverTcp_2004,
-
-    FxSerialOverTcp,
 
     IEC104,
 
@@ -38,11 +24,20 @@ public enum ProtocolType
 
     S200Smart,
 
-    S7300,
-
     S71200,
+    S1200,
 
     S71500,
+    S1500,
+
+    S7200,
+    S200,
+
+    S7300,
+    S300,
+
+    S7400,
+    S400,
 
     MySQL,
 
@@ -51,4 +46,37 @@ public enum ProtocolType
     FJ60W,
 
     GP1125T,
+
+    BottomImageF1970,
+
+    //Serial or OverTcp
+    ModbusRtu,
+    ModbusRtuSerial,
+
+    ModbusRtuOverTcp,
+
+    DLT645,
+    DLT6452007,
+    DLT6452007Serial,
+    DLT645_2007,
+    DLT645_2007Serial,
+
+    DLT645_2007OverTcp,
+    DLT6452007OverTcp,
+
+    CJT188,
+    CJT188Serial,
+    CJT188_2004,
+    CJT188_2004Serial,
+
+    CJT188OverTcp_2004,
+    CJT188OverTcp,
+    CJT188OverTcp2004,
+
+    FxSerial,
+
+    FxSerialOverTcp,
+
+    //Udp
+    FinsUdp,
 }

@@ -5,6 +5,7 @@ using KEDA_Common.Interfaces;
 using KEDA_Common.Model;
 using KEDA_Processing_Center.Interfaces;
 using SqlSugar;
+using System.Collections.Concurrent;
 using System.IO.Ports;
 using System.Text.Json;
 
@@ -13,16 +14,16 @@ namespace KEDA_Processing_Center.Services;
 public class WorkstationConfigService : IWorkstationConfigService
 {
     private readonly IValidator<Workstation> _validator;
-    private readonly SqlSugarClient _db;
+    private readonly ISqlSugarClientFactory _dbFactory;
     private readonly JsonSerializerOptions options = new()
     {
         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
     };
 
-    public WorkstationConfigService(IValidator<Workstation> validator, SqlSugarClient db)
+    public WorkstationConfigService(IValidator<Workstation> validator, ISqlSugarClientFactory dbFactory)
     {
         _validator = validator;
-        _db = db;
+        _dbFactory = dbFactory;
     }
 
     public async Task<IResult> HandleAsync(Workstation? ws)
@@ -32,7 +33,7 @@ public class WorkstationConfigService : IWorkstationConfigService
         if (!res.IsValid) return Results.Ok(ApiResponse<string>.Fial(res.ErrorMessage ?? "服务器无返回错误信息"));
 
         // 1. 转换为 ProtocolEntity 列表
-        var protocolEntities = new List<ProtocolEntity>();
+        var protocolEntities = new ConcurrentBag<ProtocolEntity>();
         foreach (var proto in ws!.Protocols)
         {
             var protocolEntity = new ProtocolEntity
@@ -44,6 +45,8 @@ public class WorkstationConfigService : IWorkstationConfigService
                 Gateway = proto.Gateway,
                 ProtocolPort = int.TryParse(proto.ProtocolPort, out var port) ? port : 502,
                 PortName = proto.PortName,
+                AddressStartWithZero = !bool.TryParse(proto.AddressStartWithZero, out var asz) || asz,
+                InstrumentType = byte.TryParse(proto.InstrumentType, out var type) ? type : (byte)0,
                 BaudRate = int.TryParse(proto.BaudRate, out var baud) ? baud : 9600,
                 DataBits = int.TryParse(proto.DataBits, out var bits) ? bits : 8,
                 StopBits = Enum.TryParse<StopBits>(proto.StopBits, out var stopBits) ? stopBits : StopBits.One,
@@ -63,8 +66,7 @@ public class WorkstationConfigService : IWorkstationConfigService
                         Address = p.Address,
                         Length = ushort.TryParse(p.Length, out var length) ? length : (ushort)0,
                         Format = Enum.TryParse<DataFormat>(proto.Format, out var df) ? df : DataFormat.CDAB,
-                        AddressStartWithZero = bool.TryParse(proto.AddressStartWithZero, out var asz) ? asz : true,
-                        InstrumentType = byte.TryParse(proto.InstrumentType, out var type) ? type : (byte)0,
+                        Change = p.Change,
                     }).ToList()
                 }).ToList()
             };
@@ -81,21 +83,22 @@ public class WorkstationConfigService : IWorkstationConfigService
         var wsJson = JsonSerializer.Serialize(ws, options);
 
         // 3. 事务保存
-        var result = await _db.Ado.UseTranAsync(async () =>
+        using var db = _dbFactory.CreateClient();
+        var result = await db.Ado.UseTranAsync(async () =>
         {
             var wsConfig = new WorkstationConfig
             {
                 ConfigJson = wsJson,
                 SaveTime = now
             };
-            await _db.Insertable(wsConfig).ExecuteCommandAsync();
+            await db.Insertable(wsConfig).ExecuteCommandAsync();
 
             var protocolConfig = new ProtocolConfig
             {
                 ConfigJson = protocolJson,
                 SaveTime = now
             };
-            await _db.Insertable(protocolConfig).ExecuteCommandAsync();
+            await db.Insertable(protocolConfig).ExecuteCommandAsync();
         });
 
         if (result.IsSuccess)

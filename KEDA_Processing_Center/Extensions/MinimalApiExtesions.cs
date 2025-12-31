@@ -15,6 +15,5 @@ public static class MinimalApiExtesions
         #endregion 测试用
 
         app.MapPost("/send_collector_task", (IWorkstationConfigService service, Workstation? ws) => service.HandleAsync(ws));
-        app.MapPost("/WritePoints", (IWriteTaskService service, List<WritePointData> points) => service.HandleAsync(points));
     }
 }

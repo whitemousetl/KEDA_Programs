@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SqlSugar;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,13 +15,13 @@ using System.Threading.Tasks;
 namespace KEDA_Common.Services;
 public class ProtocolConfigProvider : IProtocolConfigProvider
 {
-    private readonly IServiceProvider _service;
     private readonly ILogger<ProtocolConfigProvider> _logger;
+    private readonly ISqlSugarClientFactory _dbFactory;
 
-    public ProtocolConfigProvider(IServiceProvider service, ILogger<ProtocolConfigProvider> logger)
+    public ProtocolConfigProvider(ILogger<ProtocolConfigProvider> logger, ISqlSugarClientFactory dbFactory)
     {
-        _service = service;
         _logger = logger;
+        _dbFactory = dbFactory;
     }
 
     /// <summary>
@@ -28,9 +29,9 @@ public class ProtocolConfigProvider : IProtocolConfigProvider
     /// </summary>
     public async Task<ProtocolConfig?> GetLatestConfigAsync(CancellationToken token)
     {
+        using var db = _dbFactory.CreateClient();
         try
         {
-            var db = _service.GetRequiredService<SqlSugarClient>();
             return await db.Queryable<ProtocolConfig>()
                 .OrderByDescending(x => x.SaveTime)
                 .FirstAsync(token);
@@ -47,9 +48,9 @@ public class ProtocolConfigProvider : IProtocolConfigProvider
     /// </summary>
     public async Task<ProtocolEntity?> GetProtocolEntityByProtocolIdAsync(string protocolId, CancellationToken token)
     {
+        using var db = _dbFactory.CreateClient();
         try
         {
-            var db = _service.GetRequiredService<SqlSugarClient>();
             var config = await db.Queryable<ProtocolConfig>()
                 .OrderByDescending(x => x.SaveTime)
                 .FirstAsync(token);
@@ -57,8 +58,8 @@ public class ProtocolConfigProvider : IProtocolConfigProvider
             if (config == null || string.IsNullOrWhiteSpace(config.ConfigJson))
                 return null;
 
-            var protocolList = JsonSerializer.Deserialize<List<ProtocolEntity>>(config.ConfigJson);
-            return protocolList?.FirstOrDefault(p => p.ProtocolID == protocolId);
+            var workstationEntity = JsonSerializer.Deserialize<WorkstationEntity>(config.ConfigJson);
+            return workstationEntity?.Protocols?.FirstOrDefault(p => p.ProtocolID == protocolId);
         }
         catch (Exception ex)
         {
@@ -72,9 +73,9 @@ public class ProtocolConfigProvider : IProtocolConfigProvider
     /// </summary>
     public async Task<ProtocolEntity?> GetProtocolEntityByDeviceIdAsync(string deviceId, CancellationToken token)
     {
+        using var db = _dbFactory.CreateClient();
         try
         {
-            var db = _service.GetRequiredService<SqlSugarClient>();
             var config = await db.Queryable<ProtocolConfig>()
                 .OrderByDescending(x => x.SaveTime)
                 .FirstAsync(token);
@@ -82,8 +83,8 @@ public class ProtocolConfigProvider : IProtocolConfigProvider
             if (config == null || string.IsNullOrWhiteSpace(config.ConfigJson))
                 return null;
 
-            var protocolList = JsonSerializer.Deserialize<List<ProtocolEntity>>(config.ConfigJson);
-            return protocolList?.FirstOrDefault(p => p.Devices.Any(d => d.EquipmentId == deviceId));
+            var workstationEntity = JsonSerializer.Deserialize<WorkstationEntity>(config.ConfigJson);
+            return workstationEntity?.Protocols?.FirstOrDefault(p => p.Devices.Any(d => d.EquipmentId == deviceId));
         }
         catch (Exception ex)
         {
@@ -97,9 +98,9 @@ public class ProtocolConfigProvider : IProtocolConfigProvider
     /// </summary>
     public async Task<WorkstationConfig?> GetLatestWrokstationConfigAsync(CancellationToken token)
     {
+        using var db = _dbFactory.CreateClient();
         try
         {
-            var db = _service.GetRequiredService<SqlSugarClient>();
             return await db.Queryable<WorkstationConfig>()
                 .OrderByDescending(x => x.SaveTime)
                 .FirstAsync(token);

@@ -35,10 +35,7 @@ public class MqttPublishService : IMqttPublishService, IAsyncDisposable
         await _publishLock.WaitAsync(token);//锁住，限制并发发布，只能串行发布
         try
         {
-            if (!_client.IsConnected)
-            {
-                await _client.ConnectAsync(_options, token);
-            }
+            await EnsureConnectedAsync(token);
 
             var message = new MqttApplicationMessageBuilder()
                 .WithTopic(topic)
@@ -59,6 +56,22 @@ public class MqttPublishService : IMqttPublishService, IAsyncDisposable
         finally
         {
             _publishLock.Release();
+        }
+    }
+
+    private async Task EnsureConnectedAsync(CancellationToken token)
+    {
+        while (!_client.IsConnected && !token.IsCancellationRequested)
+        {
+            try
+            {
+                await _client.ConnectAsync(_options, token);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "MQTT连接失败，5秒后重试...");
+                await Task.Delay(5000, token);
+            }
         }
     }
 

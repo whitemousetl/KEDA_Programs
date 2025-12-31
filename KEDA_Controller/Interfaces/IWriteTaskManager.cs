@@ -1,4 +1,5 @@
 ﻿using KEDA_Common.Entity;
+using KEDA_Common.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,5 +11,5 @@ public interface IWriteTaskManager
 {
     Task StartConsumerAsync(CancellationToken token);
     Task InitSubscribeAsync(CancellationToken token);
-    Task TriggerWriteTaskAsync(WriteTaskEntity writeTask, CancellationToken token);
+    Task TriggerWriteTaskAsync(WritePointData writePointData, CancellationToken token);
 }

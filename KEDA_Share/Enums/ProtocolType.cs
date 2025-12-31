@@ -2,6 +2,10 @@
 
 public enum ProtocolType
 {
+    Api,
+
+    ApiWithOnlyOneAddress,
+
     Modbus,
     ModbusTcp,
 
@@ -39,6 +43,8 @@ public enum ProtocolType
     S71500,
 
     MySQL,
+
+    MySqlOnlyOneAddress,
 
     FJ1000Jet,
 

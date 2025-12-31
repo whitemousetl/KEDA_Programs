@@ -2,6 +2,7 @@
 using MQTTnet.Client;
 using KEDA_Common.Interfaces;
 
+namespace KEDA_Controller.Services;
 public class MqttPublishService : IMqttPublishService, IAsyncDisposable
 {
     private readonly ILogger<MqttPublishService> _logger;
@@ -25,6 +26,7 @@ public class MqttPublishService : IMqttPublishService, IAsyncDisposable
         _options = new MqttClientOptionsBuilder()
             .WithTcpServer(_server, _port)
             .WithCredentials(_username, _password)
+            .WithProtocolVersion(MQTTnet.Formatter.MqttProtocolVersion.V311) // 指定为3.1.1版本
             .Build();
     }
 
@@ -65,10 +67,7 @@ public class MqttPublishService : IMqttPublishService, IAsyncDisposable
         await _publishLock.WaitAsync(token);//锁住，限制并发发布，只能串行发布
         try
         {
-            if (!_client.IsConnected)
-            {
-                await _client.ConnectAsync(_options, token);
-            }
+            await EnsureConnectedAsync(token);
 
             var message = new MqttApplicationMessageBuilder()
                 .WithTopic(topic)
@@ -89,6 +88,22 @@ public class MqttPublishService : IMqttPublishService, IAsyncDisposable
         finally
         {
             _publishLock.Release();
+        }
+    }
+
+    private async Task EnsureConnectedAsync(CancellationToken token)
+    {
+        while (!_client.IsConnected && !token.IsCancellationRequested)
+        {
+            try
+            {
+                await _client.ConnectAsync(_options, token);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "MQTT连接失败，5秒后重试...");
+                await Task.Delay(5000, token);
+            }
         }
     }
 

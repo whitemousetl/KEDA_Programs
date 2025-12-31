@@ -1,4 +1,5 @@
 ﻿using KEDA_Common.Enums;
+using KEDA_Common.Interfaces;
 using KEDA_Controller.Interfaces;
 
 namespace KEDA_Controller;
@@ -14,7 +15,7 @@ public static class ProtocolDriverFactory
             .SelectMany(a => a.GetTypes())
             .Where(t =>
                 t.Namespace != null &&
-                t.Namespace.Equals(protocolNamespace, StringComparison.OrdinalIgnoreCase) &&
+                t.Namespace.StartsWith(protocolNamespace, StringComparison.OrdinalIgnoreCase) &&
                 typeof(IProtocolDriver).IsAssignableFrom(t) &&
                 !t.IsAbstract)
             .SelectMany(t => t.GetCustomAttributes(typeof(ProtocolTypeAttribute), false)
@@ -23,12 +24,25 @@ public static class ProtocolDriverFactory
             .ToDictionary(x => x.ProtocolType, x => x.Type);
     }
 
-    public static IProtocolDriver? CreateDriver(ProtocolType protocolType)
+    public static IProtocolDriver? CreateDriver(ProtocolType protocolType, IMqttPublishService? mqttPublishService = null)
     {
         try
         {
             if (_typeMap.TryGetValue(protocolType, out var type))
-                return Activator.CreateInstance(type) as IProtocolDriver;
+            {
+                //查找构造函数
+                var ctor = type.GetConstructors()
+                    .OrderByDescending(c => c.GetParameters().Length)
+                    .FirstOrDefault();
+
+                if (ctor == null) return null;
+
+                var parameters = ctor.GetParameters();
+                if (parameters.Length == 0)
+                    return Activator.CreateInstance(type) as IProtocolDriver;
+                if (parameters.Length == 1 && parameters[0].ParameterType == typeof(IMqttPublishService))
+                    return Activator.CreateInstance(type, mqttPublishService) as IProtocolDriver;
+            }
             return null;
         }
         catch

@@ -37,9 +37,13 @@ public static class ProtocolDriverFactory
             ProtocolType.DLT6452007Serial => new DLT645_2007SerialDriver(),
 
             ProtocolType.MySQL => new MySQLDevier(),
+            ProtocolType.MySqlOnlyOneAddress => new MySqlOnlyOneAddressDriver(),
 
             ProtocolType.OPC => new OpcUaDriver(),
             ProtocolType.OPCUA => new OpcUaDriver(),
+
+            ProtocolType.Api => new ApiDriver(),
+            ProtocolType.ApiWithOnlyOneAddress => new ApiWithOnlyOneAddressDriver(),
 
             _ => null
         };

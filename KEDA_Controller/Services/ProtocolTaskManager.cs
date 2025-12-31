@@ -1,4 +1,5 @@
-﻿using KEDA_Common.CustomException;
+﻿using Dm.util;
+using KEDA_Common.CustomException;
 using KEDA_Common.Entity;
 using KEDA_Common.Enums;
 using KEDA_Common.Interfaces;
@@ -10,6 +11,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
@@ -55,10 +57,10 @@ public class ProtocolTaskManager : IProtocolTaskManager
     {
         #region 初始化协议列表：反序列化是否成功，协议列表数量是否为空或0
         //反序列化ConfigJson为ProtocolEntity
-        List<ProtocolEntity>? protocolList = null;
+        List<WorkstationEntity>? protocolList = null;
         try
         {
-            protocolList = JsonSerializer.Deserialize<List<ProtocolEntity>>(config.ConfigJson, options);
+            protocolList = JsonSerializer.Deserialize<List<WorkstationEntity>>(config.ConfigJson, options);
         }
         catch (Exception ex)//协议列表反序列化失败，直接返回
         {
@@ -78,6 +80,7 @@ public class ProtocolTaskManager : IProtocolTaskManager
 
         foreach (var protocol in protocolList)
         {
+            if (!protocol.Devices?.Any() ?? true || protocol.Devices.All(d => !d.Points?.Any() ?? true)) continue; //过滤掉没有设备或所有设备都没有采集点的协议
             var cts = new CancellationTokenSource();
             _protocolReadCts[protocol.ProtocolID] = cts;
             _protocolReadTasks[protocol.ProtocolID] = Task.Run(() => ProtocolReadLoop(protocol, cts.Token), cts.Token);
@@ -90,7 +93,7 @@ public class ProtocolTaskManager : IProtocolTaskManager
     /// 协议采集任务主循环
     /// 负责点位数据采集、压缩、存库、MQTT发布
     /// </summary>
-    private async Task ProtocolReadLoop(ProtocolEntity protocol, CancellationToken token)
+    private async Task ProtocolReadLoop(WorkstationEntity protocol, CancellationToken token)
     {
         CreateDriver(protocol, out IProtocolDriver? driver);
         if (driver == null) return;
@@ -111,13 +114,12 @@ public class ProtocolTaskManager : IProtocolTaskManager
                 protocolResult.DeviceResults.Add(deviceResult);
             }
 
-            // 所有设备采集结束后，充实协议结果
             protocolSw.Stop();
-            CompleteProtocolStatistics(protocol, protocolResult, protocolSw);
+            CompleteProtocolStatistics(protocol, protocolResult, protocolSw); // 所有设备采集结束后，充实协议结果
 
             var data = JsonSerializer.Serialize(protocolResult, options);// 序列化为 JSON
 
-            await _mqttPublishService.PublishAsync("workstation/" + protocol.ProtocolID, data, token);
+            await _mqttPublishService.PublishAsync("edge/" + protocol.ProtocolID, data, token);
 
             ////GZip压缩编码,转换成字节数组，发布并持久化存储到SQLite中
             //byte[] compressedByteArray;
@@ -142,14 +144,20 @@ public class ProtocolTaskManager : IProtocolTaskManager
 
             //await _mqttPublishService.PublishAsync("workstation/" + protocol.ProtocolID, compressedByteArray, token);//发布到MQTT服务器，做单点测试,设备无关，工作站无关
 
-            await Task.Delay(protocol.CollectCycle, token);
+
+            // CollectCycle 为 0 时，避免忙等占满 CPU：最小延迟或 Yield 一下
+            var delayMs = protocol.CollectCycle;
+            if (delayMs <= 0) delayMs = 1; // 最小 1ms，或改为 await Task.Yield();
+
+            await Task.Delay(delayMs, token);
+            //await Task.Delay(protocol.CollectCycle, token);
         }
 
     }
 
-    private void CreateDriver(ProtocolEntity protocol, out IProtocolDriver? driver)
+    private void CreateDriver(WorkstationEntity protocol, out IProtocolDriver? driver)
     {
-        driver = ProtocolDriverFactory.CreateDriver(protocol.ProtocolType);
+        driver = ProtocolDriverFactory.CreateDriver(protocol.ProtocolType, _mqttPublishService);
         if (driver == null)
         {
             _logger.LogWarning($"协议驱动未实现: {protocol.ProtocolType}");
@@ -159,7 +167,7 @@ public class ProtocolTaskManager : IProtocolTaskManager
         _drivers[protocol.ProtocolID] = driver;// 把协议驱动放在字典中，让写任务调用
     }
 
-    private async Task<DeviceResult> ReadDeviceAsync(DeviceEntity dev, IProtocolDriver driver, ProtocolEntity protocol, CancellationToken token)
+    private async Task<DeviceResult> ReadDeviceAsync(DeviceEntity dev, IProtocolDriver driver, WorkstationEntity protocol, CancellationToken token)
     {
         var deviceResult = new DeviceResult() { EquipmentId = dev.EquipmentId };//设备结果
         var deviceSw = Stopwatch.StartNew();//设备读取计时器
@@ -167,11 +175,28 @@ public class ProtocolTaskManager : IProtocolTaskManager
         deviceResult.StartTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");//设备读取开始时间
         foreach (var point in dev.Points)
         {
+            if(point == null) continue;
+            if(point.Address == "VirtualPoint")
+            {
+                // 虚拟点，直接给默认结果
+                var virtualPointResult = new ProtocolResult
+                {
+                    Address = point.Address,
+                    Label = point.Label,
+                    DataType = point.DataType,
+                    ReadIsSuccess = true,
+                    Value = null, // 或者你需要的默认值
+                    ErrorMsg = null!,
+                    ElapsedMs = 0
+                };
+                deviceResult.PointResults.Add(virtualPointResult);
+                continue;
+            }
             var pointSw = Stopwatch.StartNew();
-            var pointResult = new PointResult { Address = point.Address, Label = point.Label, DataType = point.DataType };
+            var pointResult = new ProtocolResult { Address = point.Address, Label = point.Label, DataType = point.DataType };
             try
             {
-                var result = await driver.ReadAsync(protocol, point, token);
+                var result = await driver.ReadAsync(protocol, dev.EquipmentId, point, token);
                 if (result != null) pointResult = result;
             }
             catch (ProtocolWhenConnFailedException ex)     //协议连接失败，同时是设备和点的信息
@@ -237,7 +262,7 @@ public class ProtocolTaskManager : IProtocolTaskManager
             deviceResult.PointResults.Clear();
             foreach (var point in dev.Points)
             {
-                deviceResult.PointResults.Add(new PointResult
+                deviceResult.PointResults.Add(new ProtocolResult
                 {
                     Address = point.Address,
                     Label = point.Label,
@@ -246,15 +271,15 @@ public class ProtocolTaskManager : IProtocolTaskManager
                     ErrorMsg = deviceResult.ErrorMsg
                 });
             }
-        }
-        else
-        {
-            deviceResult.ReadIsSuccess = true;
-            deviceResult.ErrorMsg = string.Empty;
+
+            // 补全统计字段
+            deviceResult.TotalPoints = deviceResult.PointResults.Count;
+            deviceResult.SuccessPoints = deviceResult.PointResults.Count(p => p.ReadIsSuccess);
+            deviceResult.FailedPoints = deviceResult.TotalPoints - deviceResult.SuccessPoints;
         }
     }
 
-    private void CompleteProtocolStatistics(ProtocolEntity protocol, ProtocolResult protocolResult, Stopwatch protocolSw)
+    private void CompleteProtocolStatistics(WorkstationEntity protocol, ProtocolResult protocolResult, Stopwatch protocolSw)
     {
         protocolResult.EndTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
         protocolResult.ElapsedMs = protocolSw.ElapsedMilliseconds;
@@ -286,7 +311,7 @@ public class ProtocolTaskManager : IProtocolTaskManager
     /// </summary>
     public async Task StopAllAsync(CancellationToken token)
     {
-        var stopTasks = new List<Task>();
+        var stopTasks = new ConcurrentBag<Task>();
         var protocolIds = _protocolReadCts.Keys.ToList();
 
         foreach (var protocolId in protocolIds)
@@ -339,7 +364,7 @@ public class ProtocolTaskManager : IProtocolTaskManager
     /// <summary>
     /// 执行完写操作之后，恢复指定协议的读取
     /// </summary>
-    public async Task RestartProtocolAsync(string protocolId, ProtocolEntity protocol, CancellationToken token)
+    public async Task RestartProtocolAsync(string protocolId, WorkstationEntity protocol, CancellationToken token)
     {
         await StopProtocolAsync(protocolId, token);
         var newCts = new CancellationTokenSource();

@@ -13,6 +13,6 @@ public interface IProtocolTaskManager
     Task StopAllAsync(CancellationToken token);
     Task StartAllAsync(ProtocolConfig config, CancellationToken token);
     Task StopProtocolAsync(string protocolId,CancellationToken token);
-    Task RestartProtocolAsync(string protocolId, ProtocolEntity protocol, CancellationToken token);
+    Task RestartProtocolAsync(string protocolId, WorkstationEntity protocol, CancellationToken token);
     ConcurrentDictionary<string, IProtocolDriver> GetDrivers();
 }

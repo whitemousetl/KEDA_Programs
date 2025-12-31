@@ -69,7 +69,7 @@ public class Worker : BackgroundService
                     .Select(d => d.EquipmentID)
                     .ToHashSet();
 
-                var res = await _deviceStatusRepository.GetAllLatestDeviceStatusAsync();
+                var res = await _deviceStatusRepository.GetAllLatestDeviceStatusAsync();//从数据库查找最新的设备状态列表
 
                 // 设备状态上报（无论 hasChanged 是否为 true，都要上报）
                 var edgeStatus = new NotificationModel
@@ -84,14 +84,13 @@ public class Worker : BackgroundService
 
                 foreach (var deviceId in wsDeviceIds)
                 {
-                    var item = res.FirstOrDefault(d => d.DeviceId == deviceId);
-                    var devMsg = FindDeviceNameById(ws, deviceId);
+                    var devStateus = res.FirstOrDefault(d => d.DeviceId == deviceId);//从设备状态列表找到当前设备id的设备状态
+                    var devMsg = FindDeviceNameById(ws, deviceId);//根据设备id找到 设备名 和 设备类型
 
                     string equipmentStatus;
                     string message;
-                    string time;
 
-                    if (item == null)
+                    if (devStateus == null)//如果数据库里的设备状态查不到，则离线
                     {
                         // 没有采集到该设备，视为离线
                         equipmentStatus = ((int)EquipmentStatus.Offline).ToString();
@@ -99,22 +98,28 @@ public class Worker : BackgroundService
                     }
                     else
                     {
-                        // 判断时间是否变化
-                        if (!_lastDeviceUpdateTimes.TryGetValue(deviceId, out var lastUpdateTime) || lastUpdateTime != item.UpdateTime)
-                        {
-                            // 时间有变化，根据仓库状态判断
-                            equipmentStatus = item.Status == KEDA_Share.Enums.DevStatus.Online
-                                ? ((int)EquipmentStatus.Online).ToString()
-                                : ((int)EquipmentStatus.Offline).ToString();
-                            message = item.Message;
-                            _lastDeviceUpdateTimes[deviceId] = item.UpdateTime;
-                        }
-                        else
-                        {
-                            // 时间没变化，视为离线
-                            equipmentStatus = ((int)EquipmentStatus.Offline).ToString();
-                            message = "设备状态超时未更新，视为离线";
-                        }
+                        //// 判断时间是否变化，如果 上次设备更新时间字典 中找不到该设备id的上次更新时间 ，又或者是 找到了 但是 上次更新的时间 与 这次的 更新时间 不相等 
+                        //if (!_lastDeviceUpdateTimes.TryGetValue(deviceId, out var lastUpdateTime) || lastUpdateTime != devStateus.UpdateTime)
+                        //{
+                        //    // 时间有变化，根据仓库状态判断
+                        //    equipmentStatus = devStateus.Status == KEDA_Share.Enums.DevStatus.Online
+                        //        ? ((int)EquipmentStatus.Online).ToString()
+                        //        : ((int)EquipmentStatus.Offline).ToString();
+                        //    message = devStateus.Message;
+                        //    _lastDeviceUpdateTimes[deviceId] = devStateus.UpdateTime;
+                        //}
+                        //else
+                        //{
+                        //    // 时间没变化，视为离线
+                        //    equipmentStatus = ((int)EquipmentStatus.Offline).ToString();
+                        //    message = "设备状态超时未更新，视为离线";
+                        //}
+
+                        var status = devStateus.PointStatuses.All(p => p.Status == KEDA_Share.Enums.PointReadResult.Failed);//所有点都采集失败?
+                        equipmentStatus = status ? ((int)EquipmentStatus.Offline).ToString() : ((int)EquipmentStatus.Online).ToString();
+                     
+                        message = devStateus.Message;
+                        _lastDeviceUpdateTimes[deviceId] = devStateus.UpdateTime;
                     }
 
                     var devStatus = new DeviceStatus
@@ -124,7 +129,7 @@ public class Worker : BackgroundService
                         equipment_id = deviceId,
                         equipment_status = equipmentStatus,
                         msg = message,
-                        time = item?.UpdateTime ?? string.Empty,
+                        time = devStateus?.UpdateTime ?? string.Empty,
                     };
 
                     edgeStatus.items.Add(devStatus);

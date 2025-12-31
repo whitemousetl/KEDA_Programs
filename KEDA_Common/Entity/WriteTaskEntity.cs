@@ -11,6 +11,8 @@ using System.Threading.Tasks;
 namespace KEDA_Common.Entity;
 public class WriteTaskEntity//表
 {
+    public string UUID { get; set; } = string.Empty;    
+    public string DeviceType { get; set; } = string.Empty;
     public string ProtocolID { get; set; } = string.Empty;//mom上的协议编号,唯一标识
     public ProtocolInterface Interface { get; set; }//接口类型：LAN、COM
     public ProtocolType ProtocolType { get; set; }//协议类型
@@ -26,17 +28,28 @@ public class WriteTaskEntity//表
     public int CollectCycle { get; set; }//采集周期，通讯延时
     public int ReceiveTimeOut { get; set; }//接收超时
     public int ConnectTimeOut { get; set; }//连接超时
+    public WriteDevice? WriteDevice { get; set; }
+}
 
+public class WriteDevice
+{
+    public string DeviceId { get; set; } = string.Empty;
+    public byte InstrumentType { get; set; }//仪表的类型，CJT188专用，
+                                            //0x10：冷水水表；0x11：生活热水水表；0x12：直饮水水表；0x13：中水水表；
+                                            //0x20：热量表（热量）；0x21：热量表（冷量）；
+                                            //0x30：燃气表；0x40：电度表
+    public bool AddressStartWithZero { get; set; }//地址从0开始？
+    public WritePoint[] WritePoints { get; set; } = [];
+}
+
+
+public class WritePoint
+{
+    public string Label { get; set; } = string.Empty;
     public DataType DataType { get; set; }//数据类型：bool，short，ushort，int，uint，float，double，string
     public string Address { get; set; } = string.Empty;//地址
     public string StationNo { set; get; } = string.Empty; //站号
     public ushort Length { get; set; }//读取长度
     public DataFormat Format { get; set; }//解析或生成格式，大端序小端序
-    public bool AddressStartWithZero { get; set; }//地址从0开始？
-    public byte InstrumentType { get; set; }//仪表的类型，CJT188专用，
-                                            //0x10：冷水水表；0x11：生活热水水表；0x12：直饮水水表；0x13：中水水表；
-                                            //0x20：热量表（热量）；0x21：热量表（冷量）；
-                                            //0x30：燃气表；0x40：电度表
     public string Value { get; set; } = string.Empty;
-    public WriteTaskStatus WriteTaskStatus { get; set; }
 }

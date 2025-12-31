@@ -154,5 +154,10 @@ public class ModbusRtuDriver : IProtocolDriver
         }
         GC.SuppressFinalize(this);
     }
+
+    public Task<DeviceResult> ReadAsync(Protocol protocol, Device device, CancellationToken token)
+    {
+        throw new NotImplementedException();
+    }
 }
 
