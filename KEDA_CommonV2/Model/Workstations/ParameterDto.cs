@@ -9,11 +9,6 @@ namespace KEDA_CommonV2.Model.Workstations
     public class ParameterDto
     {
         /// <summary>
-        /// 参数Id
-        /// </summary>
-        public string Id { get; set; } = string.Empty;
-
-        /// <summary>
         /// 参数名
         /// </summary>
         public string Label { get; set; } = string.Empty; 

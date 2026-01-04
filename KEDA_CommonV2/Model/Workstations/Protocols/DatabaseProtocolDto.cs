@@ -48,7 +48,7 @@ namespace KEDA_CommonV2.Model.Workstations.Protocols
         public string QuerySqlString { get; set; } = string.Empty;
 
         /// <summary>
-        /// 其他参数（可选）
+        /// 连接字符串可选参数
         /// </summary>
         public string AdditionalOptions { get; set; } = string.Empty;
     }

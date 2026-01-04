@@ -3,7 +3,7 @@
 namespace KEDA_CommonV2.Enums;
 
 /// <summary>
-/// 仪器类型
+/// 设备类型
 /// </summary>
 public enum EquipmentType
 {
