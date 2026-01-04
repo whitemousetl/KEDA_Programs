@@ -1,6 +1,8 @@
 ﻿using HslCommunication.Core.Device;
 using KEDA_CommonV2.CustomException;
 using KEDA_CommonV2.Model;
+using KEDA_CommonV2.Model.Workstations;
+using KEDA_CommonV2.Model.Workstations.Protocols;
 
 namespace KEDA_Controller.Base;
 
@@ -17,17 +19,17 @@ public abstract class TcpBaseProtocolDriver<T> : BaseProtocolDriver<T> where T :
         }
     }
 
-    protected override Protocol? ExtractProtocolFromWriteTask(WriteTask writeTask)
+    protected override ProtocolDto? ExtractProtocolFromWriteTask(WriteTask writeTask)
     {
-        if (writeTask.Protocol is not LanProtocol lanProtocol)
+        if (writeTask.Protocol is not LanProtocolDto lanProtocol)
             return null;
 
         return lanProtocol;
     }
 
-    protected override IEnumerable<Point>? GetPointsFromProtocol(Protocol protocol)
+    protected override IEnumerable<ParameterDto>? GetPointsFromProtocol(ProtocolDto protocol)
     {
-        return (protocol as LanProtocol)?.Devices[0]?.Points;
+        return (protocol as LanProtocolDto)?.Equipments[0]?.Parameters;
     }
 
     protected override void DisposeConnection()

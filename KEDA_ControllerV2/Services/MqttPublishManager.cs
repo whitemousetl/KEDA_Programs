@@ -1,6 +1,7 @@
 ﻿using KEDA_CommonV2.Configuration;
 using KEDA_CommonV2.Interfaces;
 using KEDA_CommonV2.Model;
+using KEDA_CommonV2.Model.Workstations.Protocols;
 using KEDA_ControllerV2.Interfaces;
 using System.Collections.Concurrent;
 
@@ -24,7 +25,7 @@ public class MqttPublishManager : IMqttPublishManager
         _deviceDataStorageService = deviceDataStorageService;
     }
 
-    public async Task ProcessDataAsync(ProtocolResult protocolResult, Protocol protocol, CancellationToken token)
+    public async Task ProcessDataAsync(ProtocolResult protocolResult, ProtocolDto protocol, CancellationToken token)
     {
         if (protocolResult?.DeviceResults == null)
         {

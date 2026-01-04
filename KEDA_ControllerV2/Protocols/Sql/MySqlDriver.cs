@@ -1,6 +1,8 @@
 ﻿using KEDA_CommonV2.CustomException;
 using KEDA_CommonV2.Enums;
 using KEDA_CommonV2.Model;
+using KEDA_CommonV2.Model.Workstations;
+using KEDA_CommonV2.Model.Workstations.Protocols;
 using KEDA_ControllerV2.Interfaces;
 using MySqlConnector;
 using System.Text.Json;
@@ -12,18 +14,18 @@ public class MySqlDriver : IProtocolDriver
 {
     private readonly string _protocolName = "MySql";
 
-    public async Task<ProtocolResult?> ReadAsync(Protocol protocol, CancellationToken token)
+    public async Task<ProtocolResult?> ReadAsync(ProtocolDto protocol, CancellationToken token)
     {
         try
         {
-            var dbProtocol = new DatabaseProtocol();
+            var dbProtocol = new DatabaseProtocolDto();
             using var conn = CreateConnection(protocol, out dbProtocol);
 
             var result = new ProtocolResult
             {
                 Id = Guid.NewGuid().ToString("N"),
                 Time = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"),
-                ProtocolId = protocol.ProtocolId,
+                ProtocolId = protocol.Id,
                 ProtocolType = protocol.ProtocolType.ToString(),
                 DeviceResults = [],
                 StartTime = string.Empty,
@@ -35,14 +37,14 @@ public class MySqlDriver : IProtocolDriver
 
             await conn.OpenAsync(token);
 
-            var dataDict = await QueryDataDictionaryAsync(conn, dbProtocol.OuerySqlString, token);
+            var dataDict = await QueryDataDictionaryAsync(conn, dbProtocol.QuerySqlString, token);
 
-            foreach (var dev in protocol.Devices)
+            foreach (var dev in protocol.Equipments)
             {
                 var deviceResult = new DeviceResult
                 {
-                    EquipmentId = dev.EquipmentId,
-                    EquipmentName = dev.EquipmentName,
+                    EquipmentId = dev.Id,
+                    EquipmentName = dev.Name,
                     PointResults = []
                 };
 
@@ -50,7 +52,7 @@ public class MySqlDriver : IProtocolDriver
                 deviceResult.StartTime = startTime.ToString("yyyy-MM-dd HH:mm:ss.fff");
 
 
-                foreach (var point in dev.Points)
+                foreach (var point in dev.Parameters)
                 {
                     var pointResult = BuildPointResult(point, dataDict);
                     deviceResult.PointResults.Add(pointResult);
@@ -97,9 +99,9 @@ public class MySqlDriver : IProtocolDriver
         }
     }
 
-    private MySqlConnection CreateConnection(Protocol protocol, out DatabaseProtocol dbProtocol)
+    private MySqlConnection CreateConnection(ProtocolDto protocol, out DatabaseProtocolDto dbProtocol)
     {
-        if (protocol is DatabaseProtocol p)
+        if (protocol is DatabaseProtocolDto p)
         {
             var connStr = GetConnectionString(p);
             var conn = new MySqlConnection(connStr);
@@ -110,11 +112,11 @@ public class MySqlDriver : IProtocolDriver
             throw new InvalidOperationException($"{_protocolName}协议类型不是 ApiProtocol，无法进行操作。");
     }
 
-    private static string GetConnectionString(DatabaseProtocol dbProtocol)
+    private static string GetConnectionString(DatabaseProtocolDto dbProtocol)
     {
-        if (!string.IsNullOrWhiteSpace(dbProtocol.ConnectionString))
+        if (!string.IsNullOrWhiteSpace(dbProtocol.DatabaseConnectString))
         {
-            return dbProtocol.ConnectionString;
+            return dbProtocol.DatabaseConnectString;
         }
 
         // 拼接标准MySQL连接字符串
@@ -135,13 +137,13 @@ public class MySqlDriver : IProtocolDriver
         return builder.ConnectionString;
     }
 
-    private static ProtocolResult BuildFailedProtocolResult(Protocol protocol, string errorMsg)
+    private static ProtocolResult BuildFailedProtocolResult(ProtocolDto protocol, string errorMsg)
     {
         var result = new ProtocolResult
         {
             Id = Guid.NewGuid().ToString("N"),
             Time = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"),
-            ProtocolId = protocol.ProtocolId,
+            ProtocolId = protocol.Id,
             ProtocolType = protocol.ProtocolType.ToString(),
             DeviceResults = [],
             ReadIsSuccess = false,
@@ -151,14 +153,14 @@ public class MySqlDriver : IProtocolDriver
             ElapsedMs = 0
         };
 
-        if (protocol.Devices != null)
+        if (protocol.Equipments != null)
         {
-            foreach (var dev in protocol.Devices)
+            foreach (var dev in protocol.Equipments)
             {
                 var deviceResult = new DeviceResult
                 {
-                    EquipmentId = dev.EquipmentId,
-                    EquipmentName = dev.EquipmentName,
+                    EquipmentId = dev.Id,
+                    EquipmentName = dev.Name,
                     ReadIsSuccess = false,
                     ErrorMsg = errorMsg,
                     PointResults = [],
@@ -170,9 +172,9 @@ public class MySqlDriver : IProtocolDriver
                     ElapsedMs = 0
                 };
 
-                if (dev.Points != null)
+                if (dev.Parameters != null)
                 {
-                    foreach (var point in dev.Points)
+                    foreach (var point in dev.Parameters)
                     {
                         deviceResult.PointResults.Add(new PointResult
                         {
@@ -213,7 +215,7 @@ public class MySqlDriver : IProtocolDriver
         return dict;
     }
 
-    private static PointResult BuildPointResult(Point point, Dictionary<string, object> dataDict)
+    private static PointResult BuildPointResult(ParameterDto point, Dictionary<string, object> dataDict)
     {
         var label = point.Label;
         var address = point.Address;
@@ -244,7 +246,7 @@ public class MySqlDriver : IProtocolDriver
         GC.SuppressFinalize(this);
     }
 
-    public Task<PointResult?> ReadAsync(Protocol protocol, string devId, Point point, CancellationToken token)
+    public Task<PointResult?> ReadAsync(ProtocolDto protocol, string devId, ParameterDto point, CancellationToken token)
     {
         throw new NotImplementedException();
     }

@@ -13,6 +13,16 @@ namespace KEDA_CommonV2.Model.Workstations.Protocols
         public override InterfaceType InterfaceType => InterfaceType.LAN;
 
         /// <summary>
+        /// IP地址
+        /// </summary>
+        public string IpAddress { get; set; } = string.Empty;
+
+        /// <summary>
+        /// 端口
+        /// </summary>
+        public int ProtocolPort { get; set; }
+
+        /// <summary>
         /// 代理网关
         /// </summary>
         public string Gateway { get; set; } = string.Empty;

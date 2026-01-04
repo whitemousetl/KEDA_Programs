@@ -23,16 +23,6 @@ namespace KEDA_CommonV2.Model.Workstations.Protocols
         public ProtocolType ProtocolType { get; set; }
 
         /// <summary>
-        /// IP地址
-        /// </summary>
-        public string IpAddress { get; set; } = string.Empty;
-
-        /// <summary>
-        /// 端口
-        /// </summary>
-        public int ProtocolPort { get; set; }
-
-        /// <summary>
         /// 通讯延时
         /// </summary>
         public int CollectCycle { get; set; }

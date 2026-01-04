@@ -13,9 +13,14 @@ namespace KEDA_CommonV2.Model.Workstations.Protocols
         public override InterfaceType InterfaceType => InterfaceType.DATABASE;
 
         /// <summary>
-        /// 数据库连接配置类型
+        /// IP地址
         /// </summary>
-        public ConnectStringConfigType ConnectStringConfigType { get; set; }
+        public string IpAddress { get; set; } = string.Empty;
+
+        /// <summary>
+        /// 端口
+        /// </summary>
+        public int ProtocolPort { get; set; }
 
         /// <summary>
         /// 数据库账号
@@ -41,5 +46,10 @@ namespace KEDA_CommonV2.Model.Workstations.Protocols
         /// 查询SQL语句
         /// </summary>
         public string QuerySqlString { get; set; } = string.Empty;
+
+        /// <summary>
+        /// 其他参数（可选）
+        /// </summary>
+        public string AdditionalOptions { get; set; } = string.Empty;
     }
 }

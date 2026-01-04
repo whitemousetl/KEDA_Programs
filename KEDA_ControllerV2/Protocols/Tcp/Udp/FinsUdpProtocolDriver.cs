@@ -1,6 +1,6 @@
 ﻿using HslCommunication.Profinet.Omron;
 using KEDA_CommonV2.Enums;
-using KEDA_CommonV2.Model;
+using KEDA_CommonV2.Model.Workstations.Protocols;
 using KEDA_Controller.Base;
 
 namespace KEDA_ControllerV2.Protocols.Tcp.Udp;
@@ -8,9 +8,9 @@ namespace KEDA_ControllerV2.Protocols.Tcp.Udp;
 [ProtocolType(ProtocolType.OmronFinsUdp)]
 public class FinsUdpProtocolDriver : UdpBaseProtocolDriver<OmronFinsUdp>
 {
-    protected override OmronFinsUdp CreateConnection(Protocol protocol, CancellationToken token)
+    protected override OmronFinsUdp CreateConnection(ProtocolDto protocol, CancellationToken token)
     {
-        if (protocol is LanProtocol lanProtocol)
+        if (protocol is LanProtocolDto lanProtocol)
         {
             var conn = new OmronFinsUdp()
             {

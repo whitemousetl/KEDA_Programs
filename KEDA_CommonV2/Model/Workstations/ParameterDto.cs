@@ -11,7 +11,7 @@ namespace KEDA_CommonV2.Model.Workstations
         /// <summary>
         /// 参数Id
         /// </summary>
-        public string Parameter { get; set; } = string.Empty;
+        public string Id { get; set; } = string.Empty;
 
         /// <summary>
         /// 参数名
@@ -36,7 +36,7 @@ namespace KEDA_CommonV2.Model.Workstations
         /// <summary>
         /// 长度
         /// </summary>
-        public int Length { get; set; }
+        public ushort Length { get; set; }
 
         /// <summary>
         /// 默认值
@@ -51,7 +51,7 @@ namespace KEDA_CommonV2.Model.Workstations
         /// <summary>
         /// 正表达式，一元一次方程，进制转换，虚拟点计算
         /// </summary>
-        public string Change { get; set; } = string.Empty;
+        public string PositiveExpression { get; set; } = string.Empty;
 
         /// <summary>
         /// 最小值
@@ -66,7 +66,7 @@ namespace KEDA_CommonV2.Model.Workstations
         /// <summary>
         /// 协议格式,解析或生成格式，大端序小端序
         /// </summary>
-        public DataFormat Format { get; set; }
+        public DataFormat DataFormat { get; set; }
 
         /// <summary>
         /// 偏移量，地址从0开始？
@@ -77,5 +77,10 @@ namespace KEDA_CommonV2.Model.Workstations
         /// 仪表类型，CJT188专用
         /// </summary>
         public MeterType InstrumentType { get; set; }
+
+        /// <summary>
+        /// 写入才有值
+        /// </summary>
+        public string Value { get; set; } = string.Empty;
     }
 }

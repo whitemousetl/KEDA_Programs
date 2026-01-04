@@ -3,6 +3,7 @@ using KEDA_CommonV2.Converters;
 using KEDA_CommonV2.Entity;
 using KEDA_CommonV2.Interfaces;
 using KEDA_CommonV2.Model;
+using KEDA_CommonV2.Model.Workstations;
 using KEDA_ControllerV2.Interfaces;
 using System.Text.Json;
 
@@ -53,7 +54,7 @@ public class MqttSubscribeManager : IMqttSubscribeManager
 
     private async Task HandleWorkstationConfigAsync(string payload, CancellationToken token) //处理下发的协议配置，存到questdb的WorkstationConfig中
     {
-        Workstation? ws = null;
+        WorkstationDto? ws = null;
         bool isSuccess = false;
         string status = "Success";
         string message = "配置已保存";
@@ -63,7 +64,7 @@ public class MqttSubscribeManager : IMqttSubscribeManager
         {
             var options = new JsonSerializerOptions();
             options.Converters.Add(new ProtocolJsonConverter());
-            ws = JsonSerializer.Deserialize<Workstation>(payload, options);
+            ws = JsonSerializer.Deserialize<WorkstationDto>(payload, options);
 
             if (ws == null) _logger.LogError("mom下发配置时，反序列化后工作站配置为空");
             else
@@ -74,7 +75,7 @@ public class MqttSubscribeManager : IMqttSubscribeManager
                 {
                     status = "Error";
                     message = $"Label '{duplicateLabel}' 重复！所有Device的Points的Label必须唯一。";
-                    edgeId = ws.EdgeId;
+                    edgeId = ws.Id;
                     // 构造并发布响应
                     var repeatedResponse = new
                     {
@@ -90,7 +91,7 @@ public class MqttSubscribeManager : IMqttSubscribeManager
                     return;
                 }
 
-                edgeId = ws.EdgeId;
+                edgeId = ws.Id;
                 var utcNow = DateTime.UtcNow;
                 var shanghaiTime = TimeZoneInfo.ConvertTimeFromUtc(utcNow, TimeZoneInfo.FindSystemTimeZoneById("Asia/Shanghai"));
                 var config = new WorkstationConfig
@@ -114,7 +115,7 @@ public class MqttSubscribeManager : IMqttSubscribeManager
         {
             status = "Error";
             message = $"处理异常: {ex.Message}";
-            edgeId = ws?.EdgeId ?? TryExtractEdgeId(payload);
+            edgeId = ws?.Id ?? TryExtractEdgeId(payload);
         }
 
         // 构造并发布响应
@@ -153,12 +154,12 @@ public class MqttSubscribeManager : IMqttSubscribeManager
         return string.Empty;
     }
 
-    private static (bool IsUnique, string? DuplicateLabel) CheckPointLabelUnique(Workstation ws) // 检查工作站协议配置的Label是否唯一
+    private static (bool IsUnique, string? DuplicateLabel) CheckPointLabelUnique(WorkstationDto ws) // 检查工作站协议配置的Label是否唯一
     {
         var labelSet = new HashSet<string>();
-        foreach (var device in ws.Protocols.SelectMany(p => p.Devices))
+        foreach (var device in ws.Protocols.SelectMany(p => p.Equipments))
         {
-            foreach (var point in device.Points)
+            foreach (var point in device.Parameters)
             {
                 if (!labelSet.Add(point.Label))
                 {

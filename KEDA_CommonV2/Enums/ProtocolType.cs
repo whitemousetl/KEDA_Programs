@@ -1,69 +1,178 @@
-﻿namespace KEDA_CommonV2.Enums;
+﻿using System.ComponentModel;
 
+namespace KEDA_CommonV2.Enums;
+
+/// <summary>
+/// 协议类型
+/// </summary>
 public enum ProtocolType
 {
     #region LAN
-    ModbusTcpNet,
+    /// <summary>
+    /// ModbusTcpNet
+    /// </summary>
+    [Description("ModbusTcpNet")]
+    ModbusTcpNet = 0,
 
-    ModbusRtuOverTcp,
+    /// <summary>
+    /// ModbusRtuOverTcp
+    /// </summary>
+    [Description("ModbusRtuOverTcp")]
+    ModbusRtuOverTcp = 1,
 
-    OmronFinsNet,
+    /// <summary>
+    /// OmronFinsNet
+    /// </summary>
+    [Description("OmronFinsNet")]
+    OmronFinsNet = 2,
 
-    OmronCipNet,
+    /// <summary>
+    /// OmronCipNet
+    /// </summary>
+    [Description("OmronCipNet")]
+    OmronCipNet = 3,
 
-    SiemensS200Smart,
+    /// <summary>
+    /// SiemensS200Smart
+    /// </summary>
+    [Description("SiemensS200Smart")]
+    SiemensS200Smart = 4,
 
-    SiemensS1200,
+    /// <summary>
+    /// SiemensS1200
+    /// </summary>
+    [Description("SiemensS1200")]
+    SiemensS1200 = 5,
 
-    SiemensS1500,
+    /// <summary>
+    /// SiemensS1500
+    /// </summary>
+    [Description("SiemensS1500")]
+    SiemensS1500 = 6,
 
-    SiemensS200,
+    /// <summary>
+    /// SiemensS200
+    /// </summary>
+    [Description("SiemensS200")]
+    SiemensS200 = 7,
 
-    SiemensS300,
+    /// <summary>
+    /// SiemensS300
+    /// </summary>
+    [Description("SiemensS300")]
+    SiemensS300 = 8,
 
-    SiemensS400,
+    /// <summary>
+    /// SiemensS400
+    /// </summary>
+    [Description("SiemensS400")]
+    SiemensS400 = 9,
 
-    DLT6452007OverTcp,
+    /// <summary>
+    /// DLT6452007OverTcp
+    /// </summary>
+    [Description("DLT6452007OverTcp")]
+    DLT6452007OverTcp = 10,
 
-    CJT1882004OverTcp,
+    /// <summary>
+    /// CJT1882004OverTcp
+    /// </summary>
+    [Description("CJT1882004OverTcp")]
+    CJT1882004OverTcp = 11,
 
-    FxSerialOverTcp,
+    /// <summary>
+    /// FxSerialOverTcp
+    /// </summary>
+    [Description("FxSerialOverTcp")]
+    FxSerialOverTcp = 12,
 
-    IEC104,
+    /// <summary>
+    /// IEC104
+    /// </summary>
+    [Description("IEC104")]
+    IEC104 = 13,
 
-    OpcUa,
+    /// <summary>
+    /// OpcUa
+    /// </summary>
+    [Description("OpcUa")]
+    OpcUa = 14,
 
     #region Udp
-    OmronFinsUdp,
+    /// <summary>
+    /// OmronFinsUdp
+    /// </summary>
+    [Description("OmronFinsUdp")]
+    OmronFinsUdp = 15,
     #endregion
 
     #region 自由协议
-    FJ1000Jet,
+    /// <summary>
+    /// FJ1000Jet
+    /// </summary>
+    [Description("FJ1000Jet")]
+    FJ1000Jet = 16,
 
-    FJ60W,
+    /// <summary>
+    /// FJ60W
+    /// </summary>
+    [Description("FJ60W")]
+    FJ60W = 17,
 
-    GP1125T,
+    /// <summary>
+    /// GP1125T
+    /// </summary>
+    [Description("GP1125T")]
+    GP1125T = 18,
 
-    BottomImageF1970,
+    /// <summary>
+    /// BottomImageF1970
+    /// </summary>
+    [Description("BottomImageF1970")]
+    BottomImageF1970 = 19,
     #endregion
 
     #endregion
 
     #region COM
-    ModbusRtu,
+    /// <summary>
+    /// ModbusRtu
+    /// </summary>
+    [Description("ModbusRtu")]
+    ModbusRtu = 20,
 
-    DLT6452007Serial,
+    /// <summary>
+    /// DLT6452007Serial
+    /// </summary>
+    [Description("DLT6452007Serial")]
+    DLT6452007Serial = 21,
 
-    CJT1882004Serial,
+    /// <summary>
+    /// CJT1882004Serial
+    /// </summary>
+    [Description("CJT1882004Serial")]
+    CJT1882004Serial = 22,
 
-    FxSerial,
+    /// <summary>
+    /// FxSerial
+    /// </summary>
+    [Description("FxSerial")]
+    FxSerial = 23,
     #endregion
 
     #region API
-    Api,
+    /// <summary>
+    /// Api
+    /// </summary>
+    [Description("Api")]
+    Api = 24,
     #endregion
 
     #region DATABASE
-    MySQL, 
+    /// <summary>
+    /// MySQL
+    /// </summary>
+    [Description("MySQL")]
+    MySQL = 25,
     #endregion
 }

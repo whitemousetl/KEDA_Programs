@@ -3,6 +3,8 @@ using KEDA_CommonV2.Converters;
 using KEDA_CommonV2.Entity;
 using KEDA_CommonV2.Interfaces;
 using KEDA_CommonV2.Model;
+using KEDA_CommonV2.Model.Workstations;
+using KEDA_CommonV2.Model.Workstations.Protocols;
 using KEDA_CommonV2.Services;
 using KEDA_Processing_CenterV2.Interfaces;
 using Microsoft.Extensions.Options;
@@ -74,9 +76,9 @@ public class MqttSubscribeManager : IMqttSubscribeManager
             // 2. 重新订阅所有协议主题
             foreach (var protocol in workstatioin.Protocols)
             {
-                if (!string.IsNullOrEmpty(protocol.ProtocolID))
+                if (!string.IsNullOrEmpty(protocol.Id))
                 {
-                    var topic = _topicOptions.EdgePrefix + protocol.ProtocolID;
+                    var topic = _topicOptions.EdgePrefix + protocol.Id;
                     await _mqttSubscribeService.AddSubscribeTopicAsync(topic, CreateProtocolHandler(protocol), stoppingToken);
                     lock (_topicLock) { _subscribedTopics.Add(topic); }
                     protocolCount++;
@@ -103,7 +105,7 @@ public class MqttSubscribeManager : IMqttSubscribeManager
 
     private async Task HandleWorkstationConfigAsync(string payload, CancellationToken token) //处理下发的协议配置，存到questdb的WorkstationConfig中
     {
-        Workstation? ws = null;
+        WorkstationDto? ws = null;
         bool isSuccess = false;
         string status = "Success";
         string message = "配置已保存";
@@ -113,7 +115,7 @@ public class MqttSubscribeManager : IMqttSubscribeManager
         {
             var options = new JsonSerializerOptions();
             options.Converters.Add(new ProtocolJsonConverter());
-            ws = JsonSerializer.Deserialize<Workstation>(payload, options);
+            ws = JsonSerializer.Deserialize<WorkstationDto>(payload, options);
 
             if (ws == null) _logger.LogError("mom下发配置时，反序列化后工作站配置为空");
             else
@@ -124,7 +126,7 @@ public class MqttSubscribeManager : IMqttSubscribeManager
                 {
                     status = "Error";
                     message = $"Label '{duplicateLabel}' 重复！所有Device的Points的Label必须唯一。";
-                    edgeId = ws.EdgeID;
+                    edgeId = ws.Id;
                     // 构造并发布响应
                     var repeatedResponse = new
                     {
@@ -140,7 +142,7 @@ public class MqttSubscribeManager : IMqttSubscribeManager
                     return;
                 }
 
-                edgeId = ws.EdgeID;
+                edgeId = ws.Id;
                 var utcNow = DateTime.UtcNow;
                 var shanghaiTime = TimeZoneInfo.ConvertTimeFromUtc(utcNow, TimeZoneInfo.FindSystemTimeZoneById("Asia/Shanghai"));
                 var config = new WorkstationConfig
@@ -164,7 +166,7 @@ public class MqttSubscribeManager : IMqttSubscribeManager
         {
             status = "Error";
             message = $"处理异常: {ex.Message}";
-            edgeId = ws?.EdgeID ?? TryExtractEdgeId(payload);
+            edgeId = ws?.Id ?? TryExtractEdgeId(payload);
         }
 
         // 构造并发布响应
@@ -194,12 +196,12 @@ public class MqttSubscribeManager : IMqttSubscribeManager
         return string.Empty;
     }
 
-    private static (bool IsUnique, string? DuplicateLabel) CheckPointLabelUnique(Workstation ws) // 检查工作站协议配置的Label是否唯一
+    private static (bool IsUnique, string? DuplicateLabel) CheckPointLabelUnique(WorkstationDto ws) // 检查工作站协议配置的Label是否唯一
     {
         var labelSet = new HashSet<string>();
-        foreach (var device in ws.Protocols.SelectMany(p => p.Devices))
+        foreach (var device in ws.Protocols.SelectMany(p => p.Equipments))
         {
-            foreach (var point in device.Points)
+            foreach (var point in device.Parameters)
             {
                 if (!labelSet.Add(point.Label))
                 {
@@ -210,7 +212,7 @@ public class MqttSubscribeManager : IMqttSubscribeManager
         return (true, null);
     }
 
-    private Func<ProtocolResult, CancellationToken, Task> CreateProtocolHandler(Protocol protocol) //创建协议处理器，1处理数据，2监控状态
+    private Func<ProtocolResult, CancellationToken, Task> CreateProtocolHandler(ProtocolDto protocol) //创建协议处理器，1处理数据，2监控状态
     {
         return async (protocolResult, token) =>
         {
@@ -220,11 +222,11 @@ public class MqttSubscribeManager : IMqttSubscribeManager
             // ======= 设备状态监控频率限制（每个 protocol 限制 1 分钟一次） =======
             var now = DateTime.UtcNow;
 
-            if (!_lastMonitorTimes.TryGetValue(protocol.ProtocolID, out var lastTime) ||
+            if (!_lastMonitorTimes.TryGetValue(protocol.Id, out var lastTime) ||
                 (now - lastTime).TotalSeconds >= 60)
             {
                 // 更新执行时间，避免并发重复触发
-                _lastMonitorTimes[protocol.ProtocolID] = now;
+                _lastMonitorTimes[protocol.Id] = now;
 
                 _ = Task.Run(async () =>
                 {

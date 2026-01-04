@@ -5,6 +5,8 @@ using HslCommunication.ModBus;
 using KEDA_CommonV2.CustomException;
 using KEDA_CommonV2.Enums;
 using KEDA_CommonV2.Model;
+using KEDA_CommonV2.Model.Workstations;
+using KEDA_CommonV2.Model.Workstations.Protocols;
 using KEDA_ControllerV2.Interfaces;
 using System.Collections.Concurrent;
 
@@ -20,7 +22,7 @@ public abstract class BaseProtocolDriver<T> : IProtocolDriver where T : class
     protected readonly string _protocolName; // 协议名称
 
     // 读取函数映射表
-    private static readonly ConcurrentDictionary<DataType, Func<BaseProtocolDriver<T>, Point, CancellationToken, Task<(bool IsSuccess, object? Content, string Message)>>> _readFuncs =
+    private static readonly ConcurrentDictionary<DataType, Func<BaseProtocolDriver<T>, ParameterDto, CancellationToken, Task<(bool IsSuccess, object? Content, string Message)>>> _readFuncs =
         new()
         {
             [DataType.Bool] = async (driver, point, token) => await driver.ReadBoolAsync(point.Address),
@@ -36,7 +38,7 @@ public abstract class BaseProtocolDriver<T> : IProtocolDriver where T : class
         };
 
     // 写入函数映射表
-    private static readonly ConcurrentDictionary<DataType, Func<BaseProtocolDriver<T>, Point, CancellationToken, Task<bool>>> _writeFuncs =
+    private static readonly ConcurrentDictionary<DataType, Func<BaseProtocolDriver<T>, ParameterDto, CancellationToken, Task<bool>>> _writeFuncs =
         new()
         {
             [DataType.Bool] = async (driver, point, token) =>
@@ -68,7 +70,7 @@ public abstract class BaseProtocolDriver<T> : IProtocolDriver where T : class
 
     #region 读方法
 
-    public virtual async Task<PointResult?> ReadAsync(Protocol protocol, string devId, Point point, CancellationToken token)
+    public virtual async Task<PointResult?> ReadAsync(ProtocolDto protocol, string devId, ParameterDto point, CancellationToken token)
     {
         try
         {
@@ -97,7 +99,7 @@ public abstract class BaseProtocolDriver<T> : IProtocolDriver where T : class
         }
     }
 
-    protected virtual async Task<PointResult> ReadPointAsync(Point point, CancellationToken token)
+    protected virtual async Task<PointResult> ReadPointAsync(ParameterDto point, CancellationToken token)
     {
         var result = new PointResult
         {
@@ -167,7 +169,7 @@ public abstract class BaseProtocolDriver<T> : IProtocolDriver where T : class
         return false;
     }
 
-    private async Task<bool> WritePointAsync(Point point, CancellationToken token)
+    private async Task<bool> WritePointAsync(ParameterDto point, CancellationToken token)
     {
         if (_conn == null)
             throw new ProtocolIsNullWhenWriteException($"{_protocolName}协议为空，请检查",
@@ -186,13 +188,13 @@ public abstract class BaseProtocolDriver<T> : IProtocolDriver where T : class
     /// <summary>
     /// 应用点位配置（站号、字节序、仪表类型等）
     /// </summary>
-    protected virtual void ApplyPointConfiguration(Point point)
+    protected virtual void ApplyPointConfiguration(ParameterDto point)
     {
         // 设置站号
         SetStationNoIfNeed(point.StationNo);
 
         // 设置字节序
-        SetDataFormatNoIfNeed(point.Format);
+        SetDataFormatNoIfNeed(point.DataFormat);
 
         // 设置地址起始位（如果协议支持）
         SetAddressStartWithZeroIfNeed(point.AddressStartWithZero);
@@ -308,12 +310,12 @@ public abstract class BaseProtocolDriver<T> : IProtocolDriver where T : class
     /// <summary>
     /// 创建连接对象
     /// </summary>
-    protected abstract T CreateConnection(Protocol protocol, CancellationToken token);
+    protected abstract T CreateConnection(ProtocolDto protocol, CancellationToken token);
 
     /// <summary>
     /// 非逐个采集点读取的协议需要实现的方法
     /// </summary>
-    public virtual Task<ProtocolResult?> ReadAsync(Protocol protocol, CancellationToken token)
+    public virtual Task<ProtocolResult?> ReadAsync(ProtocolDto protocol, CancellationToken token)
     {
         throw new NotImplementedException();
     }
@@ -326,12 +328,12 @@ public abstract class BaseProtocolDriver<T> : IProtocolDriver where T : class
     /// <summary>
     /// 从写任务中提取协议对象
     /// </summary>
-    protected abstract Protocol? ExtractProtocolFromWriteTask(WriteTask writeTask);
+    protected abstract ProtocolDto? ExtractProtocolFromWriteTask(WriteTask writeTask);
 
     /// <summary>
     /// 从协议中获取点位列表
     /// </summary>
-    protected abstract IEnumerable<Point>? GetPointsFromProtocol(Protocol protocol);
+    protected abstract IEnumerable<ParameterDto>? GetPointsFromProtocol(ProtocolDto protocol);
 
     #endregion 抽象方法 - 子类必须实现
 

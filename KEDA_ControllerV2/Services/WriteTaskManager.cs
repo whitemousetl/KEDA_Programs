@@ -66,7 +66,7 @@ public class WriteTaskManager : IWriteTaskManager
     /// </summary>
     private async Task HandleProtocolWriteTaskAsync(WriteTask writeTask, CancellationToken stoppingToken) // 要修改DoProtocolWriteTaskAsync方法，返回true
     {
-        var protocolId = writeTask.Protocol.ProtocolId;
+        var protocolId = writeTask.Protocol.Id;
         bool isSuccess = false;
         string msg = string.Empty;
 
@@ -91,7 +91,7 @@ public class WriteTaskManager : IWriteTaskManager
             var log = new WriteTaskLog
             {
                 UUID = writeTask.UUID,
-                DeviceType = writeTask.Protocol.Devices[0].EquipmentType,
+                DeviceType = writeTask.Protocol.Equipments[0].EquipmentType,
                 WriteTaskJson = JsonSerializer.Serialize(writeTask, _jsonOptions),
                 Time = DateTime.UtcNow,
                 TimeLocal = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),

@@ -1,6 +1,6 @@
 ﻿using KEDA_CommonV2.Converters;
 using KEDA_CommonV2.Expressions;
-using KEDA_CommonV2.Model;
+using KEDA_CommonV2.Model.Workstations;
 using KEDA_CommonV2.Utilities;
 using KEDA_ControllerV2.Interfaces;
 using System.Text.Json;
@@ -16,23 +16,23 @@ public class PointExpressionConverter : IPointExpressionConverter
         _logger = logger;
     }
 
-    public object? Convert(Point point, object? value)
+    public object? Convert(ParameterDto point, object? value)
     {
         try
         {
-            if (string.IsNullOrEmpty(point.Change))
+            if (string.IsNullOrEmpty(point.PositiveExpression))
                 return value;
 
-            return point.Change.ToUpperInvariant() switch
+            return point.PositiveExpression.ToUpperInvariant() switch
             {
                 "HEX2DEC" => NumberBaseConverter.HexToDecimal(value), //工具静态类，十六进制转十进制
                 "DEC2HEX" => NumberBaseConverter.DecimalToHex(value, false), //工具静态类，十进制转十六进制
-                _ => EvaluateExpression(point.Change, value)
+                _ => EvaluateExpression(point.PositiveExpression, value)
             };
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "点位值转换失败:  {Expression}, 原值: {Value}", point.Change, value);
+            _logger.LogWarning(ex, "点位值转换失败:  {Expression}, 原值: {Value}", point.PositiveExpression, value);
             return value;
         }
     }

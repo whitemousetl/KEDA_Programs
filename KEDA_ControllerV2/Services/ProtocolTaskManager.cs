@@ -3,6 +3,8 @@ using KEDA_CommonV2.CustomException;
 using KEDA_CommonV2.Enums;
 using KEDA_CommonV2.Interfaces;
 using KEDA_CommonV2.Model;
+using KEDA_CommonV2.Model.Workstations;
+using KEDA_CommonV2.Model.Workstations.Protocols;
 using KEDA_ControllerV2.Interfaces;
 using System.Collections.Concurrent;
 using System.Diagnostics;
@@ -61,26 +63,26 @@ public class ProtocolTaskManager : IProtocolTaskManager
 
         foreach (var protocol in protocolList)
         {
-            if (!protocol.Devices?.Any() ?? true || protocol.Devices.All(d => !d.Points?.Any() ?? true)) continue; //过滤掉没有设备或所有设备都没有采集点的协议
+            if (!protocol.Equipments?.Any() ?? true || protocol.Equipments.All(d => !d.Parameters?.Any() ?? true)) continue; //过滤掉没有设备或所有设备都没有采集点的协议
             //网口或串口协议
-            if(protocol.Interface == ProtocolInterface.COM || protocol.Interface == ProtocolInterface.LAN)
+            if(protocol.InterfaceType == InterfaceType.COM || protocol.InterfaceType == InterfaceType.LAN)
             {
                 var cts = new CancellationTokenSource();
-                _protocolReadCts[protocol.ProtocolId] = cts;
-                _protocolReadTasks[protocol.ProtocolId] = Task.Run(() => ProtocolReadLoop(protocol, cts.Token), cts.Token);
+                _protocolReadCts[protocol.Id] = cts;
+                _protocolReadTasks[protocol.Id] = Task.Run(() => ProtocolReadLoop(protocol, cts.Token), cts.Token);
             }
-            else if(protocol.Interface == ProtocolInterface.API || protocol.Interface == ProtocolInterface.DATABASE)
+            else if(protocol.InterfaceType == InterfaceType.API || protocol.InterfaceType == InterfaceType.DATABASE)
             {
                 var cts = new CancellationTokenSource();
-                _protocolReadCts[protocol.ProtocolId] = cts;
-                _protocolReadTasks[protocol.ProtocolId] = Task.Run(() => ApiAndDblReadLoop(protocol, cts.Token), cts.Token);
+                _protocolReadCts[protocol.Id] = cts;
+                _protocolReadTasks[protocol.Id] = Task.Run(() => ApiAndDblReadLoop(protocol, cts.Token), cts.Token);
             }
         }
 
         await Task.CompletedTask;
     }
 
-    private async Task ApiAndDblReadLoop(Protocol protocol, CancellationToken token)
+    private async Task ApiAndDblReadLoop(ProtocolDto protocol, CancellationToken token)
     {
         CreateDriver(protocol, out IProtocolDriver? driver);
         if (driver == null) return;
@@ -103,11 +105,11 @@ public class ProtocolTaskManager : IProtocolTaskManager
             // ======= 设备状态监控频率限制（每个 protocol 限制 1 分钟一次） =======
             var now = DateTime.UtcNow;
 
-            if (!_lastMonitorTimes.TryGetValue(protocol.ProtocolId, out var lastTime) ||
+            if (!_lastMonitorTimes.TryGetValue(protocol.Id, out var lastTime) ||
                 (now - lastTime).TotalSeconds >= 60)
             {
                 // 更新执行时间，避免并发重复触发
-                _lastMonitorTimes[protocol.ProtocolId] = now;
+                _lastMonitorTimes[protocol.Id] = now;
 
                 _ = Task.Run(async () =>
                 {
@@ -153,18 +155,18 @@ public class ProtocolTaskManager : IProtocolTaskManager
     /// 协议采集任务主循环
     /// 负责点位数据采集、压缩、存库、MQTT发布
     /// </summary>
-    private async Task ProtocolReadLoop(Protocol protocol, CancellationToken token)
+    private async Task ProtocolReadLoop(ProtocolDto protocol, CancellationToken token)
     {
         CreateDriver(protocol, out IProtocolDriver? driver);
         if (driver == null) return;
 
         while (!token.IsCancellationRequested)
         {
-            var protocolResult = new ProtocolResult { ProtocolId = protocol.ProtocolId };//协议结果
+            var protocolResult = new ProtocolResult { ProtocolId = protocol.Id };//协议结果
             protocolResult.StartTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");//协议开始读取时间
             var protocolSw = Stopwatch.StartNew();//协议读取计时器
             protocolResult.ReadIsSuccess = true;//假设协议是读取成功的
-            foreach (var dev in protocol.Devices)//读取地址值
+            foreach (var dev in protocol.Equipments)//读取地址值
             {
                 var deviceResult = await ReadDeviceAsync(dev, driver, protocol, token);
 
@@ -183,11 +185,11 @@ public class ProtocolTaskManager : IProtocolTaskManager
             // ======= 设备状态监控频率限制（每个 protocol 限制 1 分钟一次） =======
             var now = DateTime.UtcNow;
 
-            if (!_lastMonitorTimes.TryGetValue(protocol.ProtocolId, out var lastTime) ||
+            if (!_lastMonitorTimes.TryGetValue(protocol.Id, out var lastTime) ||
                 (now - lastTime).TotalSeconds >= 60)
             {
                 // 更新执行时间，避免并发重复触发
-                _lastMonitorTimes[protocol.ProtocolId] = now;
+                _lastMonitorTimes[protocol.Id] = now;
 
                 _ = Task.Run(async () =>
                 {
@@ -231,7 +233,7 @@ public class ProtocolTaskManager : IProtocolTaskManager
         }
     }
 
-    private void CreateDriver(Protocol protocol, out IProtocolDriver? driver)
+    private void CreateDriver(ProtocolDto protocol, out IProtocolDriver? driver)
     {
         driver = ProtocolDriverFactory.CreateDriver(protocol.ProtocolType);
         if (driver == null)
@@ -240,16 +242,16 @@ public class ProtocolTaskManager : IProtocolTaskManager
             return;//跳出当前lamba表达式，不会跳出StartCollect方法,继续protocolList的下一个协议
         }
 
-        _drivers[protocol.ProtocolId] = driver;// 把协议驱动放在字典中，让写任务调用
+        _drivers[protocol.Id] = driver;// 把协议驱动放在字典中，让写任务调用
     }
 
-    private async Task<DeviceResult> ReadDeviceAsync(Device dev, IProtocolDriver driver, Protocol protocol, CancellationToken token)
+    private async Task<DeviceResult> ReadDeviceAsync(EquipmentDto dev, IProtocolDriver driver, ProtocolDto protocol, CancellationToken token)
     {
-        var deviceResult = new DeviceResult() { EquipmentId = dev.EquipmentId, EquipmentName = dev.EquipmentName };//设备结果
+        var deviceResult = new DeviceResult() { EquipmentId = dev.Id, EquipmentName = dev.Name };//设备结果
         var deviceSw = Stopwatch.StartNew();//设备读取计时器
         deviceResult.ReadIsSuccess = true;//假设本设备是读取成功的
         deviceResult.StartTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");//设备读取开始时间
-        foreach (var point in dev.Points)
+        foreach (var point in dev.Parameters)
         {
             if (point == null) continue;
             if (point.Address == "VirtualPoint")
@@ -272,7 +274,7 @@ public class ProtocolTaskManager : IProtocolTaskManager
             var pointResult = new PointResult { Address = point.Address, Label = point.Label, DataType = point.DataType };
             try
             {
-                var result = await driver.ReadAsync(protocol, dev.EquipmentId, point, token);
+                var result = await driver.ReadAsync(protocol, dev.Id, point, token);
                 if (result != null) pointResult = result;
             }
             catch (ProtocolWhenConnFailedException ex)     //协议连接失败，同时是设备和点的信息
@@ -331,12 +333,12 @@ public class ProtocolTaskManager : IProtocolTaskManager
         return deviceResult;
     }
 
-    private static void UpdatePointResultIfDevError(Device dev, DeviceResult deviceResult)
+    private static void UpdatePointResultIfDevError(EquipmentDto dev, DeviceResult deviceResult)
     {
         if (!deviceResult.ReadIsSuccess)
         {
             deviceResult.PointResults.Clear();
-            foreach (var point in dev.Points)
+            foreach (var point in dev.Parameters)
             {
                 deviceResult.PointResults.Add(new PointResult
                 {
@@ -355,7 +357,7 @@ public class ProtocolTaskManager : IProtocolTaskManager
         }
     }
 
-    private void CompleteProtocolStatistics(Protocol protocol, ProtocolResult protocolResult, Stopwatch protocolSw)
+    private void CompleteProtocolStatistics(ProtocolDto protocol, ProtocolResult protocolResult, Stopwatch protocolSw)
     {
         protocolResult.EndTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
         protocolResult.ElapsedMs = protocolSw.ElapsedMilliseconds;
@@ -372,11 +374,11 @@ public class ProtocolTaskManager : IProtocolTaskManager
         bool allPointsFailed = protocolResult.FailedPoints == protocolResult.TotalPoints && protocolResult.TotalPoints > 0;
         if (allPointsFailed)
         {
-            if (_drivers.TryGetValue(protocol.ProtocolId, out var driver1))
+            if (_drivers.TryGetValue(protocol.Id, out var driver1))
             {
                 (driver1 as IDisposable)?.Dispose();
-                _drivers.TryRemove(protocol.ProtocolId, out _);
-                _logger.LogWarning($"协议[{protocol.ProtocolId}]所有点采集失败，已释放连接，下次将自动重连。");
+                _drivers.TryRemove(protocol.Id, out _);
+                _logger.LogWarning($"协议[{protocol.Id}]所有点采集失败，已释放连接，下次将自动重连。");
             }
         }
     }
@@ -440,7 +442,7 @@ public class ProtocolTaskManager : IProtocolTaskManager
     /// <summary>
     /// 执行完写操作之后，恢复指定协议的读取
     /// </summary>
-    public async Task RestartProtocolAsync(string protocolId, Protocol protocol, CancellationToken token)
+    public async Task RestartProtocolAsync(string protocolId, ProtocolDto protocol, CancellationToken token)
     {
         await StopProtocolAsync(protocolId, token);
         var newCts = new CancellationTokenSource();

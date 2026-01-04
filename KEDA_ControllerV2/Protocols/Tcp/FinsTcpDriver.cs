@@ -1,6 +1,6 @@
 ﻿using HslCommunication.Profinet.Omron;
 using KEDA_CommonV2.Enums;
-using KEDA_CommonV2.Model;
+using KEDA_CommonV2.Model.Workstations.Protocols;
 using KEDA_Controller.Base;
 
 namespace KEDA_ControllerV2.Protocols.Tcp;
@@ -8,9 +8,9 @@ namespace KEDA_ControllerV2.Protocols.Tcp;
 [ProtocolType(ProtocolType.OmronFinsNet)]
 public class FinsTcpDriver : TcpBaseProtocolDriver<OmronFinsNet>
 {
-    protected override OmronFinsNet CreateConnection(Protocol protocol, CancellationToken token)
+    protected override OmronFinsNet CreateConnection(ProtocolDto protocol, CancellationToken token)
     {
-        if (protocol is LanProtocol lanProtocol)
+        if (protocol is LanProtocolDto lanProtocol)
         {
             var conn = new OmronFinsNet()
             {

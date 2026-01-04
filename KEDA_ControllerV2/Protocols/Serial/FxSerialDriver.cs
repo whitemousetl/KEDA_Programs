@@ -1,6 +1,7 @@
 ﻿using HslCommunication.Profinet.Melsec;
 using KEDA_CommonV2.Enums;
 using KEDA_CommonV2.Model;
+using KEDA_CommonV2.Model.Workstations.Protocols;
 using KEDA_ControllerV2.Base;
 
 namespace KEDA_ControllerV2.Protocols.Serial;
@@ -8,12 +9,12 @@ namespace KEDA_ControllerV2.Protocols.Serial;
 [ProtocolType(ProtocolType.FxSerial)]
 public class FxSerialDriver : SerialBaseProtocolDriver<MelsecFxSerial>
 {
-    protected override MelsecFxSerial CreateConnection(Protocol protocol, CancellationToken token)
+    protected override MelsecFxSerial CreateConnection(ProtocolDto protocol, CancellationToken token)
     {
-        if (protocol is SerialProtocol serialProtocol)
+        if (protocol is SerialProtocolDto serialProtocol)
         {
             var conn = new MelsecFxSerial();
-            conn.SerialPortInni(serialProtocol.PortName, serialProtocol.BaudRate, serialProtocol.DataBits, serialProtocol.StopBits, serialProtocol.Parity);
+            conn.SerialPortInni(serialProtocol.SerialPortName, (int)serialProtocol.BaudRate, (int)serialProtocol.DataBits, serialProtocol.StopBits, serialProtocol.Parity);
             conn.ReceiveTimeOut = serialProtocol.ReceiveTimeOut;
             return conn;
         }

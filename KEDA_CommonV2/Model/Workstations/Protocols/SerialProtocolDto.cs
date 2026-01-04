@@ -14,6 +14,11 @@ namespace KEDA_CommonV2.Model.Workstations.Protocols
         public override InterfaceType InterfaceType => InterfaceType.COM;
 
         /// <summary>
+        /// 串口名称
+        /// </summary>
+        public string SerialPortName { get; set; }
+
+        /// <summary>
         /// 波特率
         /// </summary>
         public BaudRateType BaudRate { get; set; }

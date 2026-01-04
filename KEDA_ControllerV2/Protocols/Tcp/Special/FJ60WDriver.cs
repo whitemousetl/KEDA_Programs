@@ -1,6 +1,8 @@
 ﻿using KEDA_CommonV2.CustomException;
 using KEDA_CommonV2.Enums;
 using KEDA_CommonV2.Model;
+using KEDA_CommonV2.Model.Workstations;
+using KEDA_CommonV2.Model.Workstations.Protocols;
 using KEDA_ControllerV2.Interfaces;
 using System.Collections.Concurrent;
 using System.Net.Sockets;
@@ -29,7 +31,7 @@ public class FJ60WDriver : IProtocolDriver
     public string GetProtocolName() => "FJ60W";
 
     // ReadAsync 只返回缓存，不做网络读取
-    public Task<PointResult?> ReadAsync(Protocol protocol, string devId, Point point, CancellationToken token)
+    public Task<PointResult?> ReadAsync(ProtocolDto protocol, string devId, ParameterDto point, CancellationToken token)
     {
         // 确保接收循环已经运行（若未启动且有协议信息，尝试连接并启动）
         // 注意：这里不做阻塞式连接；连接失败时由接收循环异常处理
@@ -70,7 +72,7 @@ public class FJ60WDriver : IProtocolDriver
 
     public async Task<bool> WriteAsync(WriteTask writeTask, CancellationToken token)
     {
-        if (writeTask.Protocol is LanProtocol lanProtocol)
+        if (writeTask.Protocol is LanProtocolDto lanProtocol)
         {
             bool result = false;
 
@@ -78,8 +80,8 @@ public class FJ60WDriver : IProtocolDriver
             {
                 await EnsureConnectedAsync(lanProtocol, token);
 
-                if (lanProtocol.Devices == null) return false;
-                var points = lanProtocol.Devices[0].Points;
+                if (lanProtocol.Equipments == null) return false;
+                var points = lanProtocol.Equipments[0].Parameters;
 
                 string msg;
                 if (points.Count == 1)
@@ -125,7 +127,7 @@ public class FJ60WDriver : IProtocolDriver
     }
 
     // 启动接收循环（仅在需要时启动一次）
-    private async Task EnsureReceiveLoopStartedAsync(Protocol protocol, CancellationToken token)
+    private async Task EnsureReceiveLoopStartedAsync(ProtocolDto protocol, CancellationToken token)
     {
         if (_receiveStarted) return;
 
@@ -147,7 +149,7 @@ public class FJ60WDriver : IProtocolDriver
     }
 
     // 后台循环：持续读取服务器数据，解析并更新缓存
-    private async Task ReceiveLoop(Protocol protocol, CancellationToken token)
+    private async Task ReceiveLoop(ProtocolDto protocol, CancellationToken token)
     {
         var buffer = new byte[2048];
         var sb = new StringBuilder();
@@ -213,7 +215,7 @@ public class FJ60WDriver : IProtocolDriver
         }
     }
 
-    private string GetPointKey(Point point)
+    private string GetPointKey(ParameterDto point)
         => string.IsNullOrWhiteSpace(point.Address) ? point.Label : point.Address;
 
     // 收到 MK 时，示例地把当前已知点都标记为成功（实际按你的协议填充值）
@@ -285,9 +287,9 @@ public class FJ60WDriver : IProtocolDriver
     }
 
     // 为了让 ProtocolTaskManager 的首次读不全是失败，你可以在设备加载点列表时先初始化缓存
-    public void InitializePointsCache(Device device)
+    public void InitializePointsCache(EquipmentDto device)
     {
-        foreach (var point in device.Points)
+        foreach (var point in device.Parameters)
         {
             var key = GetPointKey(point);
             _latestPointResults.TryAdd(key, new PointResult
@@ -304,9 +306,9 @@ public class FJ60WDriver : IProtocolDriver
         }
     }
 
-    private async Task EnsureConnectedAsync(Protocol protocol, CancellationToken token)
+    private async Task EnsureConnectedAsync(ProtocolDto protocol, CancellationToken token)
     {
-        if (protocol is LanProtocol lanProtocol)
+        if (protocol is LanProtocolDto lanProtocol)
         {
             if (_client != null && _client.Connected && _stream != null)
                 return;
@@ -347,7 +349,7 @@ public class FJ60WDriver : IProtocolDriver
         GC.SuppressFinalize(this);
     }
 
-    public Task<ProtocolResult?> ReadAsync(Protocol protocol, CancellationToken token)
+    public Task<ProtocolResult?> ReadAsync(ProtocolDto protocol, CancellationToken token)
     {
         throw new NotImplementedException();
     }

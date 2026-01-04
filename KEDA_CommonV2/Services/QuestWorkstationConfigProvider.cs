@@ -3,6 +3,8 @@ using KEDA_CommonV2.Converters;
 using KEDA_CommonV2.Entity;
 using KEDA_CommonV2.Interfaces;
 using KEDA_CommonV2.Model;
+using KEDA_CommonV2.Model.Workstations;
+using KEDA_CommonV2.Model.Workstations.Protocols;
 using Microsoft.Extensions.Logging;
 using Npgsql;
 using System.Text.Json;
@@ -48,7 +50,7 @@ public class QuestWorkstationConfigProvider : IWorkstationConfigProvider
         return null;
     }
 
-    public async Task<Workstation?> GetLatestWrokstationAsync(CancellationToken token)
+    public async Task<WorkstationDto?> GetLatestWrokstationAsync(CancellationToken token)
     {
         var configEntity = await GetLatestWorkstationConfigEntityAsync(token);
         if (configEntity == null || string.IsNullOrWhiteSpace(configEntity.ConfigJson))
@@ -56,17 +58,17 @@ public class QuestWorkstationConfigProvider : IWorkstationConfigProvider
 
         var options = new JsonSerializerOptions();
         options.Converters.Add(new ProtocolJsonConverter());
-        return JsonSerializer.Deserialize<Workstation>(configEntity.ConfigJson, options);
+        return JsonSerializer.Deserialize<WorkstationDto>(configEntity.ConfigJson, options);
     }
 
-    public async Task<Protocol?> GetProtocolByProtocolIdAsync(string protocolId, CancellationToken token)
+    public async Task<ProtocolDto?> GetProtocolByProtocolIdAsync(string protocolId, CancellationToken token)
     {
         try
         {
             var workstation = await GetLatestWrokstationAsync(token);
             if (workstation?.Protocols == null)
                 return null;
-            return workstation.Protocols.FirstOrDefault(p => p.ProtocolId == protocolId);
+            return workstation.Protocols.FirstOrDefault(p => p.Id == protocolId);
         }
         catch (Exception ex)
         {
@@ -75,14 +77,14 @@ public class QuestWorkstationConfigProvider : IWorkstationConfigProvider
         }
     }
 
-    public async Task<Protocol?> GetProtocolByDeviceIdAsync(string deviceId, CancellationToken token)
+    public async Task<ProtocolDto?> GetProtocolByDeviceIdAsync(string deviceId, CancellationToken token)
     {
         try
         {
             var workstation = await GetLatestWrokstationAsync(token);
             if (workstation?.Protocols == null)
                 return null;
-            return workstation.Protocols.FirstOrDefault(p => p.Devices.Any(d => d.EquipmentId == deviceId));
+            return workstation.Protocols.FirstOrDefault(p => p.Equipments.Any(d => d.Id == deviceId));
         }
         catch (Exception ex)
         {

@@ -1,6 +1,8 @@
 ﻿using HslCommunication.Core.Device;
 using KEDA_CommonV2.CustomException;
 using KEDA_CommonV2.Model;
+using KEDA_CommonV2.Model.Workstations;
+using KEDA_CommonV2.Model.Workstations.Protocols;
 using KEDA_Controller.Base;
 
 namespace KEDA_ControllerV2.Base;
@@ -20,14 +22,14 @@ public abstract class SerialBaseProtocolDriver<T> : BaseProtocolDriver<T> where 
         return Task.CompletedTask;
     }
 
-    protected override Protocol? ExtractProtocolFromWriteTask(WriteTask writeTask)
+    protected override ProtocolDto? ExtractProtocolFromWriteTask(WriteTask writeTask)
     {
-        if (writeTask.Protocol is not SerialProtocol serialProtocol)
+        if (writeTask.Protocol is not SerialProtocolDto serialProtocol)
             return null;
 
-        return new SerialProtocol
+        return new SerialProtocolDto
         {
-            ProtocolId = serialProtocol.ProtocolId,
+            Id = serialProtocol.Id,
             ProtocolType = serialProtocol.ProtocolType,
             Remark = serialProtocol.Remark,
             CollectCycle = serialProtocol.CollectCycle,
@@ -36,9 +38,9 @@ public abstract class SerialBaseProtocolDriver<T> : BaseProtocolDriver<T> where 
         };
     }
 
-    protected override IEnumerable<Point>? GetPointsFromProtocol(Protocol protocol)
+    protected override IEnumerable<ParameterDto>? GetPointsFromProtocol(ProtocolDto protocol)
     {
-        return (protocol as SerialProtocol)?.Devices[0]?.Points;
+        return (protocol as SerialProtocolDto)?.Equipments[0]?.Parameters;
     }
 
     protected override void DisposeConnection()

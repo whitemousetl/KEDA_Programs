@@ -1,4 +1,4 @@
-﻿using KEDA_CommonV2.Model;
+﻿using KEDA_CommonV2.Model.Workstations.Protocols;
 using System.Collections.Concurrent;
 
 namespace KEDA_ControllerV2.Interfaces;
@@ -13,7 +13,7 @@ public interface IProtocolTaskManager
 
     Task StopProtocolAsync(string protocolId, CancellationToken token);
 
-    Task RestartProtocolAsync(string protocolId, Protocol protocol, CancellationToken token);
+    Task RestartProtocolAsync(string protocolId, ProtocolDto protocol, CancellationToken token);
 
     ConcurrentDictionary<string, IProtocolDriver> GetDrivers();
 }

@@ -1,6 +1,7 @@
 ﻿using DynamicExpresso;
 using KEDA_CommonV2.Expressions;
 using KEDA_CommonV2.Model;
+using KEDA_CommonV2.Model.Workstations;
 using KEDA_Processing_CenterV2.Interfaces;
 
 namespace KEDA_Processing_CenterV2.Services;
@@ -13,21 +14,21 @@ public class VirtualPointCalculator : IVirtualPointCalculator
         _logger = logger;
     }
 
-    public void Calculate(IEnumerable<Point> virtualPoints, IDictionary<string, object?> deviceData)
+    public void Calculate(IEnumerable<ParameterDto> virtualPoints, IDictionary<string, object?> deviceData)
     {
         foreach (var point in virtualPoints)
         {
-            if (string.IsNullOrWhiteSpace(point.Change))
+            if (string.IsNullOrWhiteSpace(point.PositiveExpression))
                 continue;
 
             try
             {
-                var result = EvaluateExpression(point.Change, deviceData);
+                var result = EvaluateExpression(point.PositiveExpression, deviceData);
                 deviceData[point.Label] = result;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "虚拟点计算失败: {Label}, 表达式: {Expression}", point.Label, point.Change);
+                _logger.LogError(ex, "虚拟点计算失败: {Label}, 表达式: {Expression}", point.Label, point.PositiveExpression);
                 deviceData[point.Label] = null;
             }
         }

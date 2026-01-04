@@ -2,6 +2,7 @@
 using KEDA_CommonV2.Enums;
 using KEDA_CommonV2.Interfaces;
 using KEDA_CommonV2.Model;
+using KEDA_CommonV2.Model.Workstations;
 using KEDA_ControllerV2.Interfaces;
 using System.Collections.Concurrent;
 using System.Text.Encodings.Web;
@@ -56,7 +57,7 @@ public class DeviceNotificationService : IDeviceNotificationService
 
             var data = JsonSerializer.Serialize(deviceResults, _jsonSerializerOptions);
 
-            var edgeId = ws.EdgeId;
+            var edgeId = ws.Id;
             var workstationStatusTopic = _topicOptions.WorkstationStatusPrefix + edgeId;
 
             await _mqttPublishService.PublishAsync(workstationStatusTopic, data, token);
@@ -104,12 +105,12 @@ public class DeviceNotificationService : IDeviceNotificationService
     //    }
     //}
 
-    private static void ProcessDeviceResults(Workstation? ws, NotificationModel devNotificationModel, ProtocolResult protocolResult)
+    private static void ProcessDeviceResults(WorkstationDto? ws, NotificationModel devNotificationModel, ProtocolResult protocolResult)
     {
         foreach (var devResult in protocolResult.DeviceResults)
         {
-            var protocol = ws?.Protocols.FirstOrDefault(p => p.Devices.Any(x => x.EquipmentId == devResult.EquipmentId));
-            var device = protocol?.Devices.FirstOrDefault(x => x.EquipmentId == devResult.EquipmentId);
+            var protocol = ws?.Protocols.FirstOrDefault(p => p.Equipments.Any(x => x.Id == devResult.EquipmentId));
+            var device = protocol?.Equipments.FirstOrDefault(x => x.Id == devResult.EquipmentId);
 
             if (device == null) continue;
 
@@ -122,9 +123,9 @@ public class DeviceNotificationService : IDeviceNotificationService
 
             var devStatus = new DeviceStatus
             {
-                equipment_name = device.EquipmentName,
+                equipment_name = device.Name,
                 dev_type = ((int)device.EquipmentType).ToString(),
-                equipment_id = device.EquipmentId,
+                equipment_id = device.Id,
                 equipment_status = equipmentStatus,
                 msg = devResult.ErrorMsg,
                 time = devResult.EndTime ?? string.Empty,

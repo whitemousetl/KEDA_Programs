@@ -1,6 +1,8 @@
 ﻿using KEDA_CommonV2.CustomException;
 using KEDA_CommonV2.Enums;
 using KEDA_CommonV2.Model;
+using KEDA_CommonV2.Model.Workstations;
+using KEDA_CommonV2.Model.Workstations.Protocols;
 using KEDA_ControllerV2.Interfaces;
 using System.Net.Sockets;
 using System.Text;
@@ -19,19 +21,19 @@ public class BottomImageF1970Driver : IProtocolDriver
 
     public BottomImageF1970Driver() => _protocolName = GetProtocolName();
 
-    public Task<PointResult?> ReadAsync(Protocol protocol, string devId, Point point, CancellationToken token)
+    public Task<PointResult?> ReadAsync(ProtocolDto protocol, string devId, ParameterDto point, CancellationToken token)
     {
         throw new NotImplementedException();
     }
 
     public virtual async Task<bool> WriteAsync(WriteTask writeTask, CancellationToken token)
     {
-        if (writeTask.Protocol is LanProtocol lanProtocol)
+        if (writeTask.Protocol is LanProtocolDto lanProtocol)
         {
             bool ok = false;
             try
             {
-                string address = writeTask?.Protocol.Devices[0].Points[0].Value ?? string.Empty;
+                string address = writeTask?.Protocol.Equipments[0].Parameters[0].Value ?? string.Empty;
                 string deviceMsg = string.Empty;
 
                 using var client = new TcpClient();
@@ -241,7 +243,7 @@ public class BottomImageF1970Driver : IProtocolDriver
 
     public string GetProtocolName() => "BottomImageF1970";
 
-    public Task<ProtocolResult?> ReadAsync(Protocol protocol, CancellationToken token)
+    public Task<ProtocolResult?> ReadAsync(ProtocolDto protocol, CancellationToken token)
     {
         throw new NotImplementedException();
     }

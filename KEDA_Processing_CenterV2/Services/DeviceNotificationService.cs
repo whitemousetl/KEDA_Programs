@@ -2,6 +2,7 @@
 using KEDA_CommonV2.Enums;
 using KEDA_CommonV2.Interfaces;
 using KEDA_CommonV2.Model;
+using KEDA_CommonV2.Model.Workstations;
 using KEDA_Processing_CenterV2.Interfaces;
 using Microsoft.Extensions.Options;
 using System.Collections.Concurrent;
@@ -34,9 +35,9 @@ public class DeviceNotificationService : IDeviceNotificationService
             if (ws == null) return;
             var devNotificationModel = new NotificationModel
             {
-                edge_id = ws.EdgeID,
-                edge_name = ws.EdgeName,
-                ip = ws.Ip,
+                edge_id = ws.Id,
+                edge_name = ws.Name,
+                ip = ws.IpAddress,
                 status = "1",
                 msg = string.Empty,
                 desc = string.Empty,
@@ -62,12 +63,12 @@ public class DeviceNotificationService : IDeviceNotificationService
         }
     }
 
-    private static void ProcessDeviceResults(Workstation? ws, NotificationModel devNotificationModel, ProtocolResult protocolResult)
+    private static void ProcessDeviceResults(WorkstationDto? ws, NotificationModel devNotificationModel, ProtocolResult protocolResult)
     {
         foreach (var devResult in protocolResult.DeviceResults)
         {
-            var protocol = ws?.Protocols.FirstOrDefault(p => p.Devices.Any(x => x.EquipmentID == devResult.EquipmentId));
-            var device = protocol?.Devices.FirstOrDefault(x => x.EquipmentID == devResult.EquipmentId);
+            var protocol = ws?.Protocols.FirstOrDefault(p => p.Equipments.Any(x => x.Id == devResult.EquipmentId));
+            var device = protocol?.Equipments.FirstOrDefault(x => x.Id == devResult.EquipmentId);
 
             if (device == null) continue;
 
@@ -80,9 +81,9 @@ public class DeviceNotificationService : IDeviceNotificationService
 
             var devStatus = new DeviceStatus
             {
-                equipment_name = device.EquipmentName,
+                equipment_name = device.Name,
                 dev_type = ((int)device.EquipmentType).ToString(),
-                equipment_id = device.EquipmentID,
+                equipment_id = device.Id,
                 equipment_status = equipmentStatus,
                 msg = devResult.ErrorMsg,
                 time = devResult.EndTime ?? string.Empty,

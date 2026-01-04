@@ -1,6 +1,8 @@
 ﻿using KEDA_CommonV2.CustomException;
 using KEDA_CommonV2.Enums;
 using KEDA_CommonV2.Model;
+using KEDA_CommonV2.Model.Workstations;
+using KEDA_CommonV2.Model.Workstations.Protocols;
 using KEDA_ControllerV2.Interfaces;
 using System.Text.Json;
 
@@ -10,18 +12,18 @@ public class ApiDriver : IProtocolDriver
 {
     private readonly string _protocolName = "Api"; // 协议名称
 
-    public async Task<ProtocolResult?> ReadAsync(Protocol protocol, CancellationToken token)
+    public async Task<ProtocolResult?> ReadAsync(ProtocolDto protocol, CancellationToken token)
     {
         try
         {
-            var apiProtocol = new ApiProtocol();
+            var apiProtocol = new ApiProtocolDto();
             using var client = CreateConnection(protocol, out apiProtocol, token);
 
             var result = new ProtocolResult
             {
                 Id = Guid.NewGuid().ToString("N"),
                 Time = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"),
-                ProtocolId = apiProtocol.ProtocolId,
+                ProtocolId = apiProtocol.Id,
                 ProtocolType = apiProtocol.ProtocolType.ToString(),
                 DeviceResults = [],
                 StartTime = string.Empty,
@@ -34,31 +36,31 @@ public class ApiDriver : IProtocolDriver
             var request = new HttpRequestMessage(apiProtocol.RequestMethod
             switch
             {
-                ApiHttpMethod.Get => HttpMethod.Get,
-                ApiHttpMethod.Post => HttpMethod.Post,
-                ApiHttpMethod.Put => HttpMethod.Put,
-                ApiHttpMethod.Delete => HttpMethod.Delete,
+                RequestMethod.Get => HttpMethod.Get,
+                RequestMethod.Post => HttpMethod.Post,
+                RequestMethod.Put => HttpMethod.Put,
+                RequestMethod.Delete => HttpMethod.Delete,
                 _ => HttpMethod.Get
-            }, apiProtocol.OueryApiString);
+            }, apiProtocol.AccessApiString);
 
             var response = await client.SendAsync(request, token);
             response.EnsureSuccessStatusCode();
 
             var content = await response.Content.ReadAsStringAsync(token);
 
-            foreach (var dev in apiProtocol.Devices)
+            foreach (var dev in apiProtocol.Equipments)
             {
                 var deviceResult = new DeviceResult
                 {
-                    EquipmentId = dev.EquipmentId,
-                    EquipmentName = dev.EquipmentName,
+                    EquipmentId = dev.Id,
+                    EquipmentName = dev.Name,
                     PointResults = []
                 };
 
                 var startTime = DateTime.Now;
                 deviceResult.StartTime = startTime.ToString("yyyy-MM-dd HH:mm:ss.fff");
 
-                foreach (var point in dev.Points)
+                foreach (var point in dev.Parameters)
                 {
                     var address = point.Address;
                     if (string.IsNullOrWhiteSpace(address)) continue;
@@ -104,7 +106,7 @@ public class ApiDriver : IProtocolDriver
             {
                 Id = Guid.NewGuid().ToString("N"),
                 Time = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"),
-                ProtocolId = protocol.ProtocolId,
+                ProtocolId = protocol.Id,
                 ProtocolType = protocol.ProtocolType.ToString(),
                 DeviceResults = [],
                 ReadIsSuccess = false,
@@ -115,14 +117,14 @@ public class ApiDriver : IProtocolDriver
             };
 
             // 按照 UpdatePointResultIfDevError 的逻辑，补全每个设备的所有点为失败
-            if (protocol.Devices != null)
+            if (protocol.Equals != null)
             {
-                foreach (var dev in protocol.Devices)
+                foreach (var dev in protocol.Equipments)
                 {
                     var deviceResult = new DeviceResult
                     {
-                        EquipmentId = dev.EquipmentId,
-                        EquipmentName = dev.EquipmentName,
+                        EquipmentId = dev.Id,
+                        EquipmentName = dev.Name,
                         ReadIsSuccess = false,
                         ErrorMsg = $"HTTP请求失败: {ex.Message}",
                         PointResults = [],
@@ -134,9 +136,9 @@ public class ApiDriver : IProtocolDriver
                         ElapsedMs = 0
                     };
 
-                    if (dev.Points != null)
+                    if (dev.Parameters != null)
                     {
-                        foreach (var point in dev.Points)
+                        foreach (var point in dev.Parameters)
                         {
                             deviceResult.PointResults.Add(new PointResult
                             {
@@ -214,7 +216,7 @@ public class ApiDriver : IProtocolDriver
     }
 
     // 用法
-    public static PointResult BuildPointResult(Point point, string json)
+    public static PointResult BuildPointResult(ParameterDto point, string json)
     {
         var value = GetValueFromJson(json, point.Address, out var label, out var address);
         return new PointResult
@@ -228,9 +230,9 @@ public class ApiDriver : IProtocolDriver
         };
     }
 
-    public HttpClient CreateConnection(Protocol protocol, out ApiProtocol apiProtocol, CancellationToken token)
+    public HttpClient CreateConnection(ProtocolDto protocol, out ApiProtocolDto apiProtocol, CancellationToken token)
     {
-        if (protocol is ApiProtocol p)
+        if (protocol is ApiProtocolDto p)
         {
             var conn = new HttpClient();
             apiProtocol = p;
@@ -249,7 +251,7 @@ public class ApiDriver : IProtocolDriver
     }
 
 
-    public Task<PointResult?> ReadAsync(Protocol protocol, string devId, Point point, CancellationToken token)
+    public Task<PointResult?> ReadAsync(ProtocolDto protocol, string devId, ParameterDto point, CancellationToken token)
     {
         throw new NotImplementedException();
     }
