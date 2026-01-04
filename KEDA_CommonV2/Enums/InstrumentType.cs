@@ -5,7 +5,7 @@ namespace KEDA_CommonV2.Enums;
 /// <summary>
 /// 仪表类型
 /// </summary>
-public enum MeterType
+public enum InstrumentType
 {
     /// <summary>
     /// 未知或未定义0x00

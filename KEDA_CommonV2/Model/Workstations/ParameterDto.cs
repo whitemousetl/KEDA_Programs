@@ -71,7 +71,7 @@ namespace KEDA_CommonV2.Model.Workstations
         /// <summary>
         /// 仪表类型，CJT188专用
         /// </summary>
-        public MeterType InstrumentType { get; set; }
+        public InstrumentType InstrumentType { get; set; }
 
         /// <summary>
         /// 写入才有值
