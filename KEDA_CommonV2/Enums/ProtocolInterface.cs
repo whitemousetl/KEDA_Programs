@@ -1,9 +1,33 @@
-﻿namespace KEDA_CommonV2.Enums;
+﻿using System.ComponentModel;
 
-public enum ProtocolInterface
+namespace KEDA_CommonV2.Enums;
+
+/// <summary>
+/// 接口类型
+/// </summary>
+public enum InterfaceType
 {
-    LAN,
-    COM,
-    API,
-    DATABASE
+    /// <summary>
+    /// LAN
+    /// </summary>
+    [Description("LAN")]
+    LAN = 0,
+
+    /// <summary>
+    /// COM
+    /// </summary>
+    [Description("COM")]
+    COM = 1,
+
+    /// <summary>
+    /// API
+    /// </summary>
+    [Description("API")]
+    API = 2,
+
+    /// <summary>
+    /// DATABASE
+    /// </summary>
+    [Description("DATABASE")]
+    DATABASE = 3,
 }

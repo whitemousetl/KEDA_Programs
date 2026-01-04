@@ -15,7 +15,7 @@ public class Workstation//与mom对接的工作站配置，转换成json后存�
 public abstract class Protocol
 {
     public string ProtocolId { get; set; } = string.Empty;
-    public abstract ProtocolInterface Interface { get; }
+    public abstract InterfaceType InterfaceType { get; }
     public ProtocolType ProtocolType { get; set; }
     public string Remark { get; set; } = string.Empty;
     public int CollectCycle { get; set; }
@@ -27,7 +27,7 @@ public abstract class Protocol
 // 网口协议
 public class LanProtocol : Protocol
 {
-    public override ProtocolInterface Interface => ProtocolInterface.LAN;
+    public override InterfaceType InterfaceType => InterfaceType.LAN;
     public string IpAddress { get; set; } = string.Empty;
     public string Gateway { get; set; } = string.Empty;
     public int ProtocolPort { get; set; }
@@ -36,7 +36,7 @@ public class LanProtocol : Protocol
 // 串口协议
 public class SerialProtocol : Protocol
 {
-    public override ProtocolInterface Interface => ProtocolInterface.COM;
+    public override InterfaceType InterfaceType => InterfaceType.COM;
     public string PortName { get; set; } = string.Empty;
     public int BaudRate { get; set; }
     public int DataBits { get; set; }
@@ -48,9 +48,9 @@ public class SerialProtocol : Protocol
 public class ApiProtocol : Protocol
 {
     //核心属性
-    public override ProtocolInterface Interface => ProtocolInterface.API;
+    public override InterfaceType InterfaceType => InterfaceType.API;
     public string OueryApiString { get; set; } = string.Empty; // 接口地址
-    public ApiHttpMethod RequestMethod { get; set; } = ApiHttpMethod.Get; // GET, POST, PUT, DELETE等
+    public RequestMethod RequestMethod { get; set; } = RequestMethod.Get; // GET, POST, PUT, DELETE等
 
     //扩展属性
     public string BaseUrl { get; set; } = string.Empty; // API基础URL
@@ -73,7 +73,7 @@ public class ApiProtocol : Protocol
 public class DatabaseProtocol : Protocol
 {
     //核心属性
-    public override ProtocolInterface Interface => ProtocolInterface.DATABASE;
+    public override InterfaceType InterfaceType => InterfaceType.DATABASE;
 
     public string ConnectionString { get; set; } = string.Empty;
     public string OuerySqlString { get; set; } = string.Empty;//SqlQuery
@@ -109,7 +109,7 @@ public class Point
     public string MaxValue { get; set; } = string.Empty; // 最大值
     public DataFormat Format { get; set; }//解析或生成格式，大端序小端序
     public bool AddressStartWithZero { get; set; }//地址从0开始？
-    public Cjt188MeterType InstrumentType { get; set; }//仪表的类型，CJT188专用，
+    public MeterType InstrumentType { get; set; }//仪表的类型，CJT188专用，
 
     //0x10：冷水水表；0x11：生活热水水表；0x12：直饮水水表；0x13：中水水表；
     //0x20：热量表（热量）；0x21：热量表（冷量）；

@@ -1,0 +1,63 @@
+﻿using System.ComponentModel;
+
+namespace KEDA_CommonV2.Enums;
+
+/// <summary>
+/// 仪表类型
+/// </summary>
+public enum MeterType
+{
+    /// <summary>
+    /// 未知或未定义0x00
+    /// </summary>
+    [Description("未知或未定义")]
+    Unknown = 0,
+
+    /// <summary>
+    /// 冷水水表0x10【水表类】
+    /// </summary>
+    [Description("冷水水表")]
+    ColdWater = 1,
+
+    /// <summary>
+    /// 生活热水水表0x11【水表类】
+    /// </summary>
+    [Description("生活热水水表")]
+    DomesticHotWater = 2,    // 生活热水水表
+
+    /// <summary>
+    /// 直饮水水表0x12【水表类】
+    /// </summary>
+    [Description("直饮水水表")]
+    DrinkingWater = 3,
+
+    /// <summary>
+    /// 中水水表0x13【水表类】
+    /// </summary>
+    [Description("中水水表")]
+    ReclaimedWater = 4,
+
+    /// <summary>
+    /// 热量0x20【热量表类】
+    /// </summary>
+    [Description("热量表")]
+    HeatMeter = 5,
+
+    /// <summary>
+    /// 冷量0x21【热量表类】
+    /// </summary>
+    [Description("冷量表")]
+    CoolingMeter = 6,
+
+    /// <summary>
+    /// 燃气表0x30【其他】
+    /// </summary>
+    [Description("燃气表")]
+    GasMeter = 7,
+
+    /// <summary>
+    /// 电度表0x40【其他】
+    /// </summary>
+    [Description("电度表")]
+    ElectricityMeter = 8
+}
