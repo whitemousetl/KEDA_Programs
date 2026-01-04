@@ -4,6 +4,7 @@ using KEDA_CommonV2.Entity;
 using KEDA_CommonV2.Interfaces;
 using KEDA_CommonV2.Model;
 using KEDA_CommonV2.Model.Workstations;
+using KEDA_CommonV2.Utilities;
 using KEDA_ControllerV2.Interfaces;
 using System.Text.Json;
 
@@ -62,9 +63,7 @@ public class MqttSubscribeManager : IMqttSubscribeManager
 
         try
         {
-            var options = new JsonSerializerOptions();
-            options.Converters.Add(new ProtocolJsonConverter());
-            ws = JsonSerializer.Deserialize<WorkstationDto>(payload, options);
+            ws = JsonSerializer.Deserialize<WorkstationDto>(payload, JsonOptionsProvider.WorkstationOptions);
 
             if (ws == null) _logger.LogError("mom下发配置时，反序列化后工作站配置为空");
             else
@@ -178,12 +177,10 @@ public class MqttSubscribeManager : IMqttSubscribeManager
             return;
         }
 
-        WriteTask? writeTaskEntity = null;
+        WriteTask? writeTaskEntity;
         try
         {
-            var options = new JsonSerializerOptions();
-            options.Converters.Add(new ProtocolJsonConverter());
-            writeTaskEntity = JsonSerializer.Deserialize<WriteTask>(payload, options);
+            writeTaskEntity = JsonSerializer.Deserialize<WriteTask>(payload, JsonOptionsProvider.WorkstationOptions);
             if (writeTaskEntity == null)
             {
                 _logger.LogWarning("写任务 payload 反序列化后为 null，已跳过。payload: {Payload}", payload);

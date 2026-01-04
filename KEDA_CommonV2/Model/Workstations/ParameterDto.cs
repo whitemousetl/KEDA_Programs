@@ -11,7 +11,7 @@ namespace KEDA_CommonV2.Model.Workstations
         /// <summary>
         /// 参数Id
         /// </summary>
-        public string Id { get; set; } = string.Empty;
+        //public string Id { get; set; } = string.Empty;
 
         /// <summary>
         /// 参数名

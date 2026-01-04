@@ -5,6 +5,7 @@ using KEDA_CommonV2.Interfaces;
 using KEDA_CommonV2.Model;
 using KEDA_CommonV2.Model.Workstations;
 using KEDA_CommonV2.Model.Workstations.Protocols;
+using KEDA_CommonV2.Utilities;
 using Microsoft.Extensions.Logging;
 using Npgsql;
 using System.Text.Json;
@@ -56,9 +57,7 @@ public class QuestWorkstationConfigProvider : IWorkstationConfigProvider
         if (configEntity == null || string.IsNullOrWhiteSpace(configEntity.ConfigJson))
             return null;
 
-        var options = new JsonSerializerOptions();
-        options.Converters.Add(new ProtocolJsonConverter());
-        return JsonSerializer.Deserialize<WorkstationDto>(configEntity.ConfigJson, options);
+        return JsonSerializer.Deserialize<WorkstationDto>(configEntity.ConfigJson, JsonOptionsProvider.WorkstationOptions);
     }
 
     public async Task<ProtocolDto?> GetProtocolByProtocolIdAsync(string protocolId, CancellationToken token)
