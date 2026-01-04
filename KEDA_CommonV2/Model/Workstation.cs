@@ -109,7 +109,7 @@ public class Point
     public string MaxValue { get; set; } = string.Empty; // 最大值
     public DataFormat Format { get; set; }//解析或生成格式，大端序小端序
     public bool AddressStartWithZero { get; set; }//地址从0开始？
-    public MeterType InstrumentType { get; set; }//仪表的类型，CJT188专用，
+    public InstrumentType InstrumentType { get; set; }//仪表的类型，CJT188专用，
 
     //0x10：冷水水表；0x11：生活热水水表；0x12：直饮水水表；0x13：中水水表；
     //0x20：热量表（热量）；0x21：热量表（冷量）；
