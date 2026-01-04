@@ -16,7 +16,7 @@ namespace KEDA_CommonV2.Model.Workstations.Protocols
         /// <summary>
         /// 串口名称
         /// </summary>
-        public string SerialPortName { get; set; }
+        public string SerialPortName { get; set; } = string.Empty;
 
         /// <summary>
         /// 波特率
