@@ -3,6 +3,7 @@ using KEDA_CommonV2.Converters;
 using KEDA_CommonV2.Entity;
 using KEDA_CommonV2.Interfaces;
 using KEDA_CommonV2.Model;
+using KEDA_CommonV2.Model.MqttResponses;
 using KEDA_CommonV2.Model.Workstations;
 using KEDA_CommonV2.Utilities;
 using KEDA_ControllerV2.Interfaces;
@@ -57,7 +58,6 @@ public class MqttSubscribeManager : IMqttSubscribeManager
     {
         WorkstationDto? ws = null;
         bool isSuccess = false;
-        string status = "Success";
         string message = "配置已保存";
         string workstationId = string.Empty;
 
@@ -72,17 +72,15 @@ public class MqttSubscribeManager : IMqttSubscribeManager
                 var (isUnique, duplicateLabel) = CheckPointLabelUnique(ws);
                 if (!isUnique)
                 {
-                    status = "Error";
                     message = $"Label '{duplicateLabel}' 重复！所有Device的Points的Label必须唯一。";
                     workstationId = ws.Id;
                     // 构造并发布响应
-                    var repeatedResponse = new
+                    var repeatedResponse = new ConfigSaveResponse
                     {
                         WorkstationId = workstationId,
                         IsSuccess = false,
-                        Status = status,
                         Message = message,
-                        Timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+                        Time = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
                     };
                     var repeatedResponseJson = JsonSerializer.Serialize(repeatedResponse);
                     var repeatedResponseTopic = _topicOptions.WorkstationConfigResponsePrefix + workstationId;
@@ -105,26 +103,23 @@ public class MqttSubscribeManager : IMqttSubscribeManager
         }
         catch (JsonException ex)
         {
-            status = "Error";
             message = $"JSON反序列化失败: {ex.Message}";
             // 可尝试从payload中提取EdgeId
             workstationId = TryExtractEdgeId(payload);
         }
         catch (Exception ex)
         {
-            status = "Error";
             message = $"处理异常: {ex.Message}";
             workstationId = ws?.Id ?? TryExtractEdgeId(payload);
         }
 
         // 构造并发布响应
-        var response = new
+        var response = new ConfigSaveResponse
         {
-            EdgeId = workstationId,
+            WorkstationId = workstationId,
             IsSuccess = isSuccess,
-            Status = status,
             Message = message,
-            Timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+            Time = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
         };
         var responseJson = JsonSerializer.Serialize(response);
 

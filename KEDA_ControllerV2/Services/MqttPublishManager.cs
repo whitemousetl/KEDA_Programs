@@ -49,8 +49,6 @@ public class MqttPublishManager : IMqttPublishManager
 
     private async Task PublishDeviceDataAsync(ConcurrentDictionary<string, string> dataDevIds, CancellationToken token)
     {
-       
-
         foreach (var dataDevId in dataDevIds)
         {
             var data = dataDevId.Value;

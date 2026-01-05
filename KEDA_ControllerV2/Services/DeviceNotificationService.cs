@@ -57,11 +57,11 @@ public class DeviceNotificationService : IDeviceNotificationService
 
             var data = JsonSerializer.Serialize(deviceResults, _jsonSerializerOptions);
 
-            var edgeId = ws.Id;
-            var workstationStatusTopic = _topicOptions.WorkstationStatusPrefix + edgeId;
+            var workstationId = ws.Id;
+            var workstationStatusTopic = _topicOptions.WorkstationStatusPrefix + workstationId;
 
             await _mqttPublishService.PublishAsync(workstationStatusTopic, data, token);
-            _logger.LogDebug("已定时转发设备 {DeviceId} 的数据到 {Topic}", edgeId, workstationStatusTopic);
+            _logger.LogDebug("已定时转发设备 {DeviceId} 的数据到 {Topic}", workstationId, workstationStatusTopic);
         }
         catch (Exception ex)
         {
