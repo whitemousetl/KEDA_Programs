@@ -1,4 +1,6 @@
-﻿namespace KEDA_CommonV2.Converters;
+﻿using System.Globalization;
+
+namespace KEDA_CommonV2.Converters;
 
 /// <summary>
 /// 数值进制转换器
@@ -10,17 +12,17 @@ public static class NumberBaseConverter
     /// 十六进制转十进制
     /// 支持格式: "FF", "0xFF", "ff"
     /// </summary>
-    public static double HexToDecimal(object? value)
+    public static long HexToDecimal(object? value)
     {
         ArgumentNullException.ThrowIfNull(value);
 
-        string hexString = value.ToString() ?? "";
+        string hexString = value.ToString()?.Trim() ?? "";
 
         // 移除 0x 前缀
         if (hexString.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
             hexString = hexString[2..];
 
-        if (int.TryParse(hexString, System.Globalization.NumberStyles.HexNumber, null, out int result))
+        if (long.TryParse(hexString, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out long result))
             return result;
 
         throw new FormatException($"无法将值 '{value}' 解析为十六进制数");
@@ -36,8 +38,9 @@ public static class NumberBaseConverter
     {
         ArgumentNullException.ThrowIfNull(value);
 
-        string str = value.ToString() ?? "";
-        if (!long.TryParse(str, out long decimalValue))
+        string str = value.ToString()?.Trim() ?? "";
+
+        if (!long.TryParse(str, NumberStyles.Integer, CultureInfo.InvariantCulture, out var decimalValue))
             throw new FormatException($"无法将值 '{value}' 解析为十进制数");
 
         string hex = decimalValue.ToString("X");
