@@ -32,11 +32,11 @@ public class WriteTaskLogService : IWriteTaskLogService
             log.Msg = string.Empty;
 
         // 构造字段和值
-        var columns = new List<string> { "UUID", "DeviceType", "WriteTaskJson", "Time", "TimeLocal", "IsSuccess", "Msg" };
+        var columns = new List<string> { "UUID", "EquipmentType", "WriteTaskJson", "Time", "TimeLocal", "IsSuccess", "Msg" };
         var values = new List<string>
         {
             $"'{log.UUID.Replace("'", "''")}'", // string
-            $"{(int)log.DeviceType}",           // int (枚举)
+            $"{(int)log.EquipmentType}",           // int (枚举)
             $"'{log.WriteTaskJson.Replace("'", "''")}'", // string
             $"'{log.Time:yyyy-MM-ddTHH:mm:ss.fffZ}'",    // DateTime
             $"'{log.TimeLocal.Replace("'", "''")}'",     // string

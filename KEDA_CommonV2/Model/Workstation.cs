@@ -6,8 +6,8 @@ namespace KEDA_CommonV2.Model;
 
 public class Workstation//与mom对接的工作站配置，转换成json后存在WorkstationConfig表中
 {
-    public string EdgeId { get; set; } = string.Empty;
-    public string EdgeName { get; set; } = string.Empty;
+    public string WorkstationId { get; set; } = string.Empty;
+    public string WorkstationName { get; set; } = string.Empty;
     public string Ip { get; set; } = string.Empty;
     public List<Protocol> Protocols { get; set; } = [];
 }
@@ -21,7 +21,7 @@ public abstract class Protocol
     public int CollectCycle { get; set; }
     public int ReceiveTimeOut { get; set; }
     public int ConnectTimeOut { get; set; }
-    public List<Device> Devices { get; set; } = [];
+    public List<Equipment> Equipments { get; set; } = [];
 }
 
 // 网口协议
@@ -87,7 +87,7 @@ public class DatabaseProtocol : Protocol
     public string AdditionalOptions { get; set; } = string.Empty; // 其他参数（可选）
 }
 
-public class Device
+public class Equipment
 {
     public string EquipmentId { get; set; } = string.Empty;//设备Id
     public string EquipmentName { get; set; } = string.Empty; //设备名称

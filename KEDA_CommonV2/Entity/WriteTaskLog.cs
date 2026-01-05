@@ -5,7 +5,7 @@ namespace KEDA_CommonV2.Entity;
 public class WriteTaskLog
 {
     public string UUID { get; set; } = string.Empty;
-    public EquipmentType DeviceType { get; set; }
+    public EquipmentType EquipmentType { get; set; }
     public string WriteTaskJson { get; set; } = string.Empty;
     public DateTime Time { get; set; }
     public string TimeLocal { get; set; } = string.Empty;

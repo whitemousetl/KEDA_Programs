@@ -21,7 +21,7 @@ public class ProtocolTaskManager : IProtocolTaskManager
 
     private readonly ILogger<ProtocolTaskManager> _logger;
     private readonly IMqttPublishManager _mqttPublishManager;
-    private readonly IDeviceNotificationService _deviceNotificationService;
+    private readonly IEquipmentNotificationService _equipmentNotificationService;
     private readonly ConcurrentDictionary<string, DateTime> _lastMonitorTimes = new();
 
     //协议ID -> 读取任务的 CancellationTokenSource 用于独立管理每个协议的采集任务生命周期
@@ -31,12 +31,12 @@ public class ProtocolTaskManager : IProtocolTaskManager
     private readonly ConcurrentDictionary<string, IProtocolDriver> _drivers = []; //协议ID -> 协议对象
     private readonly IWorkstationConfigProvider _workstationConfigProvider;
 
-    public ProtocolTaskManager(ILogger<ProtocolTaskManager> logger, IWorkstationConfigProvider workstationConfigProvider, IMqttPublishManager mqttPublishManager, IDeviceNotificationService deviceNotificationService)
+    public ProtocolTaskManager(ILogger<ProtocolTaskManager> logger, IWorkstationConfigProvider workstationConfigProvider, IMqttPublishManager mqttPublishManager, IEquipmentNotificationService equipmentNotificationService)
     {
         _logger = logger;
         _workstationConfigProvider = workstationConfigProvider;
         _mqttPublishManager = mqttPublishManager;
-        _deviceNotificationService = deviceNotificationService;
+        _equipmentNotificationService = equipmentNotificationService;
     }
 
     /// <summary>
@@ -113,38 +113,11 @@ public class ProtocolTaskManager : IProtocolTaskManager
 
                 _ = Task.Run(async () =>
                 {
-                    await _deviceNotificationService.MonitorDeviceStatusAsync(protocolResult, token); // 监控设备状态，发布MQTT设备主题
+                    await _equipmentNotificationService.MonitorEquipmentStatusAsync(protocolResult, token); // 监控设备状态，发布MQTT设备主题
                 }, token);
             }
 
             var data = JsonSerializer.Serialize(protocolResult, options);// 序列化为 JSON
-
-            //await _mqttPublishService.PublishAsync("edge/" + protocol.ProtocolId, data, token);
-
-            ////GZip压缩编码,转换成字节数组，发布并持久化存储到SQLite中
-            //byte[] compressedByteArray;
-            //using (var ms = new MemoryStream())
-            //{
-            //    using (var gzip = new GZipStream(ms, CompressionLevel.SmallestSize, true))
-            //    using (var writer = new StreamWriter(gzip))
-            //    {
-            //        writer.Write(data);
-            //    }
-            //    compressedByteArray = ms.ToArray();
-            //}
-
-            //var protocolData = new ProtocolData
-            //{
-            //    ProtocolId = protocol.ProtocolId,
-            //    Payload = compressedByteArray,
-            //    SaveTime = DateTime.Now,
-            //};
-
-            ////await _db.Insertable(protocolData).ExecuteCommandAsync(token);//存到数据库然后让处理中心读取处理,不存数据库了，只发MQTT
-
-            //await _mqttPublishService.PublishAsync("workstation/" + protocol.ProtocolId, compressedByteArray, token);//发布到MQTT服务器，做单点测试,设备无关，工作站无关
-
-            // CollectCycle 为 0 时，避免忙等占满 CPU：最小延迟或 Yield 一下
 
             await Task.Delay(delayMs, token);
             //await Task.Delay(protocol.CollectCycle, token);
@@ -166,14 +139,14 @@ public class ProtocolTaskManager : IProtocolTaskManager
             protocolResult.StartTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");//协议开始读取时间
             var protocolSw = Stopwatch.StartNew();//协议读取计时器
             protocolResult.ReadIsSuccess = true;//假设协议是读取成功的
-            foreach (var dev in protocol.Equipments)//读取地址值
+            foreach (var equipment in protocol.Equipments)//读取地址值
             {
-                var deviceResult = await ReadDeviceAsync(dev, driver, protocol, token);
+                var equipmentResult = await ReadEquipmentAsync(equipment, driver, protocol, token);
 
                 // 如果设备级异常，补全所有点的失败结果
-                UpdatePointResultIfDevError(dev, deviceResult);
+                UpdatePointResultIfEquipmentError(equipment, equipmentResult);
 
-                protocolResult.DeviceResults.Add(deviceResult);
+                protocolResult.EquipmentResults.Add(equipmentResult);
             }
 
             protocolSw.Stop();
@@ -193,36 +166,11 @@ public class ProtocolTaskManager : IProtocolTaskManager
 
                 _ = Task.Run(async () =>
                 {
-                    await _deviceNotificationService.MonitorDeviceStatusAsync(protocolResult, token); // 监控设备状态，发布MQTT设备主题
+                    await _equipmentNotificationService.MonitorEquipmentStatusAsync(protocolResult, token); // 监控设备状态，发布MQTT设备主题
                 }, token);
             }
 
             var data = JsonSerializer.Serialize(protocolResult, options);// 序列化为 JSON
-
-            //await _mqttPublishService.PublishAsync("edge/" + protocol.ProtocolId, data, token);
-
-            ////GZip压缩编码,转换成字节数组，发布并持久化存储到SQLite中
-            //byte[] compressedByteArray;
-            //using (var ms = new MemoryStream())
-            //{
-            //    using (var gzip = new GZipStream(ms, CompressionLevel.SmallestSize, true))
-            //    using (var writer = new StreamWriter(gzip))
-            //    {
-            //        writer.Write(data);
-            //    }
-            //    compressedByteArray = ms.ToArray();
-            //}
-
-            //var protocolData = new ProtocolData
-            //{
-            //    ProtocolId = protocol.ProtocolId,
-            //    Payload = compressedByteArray,
-            //    SaveTime = DateTime.Now,
-            //};
-
-            ////await _db.Insertable(protocolData).ExecuteCommandAsync(token);//存到数据库然后让处理中心读取处理,不存数据库了，只发MQTT
-
-            //await _mqttPublishService.PublishAsync("workstation/" + protocol.ProtocolId, compressedByteArray, token);//发布到MQTT服务器，做单点测试,设备无关，工作站无关
 
             // CollectCycle 为 0 时，避免忙等占满 CPU：最小延迟或 Yield 一下
             var delayMs = protocol.CollectCycle;
@@ -245,13 +193,13 @@ public class ProtocolTaskManager : IProtocolTaskManager
         _drivers[protocol.Id] = driver;// 把协议驱动放在字典中，让写任务调用
     }
 
-    private async Task<DeviceResult> ReadDeviceAsync(EquipmentDto dev, IProtocolDriver driver, ProtocolDto protocol, CancellationToken token)
+    private async Task<EquipmentResult> ReadEquipmentAsync(EquipmentDto equipment, IProtocolDriver driver, ProtocolDto protocol, CancellationToken token)
     {
-        var deviceResult = new DeviceResult() { EquipmentId = dev.Id, EquipmentName = dev.Name };//设备结果
-        var deviceSw = Stopwatch.StartNew();//设备读取计时器
-        deviceResult.ReadIsSuccess = true;//假设本设备是读取成功的
-        deviceResult.StartTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");//设备读取开始时间
-        foreach (var point in dev.Parameters)
+        var equipmentResult = new EquipmentResult() { EquipmentId = equipment.Id, EquipmentName = equipment.Name };//设备结果
+        var equipmentSw = Stopwatch.StartNew();//设备读取计时器
+        equipmentResult.ReadIsSuccess = true;//假设本设备是读取成功的
+        equipmentResult.StartTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");//设备读取开始时间
+        foreach (var point in equipment.Parameters)
         {
             if (point == null) continue;
             if (point.Address == "VirtualPoint")
@@ -267,29 +215,29 @@ public class ProtocolTaskManager : IProtocolTaskManager
                     ErrorMsg = null!,
                     ElapsedMs = 0
                 };
-                deviceResult.PointResults.Add(virtualPointResult);
+                equipmentResult.PointResults.Add(virtualPointResult);
                 continue;
             }
             var pointSw = Stopwatch.StartNew();
             var pointResult = new PointResult { Address = point.Address, Label = point.Label, DataType = point.DataType };
             try
             {
-                var result = await driver.ReadAsync(protocol, dev.Id, point, token);
+                var result = await driver.ReadAsync(protocol, equipment.Id, point, token);
                 if (result != null) pointResult = result;
             }
             catch (ProtocolWhenConnFailedException ex)     //协议连接失败，同时是设备和点的信息
             {
                 _logger.LogError($"协议连接失败,已释放连接，下次将自动重连。信息:{ex.Message}");
-                deviceResult.ReadIsSuccess = false;
-                deviceResult.ErrorMsg = ex.Message;
+                equipmentResult.ReadIsSuccess = false;
+                equipmentResult.ErrorMsg = ex.Message;
                 (driver as IDisposable)?.Dispose(); // 释放连接，下次自动重连
                 break; // 跳过当前设备
             }
             catch (ProtocolIsNullWhenReadException ex)   //读取是协议为空，同时是设备和点的信息
             {
                 _logger.LogError($"读取时发现协议为空，已释放连接，下次将自动重连。信息:{ex.Message}");
-                deviceResult.ReadIsSuccess = false;
-                deviceResult.ErrorMsg = ex.Message;
+                equipmentResult.ReadIsSuccess = false;
+                equipmentResult.ErrorMsg = ex.Message;
                 (driver as IDisposable)?.Dispose(); // 释放连接，下次自动重连
                 break; // 跳过当前设备
             }
@@ -315,7 +263,7 @@ public class ProtocolTaskManager : IProtocolTaskManager
             {
                 pointSw.Stop();
                 pointResult.ElapsedMs = pointSw.ElapsedMilliseconds;
-                deviceResult.PointResults.Add(pointResult);
+                equipmentResult.PointResults.Add(pointResult);
             }
 
             if (SharedConfigHelper.SerialLikeProtocols.Contains(protocol.ProtocolType)) //如果是串口或串口相关协议，需要冷却500毫秒
@@ -323,37 +271,37 @@ public class ProtocolTaskManager : IProtocolTaskManager
         }
 
         // 设备统计字段和时间充实
-        deviceSw.Stop();
-        deviceResult.EndTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
-        deviceResult.ElapsedMs = deviceSw.ElapsedMilliseconds;
-        deviceResult.TotalPoints = deviceResult.PointResults.Count;
-        deviceResult.SuccessPoints = deviceResult.PointResults.Count(p => p.ReadIsSuccess);
-        deviceResult.FailedPoints = deviceResult.TotalPoints - deviceResult.SuccessPoints;
+        equipmentSw.Stop();
+        equipmentResult.EndTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+        equipmentResult.ElapsedMs = equipmentSw.ElapsedMilliseconds;
+        equipmentResult.TotalPoints = equipmentResult.PointResults.Count;
+        equipmentResult.SuccessPoints = equipmentResult.PointResults.Count(p => p.ReadIsSuccess);
+        equipmentResult.FailedPoints = equipmentResult.TotalPoints - equipmentResult.SuccessPoints;
 
-        return deviceResult;
+        return equipmentResult;
     }
 
-    private static void UpdatePointResultIfDevError(EquipmentDto dev, DeviceResult deviceResult)
+    private static void UpdatePointResultIfEquipmentError(EquipmentDto equipment, EquipmentResult equipmentResult)
     {
-        if (!deviceResult.ReadIsSuccess)
+        if (!equipmentResult.ReadIsSuccess)
         {
-            deviceResult.PointResults.Clear();
-            foreach (var point in dev.Parameters)
+            equipmentResult.PointResults.Clear();
+            foreach (var point in equipment.Parameters)
             {
-                deviceResult.PointResults.Add(new PointResult
+                equipmentResult.PointResults.Add(new PointResult
                 {
                     Address = point.Address,
                     Label = point.Label,
                     ReadIsSuccess = false,
                     Value = null,
-                    ErrorMsg = deviceResult.ErrorMsg
+                    ErrorMsg = equipmentResult.ErrorMsg
                 });
             }
 
             // 补全统计字段
-            deviceResult.TotalPoints = deviceResult.PointResults.Count;
-            deviceResult.SuccessPoints = deviceResult.PointResults.Count(p => p.ReadIsSuccess);
-            deviceResult.FailedPoints = deviceResult.TotalPoints - deviceResult.SuccessPoints;
+            equipmentResult.TotalPoints = equipmentResult.PointResults.Count;
+            equipmentResult.SuccessPoints = equipmentResult.PointResults.Count(p => p.ReadIsSuccess);
+            equipmentResult.FailedPoints = equipmentResult.TotalPoints - equipmentResult.SuccessPoints;
         }
     }
 
@@ -361,13 +309,13 @@ public class ProtocolTaskManager : IProtocolTaskManager
     {
         protocolResult.EndTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
         protocolResult.ElapsedMs = protocolSw.ElapsedMilliseconds;
-        protocolResult.TotalDevices = protocolResult.DeviceResults.Count;
-        protocolResult.SuccessDevices = protocolResult.DeviceResults.Count(d => d.ReadIsSuccess);
-        protocolResult.FailedDevices = protocolResult.TotalDevices - protocolResult.SuccessDevices;
-        protocolResult.TotalPoints = protocolResult.DeviceResults.Sum(d => d.TotalPoints);
-        protocolResult.SuccessPoints = protocolResult.DeviceResults.Sum(d => d.SuccessPoints);
+        protocolResult.TotalEquipments = protocolResult.EquipmentResults.Count;
+        protocolResult.SuccessEquipments = protocolResult.EquipmentResults.Count(d => d.ReadIsSuccess);
+        protocolResult.FailedEquipments = protocolResult.TotalEquipments - protocolResult.SuccessEquipments;
+        protocolResult.TotalPoints = protocolResult.EquipmentResults.Sum(d => d.TotalPoints);
+        protocolResult.SuccessPoints = protocolResult.EquipmentResults.Sum(d => d.SuccessPoints);
         protocolResult.FailedPoints = protocolResult.TotalPoints - protocolResult.SuccessPoints;
-        protocolResult.ReadIsSuccess = protocolResult.FailedDevices == 0 && protocolResult.FailedPoints == 0;
+        protocolResult.ReadIsSuccess = protocolResult.FailedEquipments == 0 && protocolResult.FailedPoints == 0;
         protocolResult.ErrorMsg = protocolResult.ReadIsSuccess ? string.Empty : "部分设备或点采集失败";
 
         // 统计所有点是否都失败

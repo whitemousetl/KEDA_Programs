@@ -31,7 +31,7 @@ public class FJ60WDriver : IProtocolDriver
     public string GetProtocolName() => "FJ60W";
 
     // ReadAsync 只返回缓存，不做网络读取
-    public Task<PointResult?> ReadAsync(ProtocolDto protocol, string devId, ParameterDto point, CancellationToken token)
+    public Task<PointResult?> ReadAsync(ProtocolDto protocol, string equipmentId, ParameterDto point, CancellationToken token)
     {
         // 确保接收循环已经运行（若未启动且有协议信息，尝试连接并启动）
         // 注意：这里不做阻塞式连接；连接失败时由接收循环异常处理
@@ -287,9 +287,9 @@ public class FJ60WDriver : IProtocolDriver
     }
 
     // 为了让 ProtocolTaskManager 的首次读不全是失败，你可以在设备加载点列表时先初始化缓存
-    public void InitializePointsCache(EquipmentDto device)
+    public void InitializePointsCache(EquipmentDto equipment)
     {
-        foreach (var point in device.Parameters)
+        foreach (var point in equipment.Parameters)
         {
             var key = GetPointKey(point);
             _latestPointResults.TryAdd(key, new PointResult

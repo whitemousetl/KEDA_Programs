@@ -48,16 +48,16 @@
 //                await OnConnectionInitializedAsync(token);
 //            }
 
-//            if (writeTask.WriteDevice == null) return false;
+//            if (writeTask.WriteEquipment == null) return false;
 
 //            var hexList = new ConcurrentBag<byte>();
 //            hexList.Add(0x1B);
 //            hexList.Add(0x02);
-//            var station = StringToHex(writeTask.WriteDevice.WritePoints[0].StationNo);
+//            var station = StringToHex(writeTask.WriteEquipment.WritePoints[0].StationNo);
 //            //地址
 //            hexList.Add(station);
 //            hexList.Add(0x1D);
-//            var points = writeTask.WriteDevice.WritePoints;
+//            var points = writeTask.WriteEquipment.WritePoints;
 //            var strCount = (byte)points.Length;
 //            //字段总数
 //            hexList.Add(strCount);

@@ -14,7 +14,7 @@ public class VirtualPointCalculator : IVirtualPointCalculator
         _logger = logger;
     }
 
-    public void Calculate(IEnumerable<ParameterDto> virtualPoints, IDictionary<string, object?> deviceData)
+    public void Calculate(IEnumerable<ParameterDto> virtualPoints, IDictionary<string, object?> equipmentData)
     {
         foreach (var point in virtualPoints)
         {
@@ -23,18 +23,18 @@ public class VirtualPointCalculator : IVirtualPointCalculator
 
             try
             {
-                var result = EvaluateExpression(point.PositiveExpression, deviceData);
-                deviceData[point.Label] = result;
+                var result = EvaluateExpression(point.PositiveExpression, equipmentData);
+                equipmentData[point.Label] = result;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "虚拟点计算失败: {Label}, 表达式: {Expression}", point.Label, point.PositiveExpression);
-                deviceData[point.Label] = null;
+                equipmentData[point.Label] = null;
             }
         }
     }
 
-    private static object? EvaluateExpression(string expression, IDictionary<string, object?> deviceData)
+    private static object? EvaluateExpression(string expression, IDictionary<string, object?> equipmentData)
     {
         var variables = VariablePlaceholderParser.ExtractVariableNames(expression);
         var normalizedExpression = VariablePlaceholderParser.ReplacePlaceholders(expression, variables);
@@ -42,7 +42,7 @@ public class VirtualPointCalculator : IVirtualPointCalculator
         var interpreter = new Interpreter();
         foreach (var varName in variables)
         {
-            var value = deviceData.TryGetValue(varName, out var val) ? val ?? 0 : 0;
+            var value = equipmentData.TryGetValue(varName, out var val) ? val ?? 0 : 0;
             interpreter.SetVariable(varName, value);
         }
 

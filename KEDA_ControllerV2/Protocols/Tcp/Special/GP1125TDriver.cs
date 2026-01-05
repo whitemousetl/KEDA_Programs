@@ -17,7 +17,7 @@
 //[ProtocolType(ProtocolType.GP1125T)]
 //public class GP1125TDriver : IProtocolDriver//托码，标签打印机
 //{
-//    public Task<ProtocolResult?> ReadAsync(Protocol protocol, string devId, PointEntity point, CancellationToken token)
+//    public Task<ProtocolResult?> ReadAsync(Protocol protocol, string equipmentId, PointEntity point, CancellationToken token)
 //    {
 //        throw new NotImplementedException();
 //    }
@@ -29,9 +29,9 @@
 
 //        var values = new Dictionary<string, object>();
 
-//        if (writeTask.WriteDevice == null) return false;
+//        if (writeTask.WriteEquipment == null) return false;
 
-//        foreach (var point in writeTask.WriteDevice.WritePoints)
+//        foreach (var point in writeTask.WriteEquipment.WritePoints)
 //        {
 //            values[point.Label] = point.Value;
 //        }
@@ -53,7 +53,7 @@
 
 //            designCore.DrawDesign(paintResource);
 //        };
-//        print.PrinterSettings.PrinterName = writeTask.WriteDevice.DeviceId;
+//        print.PrinterSettings.PrinterName = writeTask.WriteEquipment.EquipmentId;
 
 //        print.Print();
 

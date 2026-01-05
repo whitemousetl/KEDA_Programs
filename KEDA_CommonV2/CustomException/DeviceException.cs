@@ -1,8 +1,8 @@
 ﻿namespace KEDA_CommonV2.CustomException;
 
-public class DeviceException : Exception
+public class EquipmentException : Exception
 {
-    public DeviceException(string message, Exception? inner = null) : base(message, inner)
+    public EquipmentException(string message, Exception? inner = null) : base(message, inner)
     {
     }
 }

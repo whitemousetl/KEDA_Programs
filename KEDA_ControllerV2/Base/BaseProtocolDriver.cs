@@ -70,7 +70,7 @@ public abstract class BaseProtocolDriver<T> : IProtocolDriver where T : class
 
     #region 读方法
 
-    public virtual async Task<PointResult?> ReadAsync(ProtocolDto protocol, string devId, ParameterDto point, CancellationToken token)
+    public virtual async Task<PointResult?> ReadAsync(ProtocolDto protocol, string equipmentId, ParameterDto point, CancellationToken token)
     {
         try
         {

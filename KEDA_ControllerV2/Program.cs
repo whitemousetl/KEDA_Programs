@@ -50,15 +50,15 @@ public class Program
         #region 依赖注入
 
         builder.Services.AddHostedService<Worker>();
-        builder.Services.AddSingleton<IDeviceDataStorageService, QuestDbDeviceDataStorageService>();
+        builder.Services.AddSingleton<IEquipmentDataStorageService, QuestDbEquipmentDataStorageService>();
         builder.Services.AddSingleton<IMqttPublishService, MqttPublishService>();
         builder.Services.AddSingleton<IMqttSubscribeService, MqttSubscribeService>();
         builder.Services.AddSingleton<IWorkstationConfigProvider, QuestWorkstationConfigProvider>();
         builder.Services.AddScoped<IWriteTaskLogService, WriteTaskLogService>();
 
         builder.Services.AddScoped<IConfigMonitor, ConfigMonitor>();
-        builder.Services.AddScoped<IDeviceDataProcessor, DeviceDataProcessor>(); //数据处理服务
-        builder.Services.AddScoped<IDeviceNotificationService, DeviceNotificationService>(); //监控设备状态服务，发布设备状态
+        builder.Services.AddScoped<IEquipmentDataProcessor, EquipmentDataProcessor>(); //数据处理服务
+        builder.Services.AddScoped<IEquipmentNotificationService, EquipmentNotificationService>(); //监控设备状态服务，发布设备状态
         builder.Services.AddScoped<IMqttPublishManager, MqttPublishManager>();
         builder.Services.AddScoped<IMqttSubscribeManager, MqttSubscribeManager>();
         builder.Services.AddScoped<IPointExpressionConverter, PointExpressionConverter>(); //表达式计算服务
@@ -80,7 +80,7 @@ public class Program
             //初始化WorkstationConfig,WriteTaskLog
             await DbInitializer.EnsureQuestDbTablesAsync(SharedConfigHelper.DatabaseSettings, CancellationToken.None);
             //初始化questdb的设备表的TTL，不包括WorkstationConfig,WriteTaskLog
-            var questdbService = scope.ServiceProvider.GetRequiredService<IDeviceDataStorageService>();
+            var questdbService = scope.ServiceProvider.GetRequiredService<IEquipmentDataStorageService>();
             await questdbService.EnsureAllTablesTtlUpdatedAsync();
         }
 

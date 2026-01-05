@@ -13,7 +13,7 @@ public class ProtocolJsonConverter : JsonConverter<ProtocolDto>
         var root = doc.RootElement;
 
         if (!root.TryGetProperty("InterfaceType", out var interfaceProp))
-            throw new JsonException("缺少Interface字段，无法确定协议类型");
+            throw new JsonException("缺少InterfaceType字段，无法确定协议类型");
 
         InterfaceType interfaceType;
         if (interfaceProp.ValueKind == JsonValueKind.Number)

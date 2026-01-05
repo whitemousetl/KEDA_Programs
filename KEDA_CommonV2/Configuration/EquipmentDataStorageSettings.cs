@@ -1,6 +1,6 @@
 ﻿namespace KEDA_CommonV2.Configuration;
 
-public class DeviceDataStorageSettings
+public class EquipmentDataStorageSettings
 {
     /// <summary>
     /// 数据保留天数（默认3天）

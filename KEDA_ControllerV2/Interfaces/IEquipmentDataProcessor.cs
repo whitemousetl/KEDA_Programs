@@ -4,7 +4,7 @@ using System.Collections.Concurrent;
 
 namespace KEDA_ControllerV2.Interfaces;
 
-public interface IDeviceDataProcessor
+public interface IEquipmentDataProcessor
 {
     ConcurrentDictionary<string, string> Process(ProtocolResult protocolResult, ProtocolDto protocol, CancellationToken token);
 }

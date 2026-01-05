@@ -13,7 +13,7 @@
 //[ProtocolType(ProtocolType.IEC104)]
 //public class IEC104Driver : IProtocolDriver
 //{
-//    public Task<ProtocolResult?> ReadAsync(WorkstationEntity protocol, string devId, PointEntity point, CancellationToken token)
+//    public Task<ProtocolResult?> ReadAsync(WorkstationEntity protocol, string equipmentId, PointEntity point, CancellationToken token)
 //    {
 //        throw new NotImplementedException();
 //    }

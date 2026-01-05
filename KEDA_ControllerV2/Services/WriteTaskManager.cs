@@ -91,7 +91,7 @@ public class WriteTaskManager : IWriteTaskManager
             var log = new WriteTaskLog
             {
                 UUID = writeTask.UUID,
-                DeviceType = writeTask.Protocol.Equipments[0].EquipmentType,
+                EquipmentType = writeTask.Protocol.Equipments[0].EquipmentType,
                 WriteTaskJson = JsonSerializer.Serialize(writeTask, _jsonOptions),
                 Time = DateTime.UtcNow,
                 TimeLocal = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),

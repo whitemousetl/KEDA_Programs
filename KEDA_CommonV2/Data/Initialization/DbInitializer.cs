@@ -34,7 +34,7 @@ public static class DbInitializer
              $@"
             CREATE TABLE {writeLogTableName} (
                 UUID STRING,
-                DeviceType INT,
+                EquipmentType INT,
                 WriteTaskJson STRING,
                 Time TIMESTAMP,
                 TimeLocal STRING,   -- 东八区时间字符串

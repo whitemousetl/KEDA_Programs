@@ -12,22 +12,22 @@ public class MqttPublishManager : IMqttPublishManager
     private readonly MqttTopicSettings _topicOptions;
     private readonly ILogger<MqttPublishManager> _logger;
     private readonly IMqttPublishService _mqttPublishService;
-    private readonly IDeviceDataProcessor _deviceDataProcessor;
-    private readonly IDeviceDataStorageService _deviceDataStorageService;
+    private readonly IEquipmentDataProcessor _equipmentDataProcessor;
+    private readonly IEquipmentDataStorageService _equipmentDataStorageService;
     private readonly ConcurrentDictionary<string, DateTime> _lastPublishTimes = new();
 
-    public MqttPublishManager(ILogger<MqttPublishManager> logger, IMqttPublishService mqttPublishService, IDeviceDataProcessor deviceDataProcessor, IDeviceDataStorageService deviceDataStorageService)
+    public MqttPublishManager(ILogger<MqttPublishManager> logger, IMqttPublishService mqttPublishService, IEquipmentDataProcessor equipmentDataProcessor, IEquipmentDataStorageService equipmentDataStorageService)
     {
         _logger = logger;
         _topicOptions = SharedConfigHelper.MqttTopicSettings;
         _mqttPublishService = mqttPublishService;
-        _deviceDataProcessor = deviceDataProcessor;
-        _deviceDataStorageService = deviceDataStorageService;
+        _equipmentDataProcessor = equipmentDataProcessor;
+        _equipmentDataStorageService = equipmentDataStorageService;
     }
 
     public async Task ProcessDataAsync(ProtocolResult protocolResult, ProtocolDto protocol, CancellationToken token)
     {
-        if (protocolResult?.DeviceResults == null)
+        if (protocolResult?.EquipmentResults == null)
         {
             _logger.LogWarning("接收到空的协议结果数据");
             return;
@@ -36,8 +36,8 @@ public class MqttPublishManager : IMqttPublishManager
         try
         {
             // 只负责调度和发布， 清洗转换，返回要发布的结果
-            var publishDataList = _deviceDataProcessor.Process(protocolResult, protocol, token);
-            await PublishDeviceDataAsync(publishDataList, token);
+            var publishDataList = _equipmentDataProcessor.Process(protocolResult, protocol, token);
+            await PublishEquipmentDataAsync(publishDataList, token);
         }
         catch (Exception ex)
         {
@@ -47,13 +47,13 @@ public class MqttPublishManager : IMqttPublishManager
 
     public async Task PublishConfigSavedResultAsync(string topic, string result, CancellationToken token) => await _mqttPublishService.PublishAsync(topic, result, token);
 
-    private async Task PublishDeviceDataAsync(ConcurrentDictionary<string, string> dataDevIds, CancellationToken token)
+    private async Task PublishEquipmentDataAsync(ConcurrentDictionary<string, string> dataEquipmentIds, CancellationToken token)
     {
-        foreach (var dataDevId in dataDevIds)
+        foreach (var dataEquipmentId in dataEquipmentIds)
         {
-            var data = dataDevId.Value;
-            var devId = dataDevId.Key;
-            if (string.IsNullOrWhiteSpace(data) || string.IsNullOrWhiteSpace(devId)) continue;
+            var data = dataEquipmentId.Value;
+            var equipmentId = dataEquipmentId.Key;
+            if (string.IsNullOrWhiteSpace(data) || string.IsNullOrWhiteSpace(equipmentId)) continue;
 
 
             // 反序列化data为字典
@@ -64,25 +64,25 @@ public class MqttPublishManager : IMqttPublishManager
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "设备 {DeviceId} 的数据无法反序列化为字典，跳过。", devId);
+                _logger.LogWarning(ex, $"设备 {equipmentId} 的数据无法反序列化为字典，跳过。");
                 continue;
             }
 
             if (dataDict == null)
             {
-                _logger.LogWarning("设备 {DeviceId} 的数据为空字典，跳过。", devId);
+                _logger.LogWarning($"设备 {equipmentId} 的数据为空字典，跳过。");
                 continue;
             }
 
-            // 排除 "timestamp" 和 "DeviceId" 后的有效数据key
+            // 排除 "timestamp" 和 "EquipmentId" 后的有效数据key
             var validKeys = dataDict.Keys
                 .Where(k => !string.Equals(k, "timestamp", StringComparison.OrdinalIgnoreCase)
-                         && !string.Equals(k, "DeviceId", StringComparison.OrdinalIgnoreCase))
+                         && !string.Equals(k, "EquipmentId", StringComparison.OrdinalIgnoreCase))
                 .ToList();
 
             if (validKeys.Count <= 1)
             {
-                _logger.LogWarning("设备 {DeviceId} 的有效数据点数量不足，跳过发布和存储操作。", devId);
+                _logger.LogWarning($"设备 {equipmentId} 的有效数据点数量不足，跳过发布和存储操作。");
                 continue;
             }
 
@@ -95,26 +95,26 @@ public class MqttPublishManager : IMqttPublishManager
 
             if (!hasValidValue)
             {
-                _logger.LogWarning("设备 {DeviceId} 的有效数据点值全部为空，跳过发布和存储操作。", devId);
+                _logger.LogWarning($"设备 {equipmentId} 的有效数据点值全部为空，跳过发布和存储操作。");
                 continue;
             }
 
             // 实时发布到 control/{EquipmentId}
-            var controlTopic = _topicOptions.ControlPrefix + devId;
+            var controlTopic = _topicOptions.ControlPrefix + equipmentId;
             await _mqttPublishService.PublishAsync(controlTopic, data, token);
-            _logger.LogDebug("已实时转发设备 {DeviceId} 的数据到 {Topic}", devId, controlTopic);
+            _logger.LogDebug($"已实时转发设备 {equipmentId} 的数据到 {controlTopic}");
 
             // ========== 存储到数据库 ==========
-            await _deviceDataStorageService.SaveDeviceDataAsync(devId, data, token);
+            await _equipmentDataStorageService.SaveEquipmentDataAsync(equipmentId, data, token);
 
             // 间隔一分钟发布到 workstation/data/{EquipmentId}
-            var workstationTopic = _topicOptions.WorkstationDataPrefix + devId;
+            var workstationTopic = _topicOptions.WorkstationDataPrefix + equipmentId;
             var now = DateTime.UtcNow;
-            if (!_lastPublishTimes.TryGetValue(devId, out var lastTime) || (now - lastTime).TotalSeconds >= 60)
+            if (!_lastPublishTimes.TryGetValue(equipmentId, out var lastTime) || (now - lastTime).TotalSeconds >= 60)
             {
                 await _mqttPublishService.PublishAsync(workstationTopic, data, token);
-                _lastPublishTimes.AddOrUpdate(devId, now, (_, old) => now);
-                _logger.LogDebug("已定时转发设备 {DeviceId} 的数据到 {Topic}", devId, workstationTopic);
+                _lastPublishTimes.AddOrUpdate(equipmentId, now, (_, old) => now);
+                _logger.LogDebug($"已定时转发设备 {equipmentId} 的数据到 {workstationTopic}");
             }
         }
     }

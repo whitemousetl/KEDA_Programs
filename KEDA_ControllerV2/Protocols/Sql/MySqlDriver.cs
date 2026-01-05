@@ -27,7 +27,7 @@ public class MySqlDriver : IProtocolDriver
                 Time = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"),
                 ProtocolId = protocol.Id,
                 ProtocolType = protocol.ProtocolType.ToString(),
-                DeviceResults = [],
+                EquipmentResults = [],
                 StartTime = string.Empty,
                 EndTime = string.Empty,
             };
@@ -39,52 +39,52 @@ public class MySqlDriver : IProtocolDriver
 
             var dataDict = await QueryDataDictionaryAsync(conn, dbProtocol.QuerySqlString, token);
 
-            foreach (var dev in protocol.Equipments)
+            foreach (var equipment in protocol.Equipments)
             {
-                var deviceResult = new DeviceResult
+                var equipmentResult = new EquipmentResult
                 {
-                    EquipmentId = dev.Id,
-                    EquipmentName = dev.Name,
+                    EquipmentId = equipment.Id,
+                    EquipmentName = equipment.Name,
                     PointResults = []
                 };
 
                 var startTime = DateTime.Now;
-                deviceResult.StartTime = startTime.ToString("yyyy-MM-dd HH:mm:ss.fff");
+                equipmentResult.StartTime = startTime.ToString("yyyy-MM-dd HH:mm:ss.fff");
 
 
-                foreach (var point in dev.Parameters)
+                foreach (var point in equipment.Parameters)
                 {
                     var pointResult = BuildPointResult(point, dataDict);
-                    deviceResult.PointResults.Add(pointResult);
+                    equipmentResult.PointResults.Add(pointResult);
                 }
 
                 var endTime = DateTime.Now;
-                deviceResult.EndTime = endTime.ToString("yyyy-MM-dd HH:mm:ss.fff");
-                deviceResult.ElapsedMs = (long)(endTime - startTime).TotalMilliseconds;
+                equipmentResult.EndTime = endTime.ToString("yyyy-MM-dd HH:mm:ss.fff");
+                equipmentResult.ElapsedMs = (long)(endTime - startTime).TotalMilliseconds;
 
-                deviceResult.TotalPoints = deviceResult.PointResults.Count;
-                deviceResult.SuccessPoints = deviceResult.PointResults.Count(p => p.ReadIsSuccess);
-                deviceResult.FailedPoints = deviceResult.PointResults.Count(p => !p.ReadIsSuccess);
-                deviceResult.ReadIsSuccess = deviceResult.PointResults.All(p => p.ReadIsSuccess);
-                deviceResult.ErrorMsg = deviceResult.PointResults.FirstOrDefault(p => !p.ReadIsSuccess)?.ErrorMsg ?? string.Empty;
+                equipmentResult.TotalPoints = equipmentResult.PointResults.Count;
+                equipmentResult.SuccessPoints = equipmentResult.PointResults.Count(p => p.ReadIsSuccess);
+                equipmentResult.FailedPoints = equipmentResult.PointResults.Count(p => !p.ReadIsSuccess);
+                equipmentResult.ReadIsSuccess = equipmentResult.PointResults.All(p => p.ReadIsSuccess);
+                equipmentResult.ErrorMsg = equipmentResult.PointResults.FirstOrDefault(p => !p.ReadIsSuccess)?.ErrorMsg ?? string.Empty;
 
-                result.DeviceResults.Add(deviceResult);
+                result.EquipmentResults.Add(equipmentResult);
             }
 
             var protocolEndTime = DateTime.Now;
             result.EndTime = protocolEndTime.ToString("yyyy-MM-dd HH:mm:ss.fff");
             result.ElapsedMs = (long)(protocolEndTime - protocolStartTime).TotalMilliseconds;
 
-            result.TotalDevices = result.DeviceResults.Count;
-            result.SuccessDevices = result.DeviceResults.Count(d => d.ReadIsSuccess);
-            result.FailedDevices = result.DeviceResults.Count(d => !d.ReadIsSuccess);
+            result.TotalEquipments = result.EquipmentResults.Count;
+            result.SuccessEquipments = result.EquipmentResults.Count(d => d.ReadIsSuccess);
+            result.FailedEquipments = result.EquipmentResults.Count(d => !d.ReadIsSuccess);
 
-            result.TotalPoints = result.DeviceResults.Sum(d => d.TotalPoints);
-            result.SuccessPoints = result.DeviceResults.Sum(d => d.SuccessPoints);
-            result.FailedPoints = result.DeviceResults.Sum(d => d.FailedPoints);
+            result.TotalPoints = result.EquipmentResults.Sum(d => d.TotalPoints);
+            result.SuccessPoints = result.EquipmentResults.Sum(d => d.SuccessPoints);
+            result.FailedPoints = result.EquipmentResults.Sum(d => d.FailedPoints);
 
-            result.ReadIsSuccess = result.DeviceResults.All(d => d.ReadIsSuccess);
-            result.ErrorMsg = result.DeviceResults.FirstOrDefault(d => !d.ReadIsSuccess)?.ErrorMsg ?? string.Empty;
+            result.ReadIsSuccess = result.EquipmentResults.All(d => d.ReadIsSuccess);
+            result.ErrorMsg = result.EquipmentResults.FirstOrDefault(d => !d.ReadIsSuccess)?.ErrorMsg ?? string.Empty;
 
             return result;
         }
@@ -145,7 +145,7 @@ public class MySqlDriver : IProtocolDriver
             Time = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"),
             ProtocolId = protocol.Id,
             ProtocolType = protocol.ProtocolType.ToString(),
-            DeviceResults = [],
+            EquipmentResults = [],
             ReadIsSuccess = false,
             ErrorMsg = errorMsg,
             StartTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"),
@@ -155,12 +155,12 @@ public class MySqlDriver : IProtocolDriver
 
         if (protocol.Equipments != null)
         {
-            foreach (var dev in protocol.Equipments)
+            foreach (var equipment in protocol.Equipments)
             {
-                var deviceResult = new DeviceResult
+                var equipmentResult = new EquipmentResult
                 {
-                    EquipmentId = dev.Id,
-                    EquipmentName = dev.Name,
+                    EquipmentId = equipment.Id,
+                    EquipmentName = equipment.Name,
                     ReadIsSuccess = false,
                     ErrorMsg = errorMsg,
                     PointResults = [],
@@ -172,11 +172,11 @@ public class MySqlDriver : IProtocolDriver
                     ElapsedMs = 0
                 };
 
-                if (dev.Parameters != null)
+                if (equipment.Parameters != null)
                 {
-                    foreach (var point in dev.Parameters)
+                    foreach (var point in equipment.Parameters)
                     {
-                        deviceResult.PointResults.Add(new PointResult
+                        equipmentResult.PointResults.Add(new PointResult
                         {
                             Address = point.Label,
                             Label = point.Label,
@@ -189,11 +189,11 @@ public class MySqlDriver : IProtocolDriver
                     }
                 }
 
-                deviceResult.TotalPoints = deviceResult.PointResults.Count;
-                deviceResult.SuccessPoints = deviceResult.PointResults.Count(p => p.ReadIsSuccess);
-                deviceResult.FailedPoints = deviceResult.TotalPoints - deviceResult.SuccessPoints;
+                equipmentResult.TotalPoints = equipmentResult.PointResults.Count;
+                equipmentResult.SuccessPoints = equipmentResult.PointResults.Count(p => p.ReadIsSuccess);
+                equipmentResult.FailedPoints = equipmentResult.TotalPoints - equipmentResult.SuccessPoints;
 
-                result.DeviceResults.Add(deviceResult);
+                result.EquipmentResults.Add(equipmentResult);
             }
         }
 
@@ -246,7 +246,7 @@ public class MySqlDriver : IProtocolDriver
         GC.SuppressFinalize(this);
     }
 
-    public Task<PointResult?> ReadAsync(ProtocolDto protocol, string devId, ParameterDto point, CancellationToken token)
+    public Task<PointResult?> ReadAsync(ProtocolDto protocol, string equipmentId, ParameterDto point, CancellationToken token)
     {
         throw new NotImplementedException();
     }

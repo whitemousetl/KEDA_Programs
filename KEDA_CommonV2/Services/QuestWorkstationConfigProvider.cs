@@ -76,14 +76,14 @@ public class QuestWorkstationConfigProvider : IWorkstationConfigProvider
         }
     }
 
-    public async Task<ProtocolDto?> GetProtocolByDeviceIdAsync(string deviceId, CancellationToken token)
+    public async Task<ProtocolDto?> GetProtocolByEquipmentIdAsync(string equipmentId, CancellationToken token)
     {
         try
         {
             var workstation = await GetLatestWrokstationAsync(token);
             if (workstation?.Protocols == null)
                 return null;
-            return workstation.Protocols.FirstOrDefault(p => p.Equipments.Any(d => d.Id == deviceId));
+            return workstation.Protocols.FirstOrDefault(p => p.Equipments.Any(d => d.Id == equipmentId));
         }
         catch (Exception ex)
         {

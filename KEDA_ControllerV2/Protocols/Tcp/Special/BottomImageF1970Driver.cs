@@ -21,7 +21,7 @@ public class BottomImageF1970Driver : IProtocolDriver
 
     public BottomImageF1970Driver() => _protocolName = GetProtocolName();
 
-    public Task<PointResult?> ReadAsync(ProtocolDto protocol, string devId, ParameterDto point, CancellationToken token)
+    public Task<PointResult?> ReadAsync(ProtocolDto protocol, string equipmentId, ParameterDto point, CancellationToken token)
     {
         throw new NotImplementedException();
     }
@@ -34,7 +34,7 @@ public class BottomImageF1970Driver : IProtocolDriver
             try
             {
                 string address = writeTask?.Protocol.Equipments[0].Parameters[0].Value ?? string.Empty;
-                string deviceMsg = string.Empty;
+                string equipmentMsg = string.Empty;
 
                 using var client = new TcpClient();
                 int connectTimeout = lanProtocol.ConnectTimeOut > 0 ? lanProtocol.ConnectTimeOut : 5000;
@@ -59,7 +59,7 @@ public class BottomImageF1970Driver : IProtocolDriver
 
                     var reply = await ReplyStateMachineAsync(stream, finalTimeoutMs, tailGraceMs, token);
                     ok = reply.Final && reply.Success;
-                    deviceMsg = reply.Message ?? (ok ? "OK" : "NO");
+                    equipmentMsg = reply.Message ?? (ok ? "OK" : "NO");
                 }
                 else
                 {
@@ -89,7 +89,7 @@ public class BottomImageF1970Driver : IProtocolDriver
 
                     var reply = await listenTask;
                     ok = reply.Final && reply.Success;
-                    deviceMsg = reply.Message ?? (ok ? "OK" : "NO");
+                    equipmentMsg = reply.Message ?? (ok ? "OK" : "NO");
                 }
             }
             catch (Exception ex) when (

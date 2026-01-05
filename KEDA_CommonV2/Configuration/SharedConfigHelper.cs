@@ -16,9 +16,9 @@ public static class SharedConfigHelper
         _configuration?.GetSection("DatabaseSettings").Get<DatabaseSettings>()
         ?? throw new InvalidOperationException("DatabaseSettings 配置未找到或格式错误");
 
-    public static DeviceDataStorageSettings DeviceDataStorageSettings =>
-        _configuration?.GetSection("DeviceDataStorageSettings").Get<DeviceDataStorageSettings>()
-        ?? throw new InvalidOperationException("DeviceDataStorageSettings 配置未找到或格式错误");
+    public static EquipmentDataStorageSettings EquipmentDataStorageSettings =>
+        _configuration?.GetSection("EquipmentDataStorageSettings").Get<EquipmentDataStorageSettings>()
+        ?? throw new InvalidOperationException("EquipmentDataStorageSettings 配置未找到或格式错误");
 
     public static MqttTopicSettings MqttTopicSettings =>
         _configuration?.GetSection("MqttTopicSettings").Get<MqttTopicSettings>()

@@ -10,7 +10,7 @@ public interface IWorkstationConfigProvider
 
     Task<ProtocolDto?> GetProtocolByProtocolIdAsync(string protocolId, CancellationToken token);
 
-    Task<ProtocolDto?> GetProtocolByDeviceIdAsync(string protocolId, CancellationToken token);
+    Task<ProtocolDto?> GetProtocolByEquipmentIdAsync(string protocolId, CancellationToken token);
 
     Task<WorkstationDto?> GetLatestWrokstationAsync(CancellationToken token);
 

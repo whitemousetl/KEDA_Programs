@@ -8,17 +8,17 @@ using System.Text.Json;
 
 namespace KEDA_CommonV2.Services;
 
-public class QuestDbDeviceDataStorageService : IDeviceDataStorageService
+public class QuestDbEquipmentDataStorageService : IEquipmentDataStorageService
 {
-    private readonly ILogger<QuestDbDeviceDataStorageService> _logger;
+    private readonly ILogger<QuestDbEquipmentDataStorageService> _logger;
     private readonly string _connectionString;
-    private readonly DeviceDataStorageSettings _storageOptions;
+    private readonly EquipmentDataStorageSettings _storageOptions;
     private readonly ConcurrentDictionary<string, HashSet<string>> _tableColumnsCache = new();
     private readonly ConcurrentDictionary<string, SemaphoreSlim> _tableLocks = new();
 
-    public QuestDbDeviceDataStorageService(
-        IOptions<DeviceDataStorageSettings> storageOptions,
-        ILogger<QuestDbDeviceDataStorageService> logger)
+    public QuestDbEquipmentDataStorageService(
+        IOptions<EquipmentDataStorageSettings> storageOptions,
+        ILogger<QuestDbEquipmentDataStorageService> logger)
     {
         _logger = logger;
         _storageOptions = storageOptions.Value;
@@ -28,9 +28,9 @@ public class QuestDbDeviceDataStorageService : IDeviceDataStorageService
     /// <summary>
     /// 保存设备数据到 QuestDB
     /// </summary>
-    public async Task SaveDeviceDataAsync(string deviceId, string jsonData, CancellationToken token)
+    public async Task SaveEquipmentDataAsync(string equipmentId, string jsonData, CancellationToken token)
     {
-        if (string.IsNullOrWhiteSpace(deviceId) || string.IsNullOrWhiteSpace(jsonData))
+        if (string.IsNullOrWhiteSpace(equipmentId) || string.IsNullOrWhiteSpace(jsonData))
         {
             _logger.LogWarning("设备ID或数据为空，跳过存储");
             return;
@@ -41,12 +41,12 @@ public class QuestDbDeviceDataStorageService : IDeviceDataStorageService
             var dataDict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(jsonData);
             if (dataDict == null || dataDict.Count == 0)
             {
-                _logger.LogWarning("设备 {DeviceId} 的数据解析后为空", deviceId);
+                _logger.LogWarning($"设备 {equipmentId} 的数据解析后为空");
                 return;
             }
 
-            dataDict.Remove("DeviceId");
-            var tableName = SanitizeTableName(deviceId);
+            dataDict.Remove("EquipmentId");
+            var tableName = SanitizeTableName(equipmentId);
 
             if (string.IsNullOrEmpty(tableName)) return;
 
@@ -64,7 +64,7 @@ public class QuestDbDeviceDataStorageService : IDeviceDataStorageService
                 // 插入数据
                 await InsertDataAsync(conn, tableName, dataDict, token);
 
-                _logger.LogDebug("成功保存设备 {DeviceId} 的数据到 QuestDB 表 {TableName}", deviceId, tableName);
+                _logger.LogDebug($"成功保存设备 {equipmentId} 的数据到 QuestDB 表 {tableName}");
             }
             finally
             {
@@ -73,7 +73,7 @@ public class QuestDbDeviceDataStorageService : IDeviceDataStorageService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "保存设备 {DeviceId} 数据到 QuestDB 时发生异常", deviceId);
+            _logger.LogError(ex, $"保存设备 {equipmentId} 数据到 QuestDB 时发生异常");
         }
     }
 

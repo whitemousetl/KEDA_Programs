@@ -72,7 +72,7 @@ public class MqttSubscribeManager : IMqttSubscribeManager
                 var (isUnique, duplicateLabel) = CheckPointLabelUnique(ws);
                 if (!isUnique)
                 {
-                    message = $"Label '{duplicateLabel}' 重复！所有Device的Points的Label必须唯一。";
+                    message = $"Label '{duplicateLabel}' 重复！每个Equipment的Points的Label必须唯一。";
                     workstationId = ws.Id;
                     // 构造并发布响应
                     var repeatedResponse = new ConfigSaveResponse
@@ -104,13 +104,13 @@ public class MqttSubscribeManager : IMqttSubscribeManager
         catch (JsonException ex)
         {
             message = $"JSON反序列化失败: {ex.Message}";
-            // 可尝试从payload中提取EdgeId
-            workstationId = TryExtractEdgeId(payload);
+            // 可尝试从payload中提取WorkstationId
+            workstationId = TryExtractWorkstationId(payload);
         }
         catch (Exception ex)
         {
             message = $"处理异常: {ex.Message}";
-            workstationId = ws?.Id ?? TryExtractEdgeId(payload);
+            workstationId = ws?.Id ?? TryExtractWorkstationId(payload);
         }
 
         // 构造并发布响应
@@ -136,13 +136,13 @@ public class MqttSubscribeManager : IMqttSubscribeManager
         }
     }
 
-    private static string TryExtractEdgeId(string json) //尝试获得工作站id
+    private static string TryExtractWorkstationId(string json) //尝试获得工作站id
     {
         try
         {
             using var doc = JsonDocument.Parse(json);
-            if (doc.RootElement.TryGetProperty("EdgeId", out var edgeIdProp))
-                return edgeIdProp.GetString() ?? string.Empty;
+            if (doc.RootElement.TryGetProperty("WorkstationId", out var workstationIdProp))
+                return workstationIdProp.GetString() ?? string.Empty;
         }
         catch { }
         return string.Empty;
@@ -151,9 +151,9 @@ public class MqttSubscribeManager : IMqttSubscribeManager
     private static (bool IsUnique, string? DuplicateLabel) CheckPointLabelUnique(WorkstationDto ws) // 检查工作站协议配置的Label是否唯一
     {
         var labelSet = new HashSet<string>();
-        foreach (var device in ws.Protocols.SelectMany(p => p.Equipments))
+        foreach (var equipment in ws.Protocols.SelectMany(p => p.Equipments))
         {
-            foreach (var point in device.Parameters)
+            foreach (var point in equipment.Parameters)
             {
                 if (!labelSet.Add(point.Label))
                 {
