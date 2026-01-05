@@ -23,7 +23,7 @@ namespace KEDA_CommonV2.Model.Workstations
         public string IpAddress { get; set; } = string.Empty;
 
         /// <summary>
-        /// 协议信息 列表
+        /// 协议信息列表
         /// </summary>
         public List<ProtocolDto> Protocols { get; set; } = new List<ProtocolDto>();
     }
