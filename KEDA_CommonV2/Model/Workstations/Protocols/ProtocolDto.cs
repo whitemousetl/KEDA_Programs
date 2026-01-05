@@ -43,7 +43,7 @@ namespace KEDA_CommonV2.Model.Workstations.Protocols
         public string Remark { get; set; } = string.Empty;
 
         /// <summary>
-        /// 设备信息 列表
+        /// 设备信息列表
         /// </summary>
         public List<EquipmentDto> Equipments { get; set; } = new List<EquipmentDto>();
     }

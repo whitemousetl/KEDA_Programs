@@ -59,7 +59,7 @@ public class MqttSubscribeManager : IMqttSubscribeManager
         bool isSuccess = false;
         string status = "Success";
         string message = "配置已保存";
-        string edgeId = string.Empty;
+        string workstationId = string.Empty;
 
         try
         {
@@ -74,23 +74,23 @@ public class MqttSubscribeManager : IMqttSubscribeManager
                 {
                     status = "Error";
                     message = $"Label '{duplicateLabel}' 重复！所有Device的Points的Label必须唯一。";
-                    edgeId = ws.Id;
+                    workstationId = ws.Id;
                     // 构造并发布响应
                     var repeatedResponse = new
                     {
-                        EdgeId = edgeId,
+                        WorkstationId = workstationId,
                         IsSuccess = false,
                         Status = status,
                         Message = message,
                         Timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
                     };
                     var repeatedResponseJson = JsonSerializer.Serialize(repeatedResponse);
-                    var repeatedResponseTopic = _topicOptions.WorkstationConfigResponsePrefix + edgeId;
+                    var repeatedResponseTopic = _topicOptions.WorkstationConfigResponsePrefix + workstationId;
                     await _mqttPublishManager.PublishConfigSavedResultAsync(repeatedResponseTopic, repeatedResponseJson, token);
                     return;
                 }
 
-                edgeId = ws.Id;
+                workstationId = ws.Id;
                 var utcNow = DateTime.UtcNow;
                 var shanghaiTime = TimeZoneInfo.ConvertTimeFromUtc(utcNow, TimeZoneInfo.FindSystemTimeZoneById("Asia/Shanghai"));
                 var config = new WorkstationConfig
@@ -108,19 +108,19 @@ public class MqttSubscribeManager : IMqttSubscribeManager
             status = "Error";
             message = $"JSON反序列化失败: {ex.Message}";
             // 可尝试从payload中提取EdgeId
-            edgeId = TryExtractEdgeId(payload);
+            workstationId = TryExtractEdgeId(payload);
         }
         catch (Exception ex)
         {
             status = "Error";
             message = $"处理异常: {ex.Message}";
-            edgeId = ws?.Id ?? TryExtractEdgeId(payload);
+            workstationId = ws?.Id ?? TryExtractEdgeId(payload);
         }
 
         // 构造并发布响应
         var response = new
         {
-            EdgeId = edgeId,
+            EdgeId = workstationId,
             IsSuccess = isSuccess,
             Status = status,
             Message = message,
@@ -128,7 +128,7 @@ public class MqttSubscribeManager : IMqttSubscribeManager
         };
         var responseJson = JsonSerializer.Serialize(response);
 
-        var responseTopic = _topicOptions.WorkstationConfigResponsePrefix + edgeId;
+        var responseTopic = _topicOptions.WorkstationConfigResponsePrefix + workstationId;
         await _mqttPublishManager.PublishConfigSavedResultAsync(responseTopic, responseJson, token);
 
         // 持续重试直到成功或取消
