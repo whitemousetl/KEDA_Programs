@@ -12,26 +12,38 @@ public class ProtocolJsonConverter : JsonConverter<ProtocolDto>
         using var doc = JsonDocument.ParseValue(ref reader);
         var root = doc.RootElement;
 
-        if (!root.TryGetProperty("InterfaceType", out var interfaceProp))
-            throw new JsonException("缺少InterfaceType字段，无法确定协议类型");
+        // Id校验
+        RequireString("Id");
 
-        InterfaceType interfaceType;
-        if (interfaceProp.ValueKind == JsonValueKind.Number)
-        {
-            var interfaceInt = interfaceProp.GetInt32();
-            interfaceType = (InterfaceType)interfaceInt;
-        }
-        else
-            throw new JsonException("Interface字段类型错误，必须为数字或字符串");
+        // InterfaceType校验
+        var interfaceType = (InterfaceType)RequireInt("InterfaceType");
 
+        // ProtocolType校验
+        RequireInt("ProtocolType");
+
+        // 分派到具体协议类型
         return interfaceType switch
         {
             InterfaceType.LAN => root.Deserialize<LanProtocolDto>(options),
             InterfaceType.COM => root.Deserialize<SerialProtocolDto>(options),
             InterfaceType.API => root.Deserialize<ApiProtocolDto>(options),
             InterfaceType.DATABASE => root.Deserialize<DatabaseProtocolDto>(options),
-            _ => throw new JsonException($"不支持的协议类型: {interfaceType}")
+            _ => throw new JsonException($"不支持的接口类型: {interfaceType}")
         };
+
+        string RequireString(string name)
+        {
+            if(!root.TryGetProperty(name, out var prop) || prop.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(prop.GetString()))
+                throw new JsonException($"缺少或无效的{name}字段");
+            return prop.GetString()!;
+        }
+
+        int RequireInt(string name)
+        {
+            if(!root.TryGetProperty(name, out var prop) || prop.ValueKind != JsonValueKind.Number)
+                throw new JsonException($"缺少或无效的{name}字段，必须为数字");
+            return prop.GetInt32();
+        }
     }
 
     public override void Write(Utf8JsonWriter writer, ProtocolDto value, JsonSerializerOptions options)

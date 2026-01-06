@@ -12,6 +12,8 @@ using System.Threading.Tasks;
 namespace KEDA_CommonV2.Test.Converters;
 public class ProtocolJsonConverterTest
 {
+    private static JsonSerializerOptions _options =  JsonOptionsProvider.WorkstationOptions;
+
     #region Read方法有效输入
     //协议转换 输入网口协议json 预期返回LanProtocolDto
     [Fact]
@@ -32,7 +34,7 @@ public class ProtocolJsonConverterTest
             """;
 
         // Act
-        var result = JsonSerializer.Deserialize<ProtocolDto>(json, JsonOptionsProvider.WorkstationOptions);
+        var result = JsonSerializer.Deserialize<ProtocolDto>(json, _options);
 
         // Assert
         Assert.NotNull(result);
@@ -60,7 +62,7 @@ public class ProtocolJsonConverterTest
             {
                 "Id": "1564sdfdsf48ee-sfds",
                 "InterfaceType": 1,
-                "ProtocolType": 20,
+                "ProtocolType": 100,
                 "CollectCycle": 1000,
                 "ReceiveTimeOut": 5000,
                 "ConnectTimeOut": 3000,
@@ -74,7 +76,7 @@ public class ProtocolJsonConverterTest
             """;
 
         // Act
-        var result = JsonSerializer.Deserialize<ProtocolDto>(json, JsonOptionsProvider.WorkstationOptions);
+        var result = JsonSerializer.Deserialize<ProtocolDto>(json, _options);
 
         // Assert
         Assert.NotNull(result);
@@ -105,7 +107,7 @@ public class ProtocolJsonConverterTest
             {
                 "Id": "1564sdfdsf48ee-sfds",
                 "InterfaceType": 2,
-                "ProtocolType": 24,
+                "ProtocolType": 200,
                 "CollectCycle": 1000,
                 "ReceiveTimeOut": 5000,
                 "ConnectTimeOut": 3000,
@@ -116,7 +118,7 @@ public class ProtocolJsonConverterTest
             """;
 
         // Act
-        var result = JsonSerializer.Deserialize<ProtocolDto>(json, JsonOptionsProvider.WorkstationOptions);
+        var result = JsonSerializer.Deserialize<ProtocolDto>(json, _options);
 
         // Assert
         Assert.NotNull(result);
@@ -144,7 +146,7 @@ public class ProtocolJsonConverterTest
             {
                 "Id": "1564sdfdsf48ee-sfds",
                 "InterfaceType": 3,
-                "ProtocolType": 25,
+                "ProtocolType": 300,
                 "CollectCycle": 1000,
                 "ReceiveTimeOut": 5000,
                 "ConnectTimeOut": 3000,
@@ -159,7 +161,7 @@ public class ProtocolJsonConverterTest
             """;
 
         // Act
-        var result = JsonSerializer.Deserialize<ProtocolDto>(json, JsonOptionsProvider.WorkstationOptions);
+        var result = JsonSerializer.Deserialize<ProtocolDto>(json, _options);
 
         // Assert
         Assert.NotNull(result);
@@ -184,8 +186,711 @@ public class ProtocolJsonConverterTest
     }
     #endregion
 
+    #region Id校验,类型是字符串
+    //缺失Id，返回JsonException，信息缺少或无效的Id字段
+    [Fact]
+    public void Read_MissingId_ThrowsJsonException()
+    {
+        var json = """
+            {
+                "InterfaceType": 3,
+                "ProtocolType": 300,
+                "CollectCycle": 1000,
+                "ReceiveTimeOut": 5000,
+                "ConnectTimeOut": 3000,
+                "Remark": "test",
+                "IpAddress": "192.168.12.22",
+                "ProtocolPort": 9600,
+                "DatabaseAccount": "keda",
+                "DatabasePassword": "root",
+                "DatabaseName": "collector",
+                "QuerySqlString": "select * from collector where name = 'keda'"
+            }
+            """;
+
+        var ex = Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, _options));
+
+        Assert.Contains("缺少或无效的Id字段", ex.Message);
+    }
+
+    //Id为Object类型，返回JsonException，信息缺少或无效的Id字段
+    [Fact]
+    public void Read_IdIsObject_ThrowsJsonException()
+    {
+        var json = """
+            {
+                "Id": { "Type": 0 },
+                "InterfaceType": 3,
+                "ProtocolType": 300,
+                "CollectCycle": 1000,
+                "ReceiveTimeOut": 5000,
+                "ConnectTimeOut": 3000,
+                "Remark": "test",
+                "IpAddress": "192.168.12.22",
+                "ProtocolPort": 9600,
+                "DatabaseAccount": "keda",
+                "DatabasePassword": "root",
+                "DatabaseName": "collector",
+                "QuerySqlString": "select * from collector where name = 'keda'"
+            }
+            """;
+
+        using var doc = JsonDocument.Parse(json);
+        var root = doc.RootElement;
+        var idProp = root.GetProperty("Id");
+        Assert.Equal(JsonValueKind.Object, idProp.ValueKind);
+
+        var ex = Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, _options));
+
+        Assert.Contains("缺少或无效的Id字段", ex.Message);
+    }
+
+    //Id为Array类型，返回JsonException，信息缺少或无效的Id字段
+    [Fact]
+    public void Read_IdIsArray_ThrowsJsonException()
+    {
+        var json = """
+            {
+                "Id": [ { "Type": 0 } ],
+                "InterfaceType": 3,
+                "ProtocolType": 300,
+                "CollectCycle": 1000,
+                "ReceiveTimeOut": 5000,
+                "ConnectTimeOut": 3000,
+                "Remark": "test",
+                "IpAddress": "192.168.12.22",
+                "ProtocolPort": 9600,
+                "DatabaseAccount": "keda",
+                "DatabasePassword": "root",
+                "DatabaseName": "collector",
+                "QuerySqlString": "select * from collector where name = 'keda'"
+            }
+            """;
+
+        using var doc = JsonDocument.Parse(json);
+        var root = doc.RootElement;
+        var idProp = root.GetProperty("Id");
+        Assert.Equal(JsonValueKind.Array, idProp.ValueKind);
+
+        var ex = Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, _options));
+
+        Assert.Contains("缺少或无效的Id字段", ex.Message);
+    }
+
+    //Id为字符串""，返回JsonException，信息缺少或无效的Id字段
+    [Fact]
+    public void Read_IdIsEmpty_ThrowsJsonException()
+    {
+        var json = """
+            {
+                "Id": "",
+                "InterfaceType": 3,
+                "ProtocolType": 300,
+                "CollectCycle": 1000,
+                "ReceiveTimeOut": 5000,
+                "ConnectTimeOut": 3000,
+                "Remark": "test",
+                "IpAddress": "192.168.12.22",
+                "ProtocolPort": 9600,
+                "DatabaseAccount": "keda",
+                "DatabasePassword": "root",
+                "DatabaseName": "collector",
+                "QuerySqlString": "select * from collector where name = 'keda'"
+            }
+            """;
+
+        using var doc = JsonDocument.Parse(json);
+        var root = doc.RootElement;
+        var idProp = root.GetProperty("Id");
+        Assert.Equal(JsonValueKind.String, idProp.ValueKind);
+
+        var ex = Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, _options));
+
+        Assert.Contains("缺少或无效的Id字段", ex.Message);
+    }
+
+    //Id为字符串"ssswwww"合法数据,InterfaceType为非法，返回JsonException，信息缺少或无效的InterfaceType字段
+    [Fact]
+    public void Read_IdIsValidString_ThrowsJsonException()
+    {
+        var json = """
+            {
+                "Id": "ssswwww",
+                "InterfaceType": 30,
+                "ProtocolType": 300,
+                "CollectCycle": 1000,
+                "ReceiveTimeOut": 5000,
+                "ConnectTimeOut": 3000,
+                "Remark": "test",
+                "IpAddress": "192.168.12.22",
+                "ProtocolPort": 9600,
+                "DatabaseAccount": "keda",
+                "DatabasePassword": "root",
+                "DatabaseName": "collector",
+                "QuerySqlString": "select * from collector where name = 'keda'"
+            }
+            """;
+
+        using var doc = JsonDocument.Parse(json);
+        var root = doc.RootElement;
+        var idProp = root.GetProperty("Id");
+        Assert.Equal(JsonValueKind.String, idProp.ValueKind);
+
+        var ex = Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, _options));
+
+        Assert.Contains("不支持的接口类型", ex.Message);
+    }
+
+    //Id是Number类型，非字符串，返回JsonException，信息缺少或无效的Id字段
+    [Fact]
+    public void Read_IdIsNumber_ThrowsJsonException()
+    {
+        var json = """
+            {
+                "Id": 22,
+                "InterfaceType": 3,
+                "ProtocolType": 300,
+                "CollectCycle": 1000,
+                "ReceiveTimeOut": 5000,
+                "ConnectTimeOut": 3000,
+                "Remark": "test",
+                "IpAddress": "192.168.12.22",
+                "ProtocolPort": 9600,
+                "DatabaseAccount": "keda",
+                "DatabasePassword": "root",
+                "DatabaseName": "collector",
+                "QuerySqlString": "select * from collector where name = 'keda'"
+            }
+            """;
+
+        using var doc = JsonDocument.Parse(json);
+        var root = doc.RootElement;
+        var idProp = root.GetProperty("Id");
+        Assert.Equal(JsonValueKind.Number, idProp.ValueKind);
+
+        var ex = Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, _options));
+
+        Assert.Contains("缺少或无效的Id字段", ex.Message);
+    }
+
+    //Id是true，非字符串，返回JsonException，信息缺少或无效的Id字段
+    [Fact]
+    public void Read_IdIsTrue_ThrowsJsonException()
+    {
+        var json = """
+            {
+                "Id": true,
+                "InterfaceType": 3,
+                "ProtocolType": 300,
+                "CollectCycle": 1000,
+                "ReceiveTimeOut": 5000,
+                "ConnectTimeOut": 3000,
+                "Remark": "test",
+                "IpAddress": "192.168.12.22",
+                "ProtocolPort": 9600,
+                "DatabaseAccount": "keda",
+                "DatabasePassword": "root",
+                "DatabaseName": "collector",
+                "QuerySqlString": "select * from collector where name = 'keda'"
+            }
+            """;
+
+        using var doc = JsonDocument.Parse(json);
+        var root = doc.RootElement;
+        var idProp = root.GetProperty("Id");
+        Assert.Equal(JsonValueKind.True, idProp.ValueKind);
+
+        var ex = Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, _options));
+
+        Assert.Contains("缺少或无效的Id字段", ex.Message);
+    }
+
+    //Id是false，非字符串，返回JsonException，信息缺少或无效的Id字段
+    [Fact]
+    public void Read_IdIsFalse_ThrowsJsonException()
+    {
+        var json = """
+            {
+                "Id": false,
+                "InterfaceType": 3,
+                "ProtocolType": 300,
+                "CollectCycle": 1000,
+                "ReceiveTimeOut": 5000,
+                "ConnectTimeOut": 3000,
+                "Remark": "test",
+                "IpAddress": "192.168.12.22",
+                "ProtocolPort": 9600,
+                "DatabaseAccount": "keda",
+                "DatabasePassword": "root",
+                "DatabaseName": "collector",
+                "QuerySqlString": "select * from collector where name = 'keda'"
+            }
+            """;
+
+        using var doc = JsonDocument.Parse(json);
+        var root = doc.RootElement;
+        var idProp = root.GetProperty("Id");
+        Assert.Equal(JsonValueKind.False, idProp.ValueKind);
+
+        var ex = Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, _options));
+
+        Assert.Contains("缺少或无效的Id字段", ex.Message);
+    }
+
+    //Id为null，返回JsonException，信息缺少或无效的Id字段
+    [Fact]
+    public void Read_IdIsNull_ThrowsJsonException()
+    {
+        var json = """
+            {
+                "Id": null,
+                "InterfaceType": 3,
+                "ProtocolType": 300,
+                "CollectCycle": 1000,
+                "ReceiveTimeOut": 5000,
+                "ConnectTimeOut": 3000,
+                "Remark": "test",
+                "IpAddress": "192.168.12.22",
+                "ProtocolPort": 9600,
+                "DatabaseAccount": "keda",
+                "DatabasePassword": "root",
+                "DatabaseName": "collector",
+                "QuerySqlString": "select * from collector where name = 'keda'"
+            }
+            """;
+
+        using var doc = JsonDocument.Parse(json);
+        var root = doc.RootElement;
+        var idProp = root.GetProperty("Id");
+        Assert.Equal(JsonValueKind.Null, idProp.ValueKind);
+
+        var ex = Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, _options));
+
+        Assert.Contains("缺少或无效的Id字段", ex.Message);
+    }
+    #endregion
+
+    #region InterfaceType校验,类型是字符串
+    //缺失InterfaceType，返回JsonException，信息缺少或无效的InterfaceType字段
     [Fact]
     public void Read_MissingInterfaceType_ThrowsJsonException()
+    {
+        var json = """
+            {
+                "ProtocolType": 300,
+                "CollectCycle": 1000,
+                "ReceiveTimeOut": 5000,
+                "ConnectTimeOut": 3000,
+                "Remark": "test",
+                "IpAddress": "192.168.12.22",
+                "ProtocolPort": 9600,
+                "DatabaseAccount": "keda",
+                "DatabasePassword": "root",
+                "DatabaseName": "collector",
+                "QuerySqlString": "select * from collector where name = 'keda'"
+            }
+            """;
+
+        var ex = Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, _options));
+
+        Assert.Contains("缺少或无效的InterfaceType字段", ex.Message);
+    }
+
+    //InterfaceType为Object类型，返回JsonException，信息缺少或无效的InterfaceType字段
+    [Fact]
+    public void Read_InterfaceTypeIsObject_ThrowsJsonException()
+    {
+        var json = """
+            {
+                "Id": "333ssssddd",
+                "InterfaceType": { "Type": 0 },
+                "ProtocolType": 300,
+                "CollectCycle": 1000,
+                "ReceiveTimeOut": 5000,
+                "ConnectTimeOut": 3000,
+                "Remark": "test",
+                "IpAddress": "192.168.12.22",
+                "ProtocolPort": 9600,
+                "DatabaseAccount": "keda",
+                "DatabasePassword": "root",
+                "DatabaseName": "collector",
+                "QuerySqlString": "select * from collector where name = 'keda'"
+            }
+            """;
+
+        using var doc = JsonDocument.Parse(json);
+        var root = doc.RootElement;
+        var interfaceTypeProp = root.GetProperty("InterfaceType");
+        Assert.Equal(JsonValueKind.Object, interfaceTypeProp.ValueKind);
+
+        var ex = Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, _options));
+
+        Assert.Contains("缺少或无效的InterfaceType字段", ex.Message);
+    }
+
+    //InterfaceType为Array类型，返回JsonException，信息缺少或无效的InterfaceType字段
+    [Fact]
+    public void Read_InterfaceTypeIsArray_ThrowsJsonException()
+    {
+        var json = """
+            {
+                "Id": "ssssdff",
+                "InterfaceType": [ { "Type": 0 } ],
+                "ProtocolType": 300,
+                "CollectCycle": 1000,
+                "ReceiveTimeOut": 5000,
+                "ConnectTimeOut": 3000,
+                "Remark": "test",
+                "IpAddress": "192.168.12.22",
+                "ProtocolPort": 9600,
+                "DatabaseAccount": "keda",
+                "DatabasePassword": "root",
+                "DatabaseName": "collector",
+                "QuerySqlString": "select * from collector where name = 'keda'"
+            }
+            """;
+
+        using var doc = JsonDocument.Parse(json);
+        var root = doc.RootElement;
+        var interfaceTypeProp = root.GetProperty("InterfaceType");
+        Assert.Equal(JsonValueKind.Array, interfaceTypeProp.ValueKind);
+
+        var ex = Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, _options));
+
+        Assert.Contains("缺少或无效的InterfaceType字段", ex.Message);
+    }
+
+    //InterfaceType为字符串""，返回JsonException，信息缺少或无效的InterfaceType字段
+    [Fact]
+    public void Read_InterfaceTypeIsEmpty_ThrowsJsonException()
+    {
+        var json = """
+            {
+                "Id": ""3333ddd,
+                "InterfaceType": "",
+                "ProtocolType": 300,
+                "CollectCycle": 1000,
+                "ReceiveTimeOut": 5000,
+                "ConnectTimeOut": 3000,
+                "Remark": "test",
+                "IpAddress": "192.168.12.22",
+                "ProtocolPort": 9600,
+                "DatabaseAccount": "keda",
+                "DatabasePassword": "root",
+                "DatabaseName": "collector",
+                "QuerySqlString": "select * from collector where name = 'keda'"
+            }
+            """;
+
+        using var doc = JsonDocument.Parse(json);
+        var root = doc.RootElement;
+        var interfaceTypeProp = root.GetProperty("Id");
+        Assert.Equal(JsonValueKind.String, interfaceTypeProp.ValueKind);
+
+        var ex = Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, _options));
+
+        Assert.Contains("缺少或无效的InterfaceType字段", ex.Message);
+    }
+
+    //InterfaceType为字符串"ssswwww"合法数据,InterfaceType为非法，返回JsonException，信息缺少或无效的InterfaceType字段
+    [Fact]
+    public void Read_InterfaceTypeIsValidString_ThrowsJsonException()
+    {
+        var json = """
+            {
+                "Id": "ssswwwwsswww333",
+                "InterfaceType": "ssswwww",
+                "ProtocolType": 300,
+                "CollectCycle": 1000,
+                "ReceiveTimeOut": 5000,
+                "ConnectTimeOut": 3000,
+                "Remark": "test",
+                "IpAddress": "192.168.12.22",
+                "ProtocolPort": 9600,
+                "DatabaseAccount": "keda",
+                "DatabasePassword": "root",
+                "DatabaseName": "collector",
+                "QuerySqlString": "select * from collector where name = 'keda'"
+            }
+            """;
+
+        using var doc = JsonDocument.Parse(json);
+        var root = doc.RootElement;
+        var idProp = root.GetProperty("Id");
+        Assert.Equal(JsonValueKind.String, idProp.ValueKind);
+
+        var ex = Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, _options));
+
+        Assert.Contains("不支持的接口类型", ex.Message);
+    }
+
+    //InterfaceType是Number类型，非字符串，返回JsonException，信息缺少或无效的InterfaceType字段
+    [Fact]
+    public void Read_InterfaceTypeIsNumber_ThrowsJsonException()
+    {
+        var json = """
+            {
+                "Id": 22,
+                "InterfaceType": 3,
+                "ProtocolType": 300,
+                "CollectCycle": 1000,
+                "ReceiveTimeOut": 5000,
+                "ConnectTimeOut": 3000,
+                "Remark": "test",
+                "IpAddress": "192.168.12.22",
+                "ProtocolPort": 9600,
+                "DatabaseAccount": "keda",
+                "DatabasePassword": "root",
+                "DatabaseName": "collector",
+                "QuerySqlString": "select * from collector where name = 'keda'"
+            }
+            """;
+
+        using var doc = JsonDocument.Parse(json);
+        var root = doc.RootElement;
+        var idProp = root.GetProperty("Id");
+        Assert.Equal(JsonValueKind.Number, idProp.ValueKind);
+
+        var ex = Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, _options));
+
+        Assert.Contains("缺少或无效的InterfaceType字段", ex.Message);
+    }
+
+    //InterfaceType是true，非字符串，返回JsonException，信息缺少或无效的InterfaceType字段
+    [Fact]
+    public void Read_InterfaceTypeIsTrue_ThrowsJsonException()
+    {
+        var json = """
+            {
+                "Id": "true",
+                "InterfaceType": true,
+                "ProtocolType": 300,
+                "CollectCycle": 1000,
+                "ReceiveTimeOut": 5000,
+                "ConnectTimeOut": 3000,
+                "Remark": "test",
+                "IpAddress": "192.168.12.22",
+                "ProtocolPort": 9600,
+                "DatabaseAccount": "keda",
+                "DatabasePassword": "root",
+                "DatabaseName": "collector",
+                "QuerySqlString": "select * from collector where name = 'keda'"
+            }
+            """;
+
+        using var doc = JsonDocument.Parse(json);
+        var root = doc.RootElement;
+        var idProp = root.GetProperty("Id");
+        Assert.Equal(JsonValueKind.True, idProp.ValueKind);
+
+        var ex = Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, _options));
+
+        Assert.Contains("缺少或无效的InterfaceType字段", ex.Message);
+    }
+
+    //InterfaceType是false，非字符串，返回JsonException，信息缺少或无效的InterfaceType字段
+    [Fact]
+    public void Read_InterfaceTypeIsFalse_ThrowsJsonException()
+    {
+        var json = """
+            {
+                "Id": "false",
+                "InterfaceType": false,
+                "ProtocolType": 300,
+                "CollectCycle": 1000,
+                "ReceiveTimeOut": 5000,
+                "ConnectTimeOut": 3000,
+                "Remark": "test",
+                "IpAddress": "192.168.12.22",
+                "ProtocolPort": 9600,
+                "DatabaseAccount": "keda",
+                "DatabasePassword": "root",
+                "DatabaseName": "collector",
+                "QuerySqlString": "select * from collector where name = 'keda'"
+            }
+            """;
+
+        using var doc = JsonDocument.Parse(json);
+        var root = doc.RootElement;
+        var idProp = root.GetProperty("Id");
+        Assert.Equal(JsonValueKind.False, idProp.ValueKind);
+
+        var ex = Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, _options));
+
+        Assert.Contains("缺少或无效的InterfaceType字段", ex.Message);
+    }
+
+    //InterfaceType为null，返回JsonException，信息缺少或无效的InterfaceType字段
+    [Fact]
+    public void Read_InterfaceTypeIsNull_ThrowsJsonException()
+    {
+        var json = """
+            {
+                "Id": "sfdsfe",
+                "InterfaceType": null,
+                "ProtocolType": 300,
+                "CollectCycle": 1000,
+                "ReceiveTimeOut": 5000,
+                "ConnectTimeOut": 3000,
+                "Remark": "test",
+                "IpAddress": "192.168.12.22",
+                "ProtocolPort": 9600,
+                "DatabaseAccount": "keda",
+                "DatabasePassword": "root",
+                "DatabaseName": "collector",
+                "QuerySqlString": "select * from collector where name = 'keda'"
+            }
+            """;
+
+        using var doc = JsonDocument.Parse(json);
+        var root = doc.RootElement;
+        var idProp = root.GetProperty("Id");
+        Assert.Equal(JsonValueKind.Null, idProp.ValueKind);
+
+        var ex = Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, _options));
+
+        Assert.Contains("缺少或无效的InterfaceType字段", ex.Message);
+    }
+
+    
+    #endregion
+
+    //#region InterfaceType校验，类型是数字
+    ////InterfaceType缺失
+    //[Fact]
+    //public void Read_MissingInterfaceType_ThrowsJsonException()
+    //{
+    //    var json = """
+    //        {
+    //            "Id": "1564sdfdsf48ee-sfds",
+    //            "ProtocolType": 0,
+    //            "CollectCycle": 1000,
+    //            "ReceiveTimeOut": 5000,
+    //            "ConnectTimeOut": 3000,
+    //            "Remark": "test",
+    //            "IpAddress": "192.168.12.22",
+    //            "ProtocolPort": 9600
+    //        }
+    //        """;
+
+    //    // Act
+    //    var ex = Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, _options));
+    //    Assert.Contains("缺少或无效的InterfaceType字段", ex.Message);
+    //}
+
+    ////InterfaceType是字符串""
+    //[Fact]
+    //public void Read_InterfaceTypeIsEmpty_ThrowsJsonException()
+    //{
+    //    var json = """
+    //        {
+    //            "Id": "1564sdfdsf48ee-sfds",
+    //            "InterfaceType": "",
+    //            "ProtocolType": 0,
+    //            "CollectCycle": 1000,
+    //            "ReceiveTimeOut": 5000,
+    //            "ConnectTimeOut": 3000,
+    //            "Remark": "test",
+    //            "IpAddress": "192.168.12.22",
+    //            "ProtocolPort": 9600
+    //        }
+    //        """;
+
+    //    using var doc = JsonDocument.Parse(json);
+    //    var root = doc.RootElement;
+    //    var idProp = root.GetProperty("Id");
+    //    Assert.Equal(JsonValueKind.String, idProp.ValueKind);
+
+    //    // Act
+    //    var ex = Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, _options));
+    //}
+
+    //[Fact]
+    //public void Read_InterfaceTypeIsNull_ThrowsJsonException()
+    //{
+    //    var json = """
+    //        {
+    //            "Id": "1564sdfdsf48ee-sfds",
+    //            "InterfaceType": null,
+    //            "ProtocolType": 0,
+    //            "CollectCycle": 1000,
+    //            "ReceiveTimeOut": 5000,
+    //            "ConnectTimeOut": 3000,
+    //            "Remark": "test",
+    //            "IpAddress": "192.168.12.22",
+    //            "ProtocolPort": 9600
+    //        }
+    //        """;
+
+    //    // Act
+    //    Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, _options));
+    //}
+
+    //[Fact]
+    //public void Read_InterfaceTypeAsString_ThrowsJsonException()
+    //{
+    //    var json = """
+    //        {
+    //            "Id": "1564sdfdsf48ee-sfds",
+    //            "InterfaceType": "0",
+    //            "ProtocolType": 0,
+    //            "CollectCycle": 1000,
+    //            "ReceiveTimeOut": 5000,
+    //            "ConnectTimeOut": 3000,
+    //            "Remark": "test",
+    //            "IpAddress": "192.168.12.22",
+    //            "ProtocolPort": 9600
+    //        }
+    //        """;
+
+    //    // Act
+    //    Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, _options));
+    //}
+
+    //[Fact]
+    //public void Read_InterfaceTypeAsObject_ThrowsJsonException()
+    //{
+    //    var json = """
+    //    {
+    //        "Id": "1564sdfdsf48ee-sfds",
+    //        "InterfaceType": { "Type": 0 },
+    //        "ProtocolType": 0,
+    //        "CollectCycle": 1000,
+    //        "ReceiveTimeOut": 5000,
+    //        "ConnectTimeOut": 3000,
+    //        "Remark": "test",
+    //        "IpAddress": "192.168.12.22",
+    //        "ProtocolPort": 9600
+    //    }
+    //    """;
+
+    //    Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, _options));
+    //}
+
+    //[Fact]
+    //public void Read_UnknownInterfaceType_ThrowsJsonException()
+    //{
+    //    var json = """
+    //    {
+    //        "Id": "1564sdfdsf48ee-sfds",
+    //        "InterfaceType": 11,
+    //        "ProtocolType": 0,
+    //        "CollectCycle": 1000,
+    //        "ReceiveTimeOut": 5000,
+    //        "ConnectTimeOut": 3000,
+    //        "Remark": "test",
+    //        "IpAddress": "192.168.12.22",
+    //        "ProtocolPort": 9600
+    //    }
+    //    """;
+
+    //    Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, _options));
+    //}
+    //#endregion
+
+    #region ProtocolType校验，类型是数字
+    [Fact]
+    public void Read_MissingProtocolType_ThrowsJsonException()
     {
         var json = """
             {
@@ -201,11 +906,53 @@ public class ProtocolJsonConverterTest
             """;
 
         // Act
-        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, JsonOptionsProvider.WorkstationOptions));
+        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, _options));
     }
 
     [Fact]
-    public void Read_InterfaceTypeAsString_ThrowsJsonException()
+    public void Read_ProtocolTypeIsEmpty_ThrowsJsonException()
+    {
+        var json = """
+            {
+                "Id": "1564sdfdsf48ee-sfds",
+                "InterfaceType": "",
+                "ProtocolType": 0,
+                "CollectCycle": 1000,
+                "ReceiveTimeOut": 5000,
+                "ConnectTimeOut": 3000,
+                "Remark": "test",
+                "IpAddress": "192.168.12.22",
+                "ProtocolPort": 9600
+            }
+            """;
+
+        // Act
+        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, _options));
+    }
+
+    [Fact]
+    public void Read_ProtocolTypeIsNull_ThrowsJsonException()
+    {
+        var json = """
+            {
+                "Id": "1564sdfdsf48ee-sfds",
+                "InterfaceType": null,
+                "ProtocolType": 0,
+                "CollectCycle": 1000,
+                "ReceiveTimeOut": 5000,
+                "ConnectTimeOut": 3000,
+                "Remark": "test",
+                "IpAddress": "192.168.12.22",
+                "ProtocolPort": 9600
+            }
+            """;
+
+        // Act
+        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, _options));
+    }
+
+    [Fact]
+    public void Read_ProtocolTypeAsString_ThrowsJsonException()
     {
         var json = """
             {
@@ -222,11 +969,11 @@ public class ProtocolJsonConverterTest
             """;
 
         // Act
-        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, JsonOptionsProvider.WorkstationOptions));
+        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, _options));
     }
 
     [Fact]
-    public void Read_InterfaceTypeAsObject_ThrowsJsonException()
+    public void Read_ProtocolTypeTypeAsObject_ThrowsJsonException()
     {
         var json = """
         {
@@ -242,11 +989,11 @@ public class ProtocolJsonConverterTest
         }
         """;
 
-        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, JsonOptionsProvider.WorkstationOptions));
+        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, _options));
     }
 
     [Fact]
-    public void Read_UnknownInterfaceType_ThrowsJsonException()
+    public void Read_UnknownProtocolType_ThrowsJsonException()
     {
         var json = """
         {
@@ -262,8 +1009,9 @@ public class ProtocolJsonConverterTest
         }
         """;
 
-        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, JsonOptionsProvider.WorkstationOptions));
+        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, _options));
     }
+    #endregion
 
     [Theory]
     [InlineData("\"abc\"")]
@@ -271,7 +1019,7 @@ public class ProtocolJsonConverterTest
     [InlineData("[1,2,3]")]
     public void Read_JsonIsNotObject_ThrowsJsonException(string input)
     {
-        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(input, JsonOptionsProvider.WorkstationOptions));
+        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(input, _options));
     }
 
     [Theory]
@@ -279,14 +1027,14 @@ public class ProtocolJsonConverterTest
     [InlineData(" ")]
     public void Read_EmptyJson_ThrowsJsonException(string input)
     {
-        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(input, JsonOptionsProvider.WorkstationOptions));
+        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(input, _options));
     }
 
     [Fact]
     public void Read_NullJson_ThrowsArgumentNullException()
     {
         string? input = null;
-        Assert.Throws<ArgumentNullException>(() => JsonSerializer.Deserialize<ProtocolDto>(input!, JsonOptionsProvider.WorkstationOptions));
+        Assert.Throws<ArgumentNullException>(() => JsonSerializer.Deserialize<ProtocolDto>(input!, _options));
     }
 
     [Fact]

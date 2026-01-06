@@ -23,19 +23,19 @@ namespace KEDA_CommonV2.Model.Workstations.Protocols
         public ProtocolType ProtocolType { get; set; }
 
         /// <summary>
-        /// 通讯延时
+        /// 通讯延时,默认0ms
         /// </summary>
         public int CollectCycle { get; set; }
 
         /// <summary>
-        /// 接收超时
+        /// 接收超时,默认500ms
         /// </summary>
-        public int ReceiveTimeOut { get; set; }
+        public int ReceiveTimeOut { get; set; } = 500;
 
         /// <summary>
-        /// 连接超时
+        /// 连接超时，默认500ms
         /// </summary>
-        public int ConnectTimeOut { get; set; }
+        public int ConnectTimeOut { get; set; } = 500;
 
         /// <summary>
         /// 备注
