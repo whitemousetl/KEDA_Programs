@@ -8,6 +8,7 @@ public class ProtocolResult//协议读取结果
     public string Time { get; set; } = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"); // 存储为字符串
     public string ProtocolId { get; set; } = string.Empty;//协议id
     public string ProtocolType { get; set; } = string.Empty; //协议类型
+    public InterfaceType InterfaceType { get; set; } //协议类型
     public List<EquipmentResult> EquipmentResults { get; set; } = []; // 设备采集结果
     public bool ReadIsSuccess { get; set; } = false;//当次是否读取成功
     public string ErrorMsg { get; set; } = string.Empty; //错误信息

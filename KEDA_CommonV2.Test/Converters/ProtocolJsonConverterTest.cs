@@ -203,4 +203,95 @@ public class ProtocolJsonConverterTest
         // Act
         Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, JsonOptionsProvider.WorkstationOptions));
     }
+
+    [Fact]
+    public void Read_InterfaceTypeAsString_ThrowsJsonException()
+    {
+        var json = """
+            {
+                "Id": "1564sdfdsf48ee-sfds",
+                "InterfaceType": "0",
+                "ProtocolType": 0,
+                "CollectCycle": 1000,
+                "ReceiveTimeOut": 5000,
+                "ConnectTimeOut": 3000,
+                "Remark": "test",
+                "IpAddress": "192.168.12.22",
+                "ProtocolPort": 9600
+            }
+            """;
+
+        // Act
+        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, JsonOptionsProvider.WorkstationOptions));
+    }
+
+    [Fact]
+    public void Read_InterfaceTypeAsObject_ThrowsJsonException()
+    {
+        var json = """
+        {
+            "Id": "1564sdfdsf48ee-sfds",
+            "InterfaceType": { "Type": 0 },
+            "ProtocolType": 0,
+            "CollectCycle": 1000,
+            "ReceiveTimeOut": 5000,
+            "ConnectTimeOut": 3000,
+            "Remark": "test",
+            "IpAddress": "192.168.12.22",
+            "ProtocolPort": 9600
+        }
+        """;
+
+        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, JsonOptionsProvider.WorkstationOptions));
+    }
+
+    [Fact]
+    public void Read_UnknownInterfaceType_ThrowsJsonException()
+    {
+        var json = """
+        {
+            "Id": "1564sdfdsf48ee-sfds",
+            "InterfaceType": 11,
+            "ProtocolType": 0,
+            "CollectCycle": 1000,
+            "ReceiveTimeOut": 5000,
+            "ConnectTimeOut": 3000,
+            "Remark": "test",
+            "IpAddress": "192.168.12.22",
+            "ProtocolPort": 9600
+        }
+        """;
+
+        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, JsonOptionsProvider.WorkstationOptions));
+    }
+
+    [Theory]
+    [InlineData("\"abc\"")]
+    [InlineData("123")]
+    [InlineData("[1,2,3]")]
+    public void Read_JsonIsNotObject_ThrowsJsonException(string input)
+    {
+        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(input, JsonOptionsProvider.WorkstationOptions));
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    public void Read_EmptyJson_ThrowsJsonException(string input)
+    {
+        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(input, JsonOptionsProvider.WorkstationOptions));
+    }
+
+    [Fact]
+    public void Read_NullJson_ThrowsArgumentNullException()
+    {
+        string? input = null;
+        Assert.Throws<ArgumentNullException>(() => JsonSerializer.Deserialize<ProtocolDto>(input!, JsonOptionsProvider.WorkstationOptions));
+    }
+
+    [Fact]
+    public void Read_ProtocolSubtypeFieldMissing_DeserializesWithDefaults()
+    {
+
+    }
 }

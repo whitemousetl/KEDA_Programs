@@ -139,25 +139,25 @@ public enum ProtocolType
     /// ModbusRtu
     /// </summary>
     [Description("ModbusRtu")]
-    ModbusRtu = 20,
+    ModbusRtu = 100,
 
     /// <summary>
     /// DLT6452007Serial
     /// </summary>
     [Description("DLT6452007Serial")]
-    DLT6452007Serial = 21,
+    DLT6452007Serial = 101,
 
     /// <summary>
     /// CJT1882004Serial
     /// </summary>
     [Description("CJT1882004Serial")]
-    CJT1882004Serial = 22,
+    CJT1882004Serial = 102,
 
     /// <summary>
     /// FxSerial
     /// </summary>
     [Description("FxSerial")]
-    FxSerial = 23,
+    FxSerial = 103,
     #endregion
 
     #region API
@@ -165,7 +165,7 @@ public enum ProtocolType
     /// Api
     /// </summary>
     [Description("Api")]
-    Api = 24,
+    Api = 200,
     #endregion
 
     #region DATABASE
@@ -173,6 +173,6 @@ public enum ProtocolType
     /// MySQL
     /// </summary>
     [Description("MySQL")]
-    MySQL = 25,
+    MySQL = 300,
     #endregion
 }
