@@ -23,16 +23,6 @@ namespace KEDA_CommonV2.Model.Workstations.Protocols
         public int ProtocolPort { get; set; }
 
         /// <summary>
-        /// 数据库账号
-        /// </summary>
-        public string DatabaseAccount { get; set; } = string.Empty;
-
-        /// <summary>
-        /// 数据库密码
-        /// </summary>
-        public string DatabasePassword { get; set; } = string.Empty;
-
-        /// <summary>
         /// 数据库名
         /// </summary>
         public string DatabaseName { get; set; } = string.Empty;
@@ -46,10 +36,5 @@ namespace KEDA_CommonV2.Model.Workstations.Protocols
         /// 查询SQL语句
         /// </summary>
         public string QuerySqlString { get; set; } = string.Empty;
-
-        /// <summary>
-        /// 连接字符串可选参数
-        /// </summary>
-        public string AdditionalOptions { get; set; } = string.Empty;
     }
 }

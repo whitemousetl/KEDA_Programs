@@ -153,8 +153,8 @@ public class ProtocolJsonConverterTest
                 "Remark": "test",
                 "IpAddress": "192.168.12.22",
                 "ProtocolPort": 9600,
-                "DatabaseAccount": "keda",
-                "DatabasePassword": "root",
+                "Account": "keda",
+                "Password": "root",
                 "DatabaseName": "collector",
                 "QuerySqlString": "select * from collector where name = 'keda'"
             }
@@ -178,8 +178,8 @@ public class ProtocolJsonConverterTest
         {
             Assert.Equal("192.168.12.22", dbProtocolDto.IpAddress);
             Assert.Equal(9600, dbProtocolDto.ProtocolPort);
-            Assert.Equal("keda", dbProtocolDto.DatabaseAccount);
-            Assert.Equal("root", dbProtocolDto.DatabasePassword);
+            Assert.Equal("keda", dbProtocolDto.Account);
+            Assert.Equal("root", dbProtocolDto.Password);
             Assert.Equal("collector", dbProtocolDto.DatabaseName);
             Assert.Equal("select * from collector where name = 'keda'", dbProtocolDto.QuerySqlString);
         }
@@ -477,6 +477,7 @@ public class ProtocolJsonConverterTest
     {
         var json = """
             {
+                "Id": "ssswwvvv4444",
                 "ProtocolType": 300,
                 "CollectCycle": 1000,
                 "ReceiveTimeOut": 5000,
@@ -520,8 +521,8 @@ public class ProtocolJsonConverterTest
 
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
-        var interfaceTypeProp = root.GetProperty("InterfaceType");
-        Assert.Equal(JsonValueKind.Object, interfaceTypeProp.ValueKind);
+        var prop = root.GetProperty("InterfaceType");
+        Assert.Equal(JsonValueKind.Object, prop.ValueKind);
 
         var ex = Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, _options));
 
@@ -552,8 +553,8 @@ public class ProtocolJsonConverterTest
 
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
-        var interfaceTypeProp = root.GetProperty("InterfaceType");
-        Assert.Equal(JsonValueKind.Array, interfaceTypeProp.ValueKind);
+        var prop = root.GetProperty("InterfaceType");
+        Assert.Equal(JsonValueKind.Array, prop.ValueKind);
 
         var ex = Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, _options));
 
@@ -566,7 +567,7 @@ public class ProtocolJsonConverterTest
     {
         var json = """
             {
-                "Id": ""3333ddd,
+                "Id": "3333ddd",
                 "InterfaceType": "",
                 "ProtocolType": 300,
                 "CollectCycle": 1000,
@@ -584,8 +585,8 @@ public class ProtocolJsonConverterTest
 
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
-        var interfaceTypeProp = root.GetProperty("Id");
-        Assert.Equal(JsonValueKind.String, interfaceTypeProp.ValueKind);
+        var prop = root.GetProperty("Id");
+        Assert.Equal(JsonValueKind.String, prop.ValueKind);
 
         var ex = Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, _options));
 
@@ -616,23 +617,23 @@ public class ProtocolJsonConverterTest
 
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
-        var idProp = root.GetProperty("Id");
-        Assert.Equal(JsonValueKind.String, idProp.ValueKind);
+        var prop = root.GetProperty("Id");
+        Assert.Equal(JsonValueKind.String, prop.ValueKind);
 
         var ex = Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, _options));
 
-        Assert.Contains("不支持的接口类型", ex.Message);
+        Assert.Contains("缺少或无效的InterfaceType字段，必须为数字", ex.Message);
     }
 
-    //InterfaceType是Number类型，非字符串，返回JsonException，信息缺少或无效的InterfaceType字段
+    //InterfaceType是Number类型，合法枚举，但是协议类型错误，为字符串，返回JsonException，信息缺少或无效的ProtocolType字段
     [Fact]
     public void Read_InterfaceTypeIsNumber_ThrowsJsonException()
     {
         var json = """
             {
-                "Id": 22,
+                "Id": "22",
                 "InterfaceType": 3,
-                "ProtocolType": 300,
+                "ProtocolType": "300",
                 "CollectCycle": 1000,
                 "ReceiveTimeOut": 5000,
                 "ConnectTimeOut": 3000,
@@ -648,12 +649,12 @@ public class ProtocolJsonConverterTest
 
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
-        var idProp = root.GetProperty("Id");
-        Assert.Equal(JsonValueKind.Number, idProp.ValueKind);
+        var prop = root.GetProperty("InterfaceType");
+        Assert.Equal(JsonValueKind.Number, prop.ValueKind);
 
         var ex = Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<ProtocolDto>(json, _options));
 
-        Assert.Contains("缺少或无效的InterfaceType字段", ex.Message);
+        Assert.Contains("缺少或无效的ProtocolType字段", ex.Message);
     }
 
     //InterfaceType是true，非字符串，返回JsonException，信息缺少或无效的InterfaceType字段

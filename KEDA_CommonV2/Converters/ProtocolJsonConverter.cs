@@ -34,7 +34,7 @@ public class ProtocolJsonConverter : JsonConverter<ProtocolDto>
         string RequireString(string name)
         {
             if(!root.TryGetProperty(name, out var prop) || prop.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(prop.GetString()))
-                throw new JsonException($"缺少或无效的{name}字段");
+                throw new JsonException($"缺少或无效的{name}字段，必须为字符串");
             return prop.GetString()!;
         }
 

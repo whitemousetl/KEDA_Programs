@@ -23,6 +23,16 @@ namespace KEDA_CommonV2.Model.Workstations.Protocols
         public ProtocolType ProtocolType { get; set; }
 
         /// <summary>
+        /// 账号
+        /// </summary>
+        public string Account { get; set; } = string.Empty;
+
+        /// <summary>
+        /// 密码
+        /// </summary>
+        public string Password { get; set; } = string.Empty;
+
+        /// <summary>
         /// 通讯延时,默认0ms
         /// </summary>
         public int CollectCycle { get; set; }
@@ -41,6 +51,11 @@ namespace KEDA_CommonV2.Model.Workstations.Protocols
         /// 备注
         /// </summary>
         public string Remark { get; set; } = string.Empty;
+
+        /// <summary>
+        /// 可选参数
+        /// </summary>
+        public string AdditionalOptions { get; set; } = string.Empty;
 
         /// <summary>
         /// 设备信息列表

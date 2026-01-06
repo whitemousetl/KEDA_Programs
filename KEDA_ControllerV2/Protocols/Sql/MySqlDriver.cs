@@ -125,8 +125,8 @@ public class MySqlDriver : IProtocolDriver
             Server = dbProtocol.IpAddress,
             Port = (uint)(dbProtocol.ProtocolPort > 0 ? dbProtocol.ProtocolPort : 3306),
             Database = dbProtocol.DatabaseName,
-            UserID = dbProtocol.DatabaseAccount,
-            Password = dbProtocol.DatabasePassword
+            UserID = dbProtocol.Account,
+            Password = dbProtocol.Password
         };
 
         if (!string.IsNullOrWhiteSpace(dbProtocol.AdditionalOptions))
