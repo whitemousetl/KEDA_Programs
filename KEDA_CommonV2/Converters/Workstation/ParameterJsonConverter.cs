@@ -20,11 +20,11 @@ public class ParameterJsonConverter : JsonConverter<ParameterDto>
 
         //字段类型校验
         var label = JsonValidateHelper.EnsurePropertyTypeIsRight<string>(root, labelPropertyName, JsonValueKind.String);
+        var address = JsonValidateHelper.EnsurePropertyTypeIsRight<string>(root, nameof(ParameterDto.Address), JsonValueKind.String);
 
         //Name如果存在，必须为字符串
         var stationNo = JsonValidateHelper.GetOptionalValue<string>(root, nameof(ParameterDto.StationNo), JsonValueKind.String) ?? string.Empty; 
-        var dataType = JsonValidateHelper.GetOptionalEnum<DataType>(root, nameof(ParameterDto.DataType)) ?? DataType.Unknown;
-        var address = JsonValidateHelper.GetOptionalValue<string>(root, nameof(ParameterDto.Address), JsonValueKind.String) ?? string.Empty;
+        var dataType = JsonValidateHelper.GetOptionalEnum<DataType>(root, nameof(ParameterDto.DataType));
         var length = JsonValidateHelper.GetOptionalValue<ushort>(root, nameof(ParameterDto.Length), JsonValueKind.Number);
         var defaultValue = JsonValidateHelper.GetOptionalValue<string>(root, nameof(ParameterDto.DefaultValue), JsonValueKind.String) ?? string.Empty;
         var cycle = JsonValidateHelper.GetOptionalValue<int>(root, nameof(ParameterDto.Cycle), JsonValueKind.Number);
@@ -33,7 +33,7 @@ public class ParameterJsonConverter : JsonConverter<ParameterDto>
         var maxValue = JsonValidateHelper.GetOptionalValue<string>(root, nameof(ParameterDto.MaxValue), JsonValueKind.String) ?? string.Empty;
         var dataFormat = JsonValidateHelper.GetOptionalEnum<DataFormat>(root, nameof(ParameterDto.DataFormat)) ?? 0;
         var addressStartWithZero = JsonValidateHelper.GetOptionalValue<bool>(root, nameof(ParameterDto.AddressStartWithZero), JsonValueKind.True);
-        var instrumentType = JsonValidateHelper.GetOptionalEnum<InstrumentType>(root, nameof(ParameterDto.InstrumentType)) ??  InstrumentType.Unknown;
+        var instrumentType = JsonValidateHelper.GetOptionalEnum<InstrumentType>(root, nameof(ParameterDto.InstrumentType));
         var value = JsonValidateHelper.GetOptionalValue<string>(root, nameof(ParameterDto.Value), JsonValueKind.String) ?? string.Empty;
 
         return new ParameterDto

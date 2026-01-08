@@ -19,7 +19,7 @@ public abstract class ProtocolDto
     /// <summary>
     /// 协议类型，必须存在
     /// </summary>
-    public ProtocolType? ProtocolType { get; set; }
+    public ProtocolType ProtocolType { get; set; }
 
     /// <summary>
     /// 通讯延时,默认1000ms，有默认值，非必须存在

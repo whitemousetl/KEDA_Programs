@@ -1,10 +1,12 @@
 ﻿using HslCommunication.Core;
+using KEDA_CommonV2.Attributes;
 using KEDA_CommonV2.Enums;
 using KEDA_CommonV2.Model.Workstations;
 using KEDA_CommonV2.Model.Workstations.Protocols;
 using KEDA_CommonV2.Utilities;
 using System.Drawing;
 using System.IO.Ports;
+using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -143,76 +145,36 @@ public class ProtocolJsonConverter : JsonConverter<ProtocolDto>
     {
         var equipments = root.GetProperty(nameof(ProtocolDto.Equipments));
 
-        switch (protocolType)
+        // 获取枚举字段上的特性
+        var fieldInfo = typeof(ProtocolType).GetField(protocolType.ToString());
+        var attr = fieldInfo?.GetCustomAttribute<ProtocolParameterAttribute>();
+
+        if (attr == null) return;
+
+        foreach (var equipment in equipments.EnumerateArray())
         {
-            case ProtocolType.ModbusTcpNet:
-            case ProtocolType.ModbusRtu:
-            case ProtocolType.ModbusRtuOverTcp:
+            if (!equipment.TryGetProperty(nameof(EquipmentDto.Parameters), out var parameters) || parameters.ValueKind != JsonValueKind.Array)
+                throw new JsonException("设备缺少参数列表");
+
+            foreach (var parameter in parameters.EnumerateArray())
+            {
+                if (attr.RequireStationNo)
                 {
-                    foreach (var equipment in equipments.EnumerateArray())
-                    {
-                        if (!equipment.TryGetProperty(nameof(EquipmentDto.Parameters), out var parameters) || parameters.ValueKind != JsonValueKind.Array)
-                            throw new JsonException("设备缺少参数列表");
-
-                        foreach (var parameter in parameters.EnumerateArray())
-                        {
-                            //存在性校验
-                            JsonValidateHelper.EnsurePropertyExists(parameter, nameof(ParameterDto.StationNo));
-                            JsonValidateHelper.EnsurePropertyExists(parameter, nameof(ParameterDto.DataFormat));
-                            JsonValidateHelper.EnsurePropertyExists(parameter, nameof(ParameterDto.DataType));
-                            JsonValidateHelper.EnsurePropertyExists(parameter, nameof(ParameterDto.AddressStartWithZero));
-
-                            //字段类型校验
-                            JsonValidateHelper.EnsurePropertyTypeIsRight<string>(parameter, nameof(ParameterDto.StationNo), JsonValueKind.String);
-                            JsonValidateHelper.EnsureEnumIsRight<DataFormat>(parameter, nameof(ParameterDto.DataFormat));
-                            JsonValidateHelper.EnsureEnumIsRight<DataType>(parameter, nameof(ParameterDto.DataType));
-                            JsonValidateHelper.EnsurePropertyTypeIsRight<bool>(parameter, nameof(ParameterDto.AddressStartWithZero), JsonValueKind.True);
-                        }
-                    }
+                    JsonValidateHelper.EnsurePropertyExists(parameter, nameof(ParameterDto.StationNo));
+                    JsonValidateHelper.EnsurePropertyTypeIsRight<string>(parameter, nameof(ParameterDto.StationNo), JsonValueKind.String);
                 }
-                break;
-
-            case ProtocolType.DLT6452007OverTcp:
-            case ProtocolType.DLT6452007Serial:
+                if (attr.RequireDataFormat)
                 {
-                    foreach (var equipment in equipments.EnumerateArray())
-                    {
-                        if (!equipment.TryGetProperty(nameof(EquipmentDto.Parameters), out var parameters) || parameters.ValueKind != JsonValueKind.Array)
-                            throw new JsonException("设备缺少参数列表");
-
-                        foreach (var parameter in parameters.EnumerateArray())
-                        {
-                            //存在性校验
-                            JsonValidateHelper.EnsurePropertyExists(parameter, nameof(ParameterDto.StationNo));
-
-                            //字段类型校验
-                            JsonValidateHelper.EnsurePropertyTypeIsRight<string>(parameter, nameof(ParameterDto.StationNo), JsonValueKind.String);
-                        }
-                    }
+                    JsonValidateHelper.EnsurePropertyExists(parameter, nameof(ParameterDto.DataFormat));
+                    JsonValidateHelper.EnsureEnumIsRight<DataFormat>(parameter, nameof(ParameterDto.DataFormat));
                 }
-                break;
-
-            case ProtocolType.CJT1882004OverTcp:
-            case ProtocolType.CJT1882004Serial:
+                if (attr.RequireDataType)
                 {
-                    foreach (var equipment in equipments.EnumerateArray())
-                    {
-                        if (!equipment.TryGetProperty(nameof(EquipmentDto.Parameters), out var parameters) || parameters.ValueKind != JsonValueKind.Array)
-                            throw new JsonException("设备缺少参数列表");
-
-                        foreach (var parameter in parameters.EnumerateArray())
-                        {
-                            //存在性校验
-                            JsonValidateHelper.EnsurePropertyExists(parameter, nameof(ParameterDto.StationNo));
-
-                            //字段类型校验
-                            JsonValidateHelper.EnsurePropertyTypeIsRight<string>(parameter, nameof(ParameterDto.StationNo), JsonValueKind.String);
-                        }
-                    }
+                    JsonValidateHelper.EnsurePropertyExists(parameter, nameof(ParameterDto.DataType));
+                    JsonValidateHelper.EnsureEnumIsRight<DataType>(parameter, nameof(ParameterDto.DataType));
                 }
-                break;
-            default:
-                break;
+                // 可扩展更多参数校验
+            }
         }
     }
 
