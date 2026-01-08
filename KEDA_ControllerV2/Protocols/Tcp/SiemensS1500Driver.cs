@@ -1,11 +1,12 @@
 ﻿using HslCommunication.Profinet.Siemens;
+using KEDA_CommonV2.Attributes;
 using KEDA_CommonV2.Enums;
 using KEDA_CommonV2.Model.Workstations.Protocols;
 using KEDA_Controller.Base;
 
 namespace KEDA_ControllerV2.Protocols.Tcp;
 
-[ProtocolType(ProtocolType.SiemensS1500)]
+[SupportedProtocolType(ProtocolType.SiemensS1500)]
 public class SiemensS1500Driver : TcpBaseProtocolDriver<SiemensS7Net>
 {
     protected override SiemensS7Net CreateConnection(ProtocolDto protocol, CancellationToken token)

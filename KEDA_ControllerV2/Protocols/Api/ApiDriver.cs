@@ -1,4 +1,5 @@
-﻿using KEDA_CommonV2.CustomException;
+﻿using KEDA_CommonV2.Attributes;
+using KEDA_CommonV2.CustomException;
 using KEDA_CommonV2.Enums;
 using KEDA_CommonV2.Model;
 using KEDA_CommonV2.Model.Workstations;
@@ -7,7 +8,7 @@ using KEDA_ControllerV2.Interfaces;
 using System.Text.Json;
 
 namespace KEDA_ControllerV2.Protocols.Api;
-[ProtocolType(ProtocolType.Api)]
+[SupportedProtocolType(ProtocolType.Api)]
 public class ApiDriver : IProtocolDriver
 {
     private readonly string _protocolName = "Api"; // 协议名称

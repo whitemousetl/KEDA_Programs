@@ -1,4 +1,5 @@
-﻿using KEDA_CommonV2.Enums;
+﻿using KEDA_CommonV2.Attributes;
+using KEDA_CommonV2.Enums;
 using KEDA_CommonV2.Interfaces;
 using KEDA_ControllerV2.Interfaces;
 
@@ -19,8 +20,8 @@ public static class ProtocolDriverFactory
                 t.Namespace.StartsWith(protocolNamespace, StringComparison.OrdinalIgnoreCase) &&
                 typeof(IProtocolDriver).IsAssignableFrom(t) &&
                 !t.IsAbstract)
-            .SelectMany(t => t.GetCustomAttributes(typeof(ProtocolTypeAttribute), false)
-            .Cast<ProtocolTypeAttribute>()
+            .SelectMany(t => t.GetCustomAttributes(typeof(SupportedProtocolTypeAttribute), false)
+            .Cast<SupportedProtocolTypeAttribute>()
             .Select(attr => new { attr.ProtocolType, Type = t }))
             .ToDictionary(x => x.ProtocolType, x => x.Type);
     }

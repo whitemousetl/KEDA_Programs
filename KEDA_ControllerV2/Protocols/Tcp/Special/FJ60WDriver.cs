@@ -1,4 +1,5 @@
-﻿using KEDA_CommonV2.CustomException;
+﻿using KEDA_CommonV2.Attributes;
+using KEDA_CommonV2.CustomException;
 using KEDA_CommonV2.Enums;
 using KEDA_CommonV2.Model;
 using KEDA_CommonV2.Model.Workstations;
@@ -11,7 +12,7 @@ using ProtocolType = KEDA_CommonV2.Enums.ProtocolType;
 
 namespace KEDA_ControllerV2.Protocols.Tcp.Special;
 
-[ProtocolType(ProtocolType.FJ60W)]
+[SupportedProtocolType(ProtocolType.FJ60W)]
 public class FJ60WDriver : IProtocolDriver
 {
     private TcpClient? _client;

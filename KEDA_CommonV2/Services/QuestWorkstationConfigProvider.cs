@@ -57,7 +57,7 @@ public class QuestWorkstationConfigProvider : IWorkstationConfigProvider
         if (configEntity == null || string.IsNullOrWhiteSpace(configEntity.ConfigJson))
             return null;
 
-        return JsonSerializer.Deserialize<WorkstationDto>(configEntity.ConfigJson, JsonOptionsProvider.WorkstationOptions);
+        return JsonSerializer.Deserialize<WorkstationDto>(configEntity.ConfigJson, JsonOptionsProvider.ProtocolJsonOptions);
     }
 
     public async Task<ProtocolDto?> GetProtocolByProtocolIdAsync(string protocolId, CancellationToken token)

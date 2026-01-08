@@ -1,11 +1,12 @@
 ﻿using HslCommunication.Instrument.CJT;
+using KEDA_CommonV2.Attributes;
 using KEDA_CommonV2.Enums;
 using KEDA_CommonV2.Model.Workstations.Protocols;
 using KEDA_ControllerV2.Base;
 
 namespace KEDA_ControllerV2.Protocols.Serial;
 
-[ProtocolType(ProtocolType.CJT1882004Serial)]
+[SupportedProtocolType(ProtocolType.CJT1882004Serial)]
 public class CJT188Driver : SerialBaseProtocolDriver<CJT188>
 {
     protected override CJT188 CreateConnection(ProtocolDto protocol, CancellationToken token)

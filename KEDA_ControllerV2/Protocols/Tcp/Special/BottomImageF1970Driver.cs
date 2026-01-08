@@ -1,5 +1,5 @@
-﻿using KEDA_CommonV2.CustomException;
-using KEDA_CommonV2.Enums;
+﻿using KEDA_CommonV2.Attributes;
+using KEDA_CommonV2.CustomException;
 using KEDA_CommonV2.Model;
 using KEDA_CommonV2.Model.Workstations;
 using KEDA_CommonV2.Model.Workstations.Protocols;
@@ -9,7 +9,7 @@ using System.Text;
 
 namespace KEDA_ControllerV2.Protocols.Tcp.Special;
 
-[ProtocolType(KEDA_CommonV2.Enums.ProtocolType.BottomImageF1970)]
+[SupportedProtocolType(KEDA_CommonV2.Enums.ProtocolType.BottomImageF1970)]
 public class BottomImageF1970Driver : IProtocolDriver
 {
     protected readonly string _protocolName;

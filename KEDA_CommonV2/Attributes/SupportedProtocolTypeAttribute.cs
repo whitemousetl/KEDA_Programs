@@ -1,13 +1,12 @@
 ﻿using KEDA_CommonV2.Enums;
 
-namespace KEDA_ControllerV2;
-
+namespace KEDA_CommonV2.Attributes;
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
-public class ProtocolTypeAttribute : Attribute
+public class SupportedProtocolTypeAttribute : Attribute
 {
     public ProtocolType ProtocolType { get; }
 
-    public ProtocolTypeAttribute(ProtocolType type)
+    public SupportedProtocolTypeAttribute(ProtocolType type)
     {
         ProtocolType = type;
     }

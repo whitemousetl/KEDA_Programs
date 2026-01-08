@@ -1,4 +1,5 @@
 ﻿using HslCommunication.Instrument.CJT;
+using KEDA_CommonV2.Attributes;
 using KEDA_CommonV2.Enums;
 using KEDA_CommonV2.Model;
 using KEDA_CommonV2.Model.Workstations.Protocols;
@@ -6,7 +7,7 @@ using KEDA_Controller.Base;
 
 namespace KEDA_ControllerV2.Protocols.Tcp;
 
-[ProtocolType(ProtocolType.CJT1882004OverTcp)]
+[SupportedProtocolType(ProtocolType.CJT1882004OverTcp)]
 public class CJT188OverTcp2004Driver : TcpBaseProtocolDriver<CJT188OverTcp>
 {
     protected override CJT188OverTcp CreateConnection(ProtocolDto protocol, CancellationToken token)

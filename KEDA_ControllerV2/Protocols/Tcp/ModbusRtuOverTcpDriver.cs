@@ -1,11 +1,12 @@
 ﻿using HslCommunication.ModBus;
+using KEDA_CommonV2.Attributes;
 using KEDA_CommonV2.Enums;
 using KEDA_CommonV2.Model.Workstations.Protocols;
 using KEDA_Controller.Base;
 
 namespace KEDA_ControllerV2.Protocols.Tcp;
 
-[ProtocolType(ProtocolType.ModbusRtuOverTcp)]
+[SupportedProtocolType(ProtocolType.ModbusRtuOverTcp)]
 public class ModbusRtuOverTcpDriver : TcpBaseProtocolDriver<ModbusRtuOverTcp>
 {
     protected override ModbusRtuOverTcp CreateConnection(ProtocolDto protocol, CancellationToken token)

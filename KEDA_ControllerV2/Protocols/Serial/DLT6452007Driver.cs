@@ -1,11 +1,12 @@
 ﻿using HslCommunication.Instrument.DLT;
+using KEDA_CommonV2.Attributes;
 using KEDA_CommonV2.Enums;
 using KEDA_CommonV2.Model.Workstations.Protocols;
 using KEDA_ControllerV2.Base;
 
 namespace KEDA_ControllerV2.Protocols.Serial;
 
-[ProtocolType(ProtocolType.DLT6452007Serial)]
+[SupportedProtocolType(ProtocolType.DLT6452007Serial)]
 public class DLT6452007Driver : SerialBaseProtocolDriver<DLT645>
 {
     protected override DLT645 CreateConnection(ProtocolDto protocol, CancellationToken token)

@@ -1,4 +1,5 @@
 ﻿using HslCommunication.ModBus;
+using KEDA_CommonV2.Attributes;
 using KEDA_CommonV2.Enums;
 using KEDA_CommonV2.Model;
 using KEDA_CommonV2.Model.Workstations.Protocols;
@@ -6,7 +7,7 @@ using KEDA_ControllerV2.Base;
 
 namespace KEDA_ControllerV2.Protocols.Serial;
 
-[ProtocolType(ProtocolType.ModbusRtu)]
+[SupportedProtocolType(ProtocolType.ModbusRtu)]
 public class ModbusRtuDriver : SerialBaseProtocolDriver<ModbusRtu>
 {
     protected override ModbusRtu CreateConnection(ProtocolDto protocol, CancellationToken token)

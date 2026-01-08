@@ -65,5 +65,5 @@ public enum DataType
     /// String
     /// </summary>
     [Description("String")]
-    String = 9
+    String = 9,
 }

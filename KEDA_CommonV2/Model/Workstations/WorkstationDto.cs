@@ -25,6 +25,6 @@ namespace KEDA_CommonV2.Model.Workstations
         /// <summary>
         /// 协议信息列表
         /// </summary>
-        public List<ProtocolDto> Protocols { get; set; } = new List<ProtocolDto>();
+        public List<ProtocolDto> Protocols { get; set; } = [];
     }
 }

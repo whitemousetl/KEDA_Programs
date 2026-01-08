@@ -1,40 +1,44 @@
 ﻿using KEDA_CommonV2.Enums;
+using System.Text.Json;
 
-namespace KEDA_CommonV2.Model.Workstations.Protocols
+namespace KEDA_CommonV2.Model.Workstations.Protocols;
+/// <summary>
+/// 数据库协议信息
+/// </summary>
+public class DatabaseProtocolDto : ProtocolDto
 {
     /// <summary>
-    /// 数据库协议信息
+    /// 接口类型,必须存在
     /// </summary>
-    public class DatabaseProtocolDto : ProtocolDto
-    {
-        /// <summary>
-        /// 接口类型
-        /// </summary>
-        public override InterfaceType InterfaceType => InterfaceType.DATABASE;
+    public override InterfaceType InterfaceType => InterfaceType.DATABASE;
 
-        /// <summary>
-        /// IP地址
-        /// </summary>
-        public string IpAddress { get; set; } = string.Empty;
+    /// <summary>
+    /// IP地址
+    /// </summary>
+    public string IpAddress { get; set; } = string.Empty;
 
-        /// <summary>
-        /// 端口
-        /// </summary>
-        public int ProtocolPort { get; set; }
+    /// <summary>
+    /// 端口
+    /// </summary>
+    public int ProtocolPort { get; set; }
 
-        /// <summary>
-        /// 数据库名
-        /// </summary>
-        public string DatabaseName { get; set; } = string.Empty;
+    /// <summary>
+    /// 数据库名
+    /// </summary>
+    public string DatabaseName { get; set; } = string.Empty;
 
-        /// <summary>
-        /// 数据库连接字符串
-        /// </summary>
-        public string DatabaseConnectString { get; set; } = string.Empty;
+    /// <summary>
+    /// 数据库连接字符串
+    /// </summary>
+    public string DatabaseConnectString { get; set; } = string.Empty;
 
-        /// <summary>
-        /// 查询SQL语句
-        /// </summary>
-        public string QuerySqlString { get; set; } = string.Empty;
-    }
+    /// <summary>
+    /// 查询SQL语句,必须存在
+    /// </summary>
+    public string QuerySqlString { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 代理网关
+    /// </summary>
+    public string Gateway { get; set; } = string.Empty;
 }

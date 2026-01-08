@@ -30,4 +30,10 @@ public enum InterfaceType
     /// </summary>
     [Description("DATABASE")]
     DATABASE = 3,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    [Description("Unknown")]
+    Unknown = 999
 }

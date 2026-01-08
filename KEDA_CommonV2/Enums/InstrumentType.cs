@@ -8,12 +8,6 @@ namespace KEDA_CommonV2.Enums;
 public enum InstrumentType
 {
     /// <summary>
-    /// 未知或未定义0x00
-    /// </summary>
-    [Description("未知或未定义")]
-    Unknown = 0,
-
-    /// <summary>
     /// 冷水水表0x10【水表类】
     /// </summary>
     [Description("冷水水表")]
@@ -59,5 +53,5 @@ public enum InstrumentType
     /// 电度表0x40【其他】
     /// </summary>
     [Description("电度表")]
-    ElectricityMeter = 64
+    ElectricityMeter = 64,
 }

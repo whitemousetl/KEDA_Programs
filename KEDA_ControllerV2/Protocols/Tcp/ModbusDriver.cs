@@ -1,11 +1,12 @@
 ﻿using HslCommunication.ModBus;
+using KEDA_CommonV2.Attributes;
 using KEDA_CommonV2.Enums;
 using KEDA_CommonV2.Model.Workstations.Protocols;
 using KEDA_Controller.Base;
 
 namespace KEDA_ControllerV2.Protocols.Tcp;
 
-[ProtocolType(ProtocolType.ModbusTcpNet)]
+[SupportedProtocolType(ProtocolType.ModbusTcpNet)]
 public class ModbusDriver : TcpBaseProtocolDriver<ModbusTcpNet>
 {
     protected override ModbusTcpNet CreateConnection(ProtocolDto protocol, CancellationToken token)

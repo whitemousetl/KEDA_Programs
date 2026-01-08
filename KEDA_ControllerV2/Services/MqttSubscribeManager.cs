@@ -63,7 +63,7 @@ public class MqttSubscribeManager : IMqttSubscribeManager
 
         try
         {
-            ws = JsonSerializer.Deserialize<WorkstationDto>(payload, JsonOptionsProvider.WorkstationOptions);
+            ws = JsonSerializer.Deserialize<WorkstationDto>(payload, JsonOptionsProvider.ProtocolJsonOptions);
 
             if (ws == null) _logger.LogError("mom下发配置时，反序列化后工作站配置为空");
             else
@@ -175,7 +175,7 @@ public class MqttSubscribeManager : IMqttSubscribeManager
         WriteTask? writeTaskEntity;
         try
         {
-            writeTaskEntity = JsonSerializer.Deserialize<WriteTask>(payload, JsonOptionsProvider.WorkstationOptions);
+            writeTaskEntity = JsonSerializer.Deserialize<WriteTask>(payload, JsonOptionsProvider.ProtocolJsonOptions);
             if (writeTaskEntity == null)
             {
                 _logger.LogWarning("写任务 payload 反序列化后为 null，已跳过。payload: {Payload}", payload);

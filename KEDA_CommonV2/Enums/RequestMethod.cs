@@ -35,5 +35,5 @@ public enum RequestMethod
     /// Patch
     /// </summary>
     [Description("Patch")]
-    Patch = 4
+    Patch = 4,
 }

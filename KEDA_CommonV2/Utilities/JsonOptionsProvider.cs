@@ -9,12 +9,15 @@ using System.Threading.Tasks;
 namespace KEDA_CommonV2.Utilities;
 public static class JsonOptionsProvider
 {
-    public static readonly JsonSerializerOptions WorkstationOptions;
+    public static readonly JsonSerializerOptions ProtocolJsonOptions;
 
     static JsonOptionsProvider()
     {
-        WorkstationOptions = new JsonSerializerOptions();
-        WorkstationOptions.Converters.Add(new ProtocolJsonConverter());
+        ProtocolJsonOptions = new JsonSerializerOptions()
+        {
+            AllowTrailingCommas = false // 明确禁止末尾逗号
+        }; ;
+        ProtocolJsonOptions.Converters.Add(new ProtocolJsonConverter());
         // 可根据需要添加更多全局设置
         // WorkstationOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
     }

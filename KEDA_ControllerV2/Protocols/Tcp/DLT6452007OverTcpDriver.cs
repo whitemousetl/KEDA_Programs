@@ -1,4 +1,5 @@
 ﻿using HslCommunication.Instrument.DLT;
+using KEDA_CommonV2.Attributes;
 using KEDA_CommonV2.Enums;
 using KEDA_CommonV2.Model;
 using KEDA_CommonV2.Model.Workstations.Protocols;
@@ -6,7 +7,7 @@ using KEDA_Controller.Base;
 
 namespace KEDA_ControllerV2.Protocols.Tcp;
 
-[ProtocolType(ProtocolType.DLT6452007OverTcp)]
+[SupportedProtocolType(ProtocolType.DLT6452007OverTcp)]
 public class DLT6452007OverTcpDriver : TcpBaseProtocolDriver<DLT645OverTcp>
 {
     protected override DLT645OverTcp CreateConnection(ProtocolDto protocol, CancellationToken token)

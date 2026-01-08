@@ -1,4 +1,5 @@
 ﻿using HslCommunication.Profinet.Melsec;
+using KEDA_CommonV2.Attributes;
 using KEDA_CommonV2.Enums;
 using KEDA_CommonV2.Model;
 using KEDA_CommonV2.Model.Workstations.Protocols;
@@ -6,7 +7,7 @@ using KEDA_ControllerV2.Base;
 
 namespace KEDA_ControllerV2.Protocols.Serial;
 
-[ProtocolType(ProtocolType.FxSerial)]
+[SupportedProtocolType(ProtocolType.FxSerial)]
 public class FxSerialDriver : SerialBaseProtocolDriver<MelsecFxSerial>
 {
     protected override MelsecFxSerial CreateConnection(ProtocolDto protocol, CancellationToken token)

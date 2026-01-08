@@ -1,4 +1,5 @@
-﻿using KEDA_CommonV2.CustomException;
+﻿using KEDA_CommonV2.Attributes;
+using KEDA_CommonV2.CustomException;
 using KEDA_CommonV2.Enums;
 using KEDA_CommonV2.Model;
 using KEDA_CommonV2.Model.Workstations;
@@ -9,7 +10,7 @@ using System.Text.Json;
 
 namespace KEDA_ControllerV2.Protocols.Sql;
 
-[ProtocolType(ProtocolType.MySQL)]
+[SupportedProtocolType(ProtocolType.MySQL)]
 public class MySqlDriver : IProtocolDriver
 {
     private readonly string _protocolName = "MySql";
