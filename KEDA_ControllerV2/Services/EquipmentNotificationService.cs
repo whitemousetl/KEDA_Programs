@@ -1,6 +1,7 @@
 ﻿using KEDA_CommonV2.Configuration;
 using KEDA_CommonV2.Interfaces;
 using KEDA_CommonV2.Model;
+using KEDA_CommonV2.Model.MqttResponses;
 using KEDA_ControllerV2.Interfaces;
 using System.Text.Encodings.Web;
 using System.Text.Json;
@@ -52,13 +53,22 @@ public class EquipmentNotificationService : IEquipmentNotificationService
                 })
                 .ToList();
 
-            var data = JsonSerializer.Serialize(equipmentResults, _jsonSerializerOptions);
+            var EquipmentsStatus = new EquipmentsStatusResponse
+            {
+                WorkstationId = ws.Id,
+                EquipmentResults = equipmentResults
+            };
 
-            var workstationId = ws.Id;
-            var workstationStatusTopic = _topicOptions.WorkstationStatusPrefix + workstationId;
+            var mqttMessage = new MqttMessage<EquipmentsStatusResponse>
+            {
+                Command = _topicOptions.WorkstationStatusPrefix,
+                Payload = EquipmentsStatus,
+            };
 
-            await _mqttPublishService.PublishAsync(workstationStatusTopic, data, token);
-            _logger.LogDebug($"已定时转发设备 {workstationId} 的数据到 {workstationStatusTopic}");
+            var data = JsonSerializer.Serialize(mqttMessage, _jsonSerializerOptions);
+
+            await _mqttPublishService.PublishAsync(_topicOptions.WorkstationStatusPrefix, data, token);
+            _logger.LogDebug($"已定时转发设备 {ws.Id} 的数据到 {_topicOptions.WorkstationStatusPrefix}");
         }
         catch (Exception ex)
         {

@@ -24,7 +24,7 @@ public class FJ60WDriver : IProtocolDriver
     private volatile bool _receiveStarted = false;
 
     // 点位最新结果缓存（key 建议使用 Address，若 Address 为空可用 Label）
-    private readonly ConcurrentDictionary<string, ProtocolResult> _latestPointResults = new();
+    private readonly ConcurrentDictionary<string, PointResult> _latestPointResults = new();
 
     public FJ60WDriver(IMqttPublishService mqttPublishService)
     {
@@ -34,7 +34,7 @@ public class FJ60WDriver : IProtocolDriver
     public string GetProtocolName() => "FJ60W";
 
     // ReadAsync 只返回缓存，不做网络读取
-    public Task<ProtocolResult?> ReadAsync(WorkstationEntity protocol, string devId, PointEntity point, CancellationToken token)
+    public Task<PointResult?> ReadAsync(ProtocolEntity protocol, string devId, PointEntity point, CancellationToken token)
     {
         // 确保接收循环已经运行（若未启动且有协议信息，尝试连接并启动）
         // 注意：这里不做阻塞式连接；连接失败时由接收循环异常处理
@@ -44,7 +44,7 @@ public class FJ60WDriver : IProtocolDriver
         if (_latestPointResults.TryGetValue(key, out var cached))
         {
             // 返回一个浅拷贝，避免调用方修改内部缓存
-            var snapshot = new ProtocolResult
+            var snapshot = new PointResult
             {
                 DataType = cached.DataType,
                 Label = cached.Label,
@@ -55,11 +55,11 @@ public class FJ60WDriver : IProtocolDriver
                 ElapsedMs = cached.ElapsedMs,
                 Metadata = new Dictionary<string, object>(cached.Metadata ?? [])
             };
-            return Task.FromResult<ProtocolResult?>(snapshot);
+            return Task.FromResult<PointResult?>(snapshot);
         }
 
         // 没有缓存时返回失败
-        var result = new ProtocolResult
+        var result = new PointResult
         {
             DataType = point.DataType,
             Label = point.Label,
@@ -70,14 +70,14 @@ public class FJ60WDriver : IProtocolDriver
             ElapsedMs = 0,
             Metadata = []
         };
-        return Task.FromResult<ProtocolResult?>(result);
+        return Task.FromResult<PointResult?>(result);
     }
 
     public async Task<bool> WriteAsync(WriteTaskEntity writeTask, CancellationToken token)
     {
         bool result = false;
 
-        var protocol = new WorkstationEntity
+        var protocol = new ProtocolEntity
         {
             IPAddress = writeTask.IPAddress,
             ProtocolPort = writeTask.ProtocolPort,
@@ -133,7 +133,7 @@ public class FJ60WDriver : IProtocolDriver
     }
 
     // 启动接收循环（仅在需要时启动一次）
-    private async Task EnsureReceiveLoopStartedAsync(WorkstationEntity protocol, CancellationToken token)
+    private async Task EnsureReceiveLoopStartedAsync(ProtocolEntity protocol, CancellationToken token)
     {
         if (_receiveStarted) return;
 
@@ -155,7 +155,7 @@ public class FJ60WDriver : IProtocolDriver
     }
 
     // 后台循环：持续读取服务器数据，解析并更新缓存
-    private async Task ReceiveLoop(WorkstationEntity protocol, CancellationToken token)
+    private async Task ReceiveLoop(ProtocolEntity protocol, CancellationToken token)
     {
         var buffer = new byte[2048];
         var sb = new StringBuilder();
@@ -232,7 +232,7 @@ public class FJ60WDriver : IProtocolDriver
         foreach (var kv in _latestPointResults)
         {
             var pr = kv.Value;
-            var updated = new ProtocolResult
+            var updated = new PointResult
             {
                 DataType = pr.DataType,
                 Label = pr.Label,
@@ -269,7 +269,7 @@ public class FJ60WDriver : IProtocolDriver
 
             _latestPointResults.AddOrUpdate(
                 key,
-                _ => new ProtocolResult
+                _ => new PointResult
                 {
                     DataType = DataType.String, // 或根据点定义设置类型
                     Label = key,
@@ -298,7 +298,7 @@ public class FJ60WDriver : IProtocolDriver
         foreach (var point in device.Points)
         {
             var key = GetPointKey(point);
-            _latestPointResults.TryAdd(key, new ProtocolResult
+            _latestPointResults.TryAdd(key, new PointResult
             {
                 DataType = point.DataType,
                 Label = point.Label,
@@ -312,7 +312,7 @@ public class FJ60WDriver : IProtocolDriver
         }
     }
 
-    private async Task EnsureConnectedAsync(WorkstationEntity protocol, CancellationToken token)
+    private async Task EnsureConnectedAsync(ProtocolEntity protocol, CancellationToken token)
     {
         if (_client != null && _client.Connected && _stream != null)
             return;

@@ -10,7 +10,7 @@ public static class VariablePlaceholderParser
     /// 从表达式中提取所有变量名
     /// 示例: "{Temperature} + {Humidity}" → ["Temperature", "Humidity"]
     /// </summary>
-    public static List<string> ExtractVariableNames(string expression)
+    private static List<string> ExtractVariableNames(string expression)
     {
         var variables = new List<string>();
         int index = 0;
@@ -36,7 +36,7 @@ public static class VariablePlaceholderParser
     /// 将表达式中的占位符替换为变量名
     /// 示例: "{Temperature} + {Humidity}" → "Temperature + Humidity"
     /// </summary>
-    public static string ReplacePlaceholders(string expression, IEnumerable<string> variableNames)
+    private static string ReplacePlaceholders(string expression, IEnumerable<string> variableNames)
     {
         string result = expression;
 

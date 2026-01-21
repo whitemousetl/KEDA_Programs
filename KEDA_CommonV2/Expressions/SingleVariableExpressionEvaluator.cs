@@ -1,4 +1,5 @@
 ﻿using DynamicExpresso;
+using DynamicExpresso.Exceptions;
 
 namespace KEDA_CommonV2.Expressions;
 
@@ -8,17 +9,60 @@ namespace KEDA_CommonV2.Expressions;
 /// </summary>
 public static class SingleVariableExpressionEvaluator
 {
+
     /// <summary>
     /// 计算单变量表达式，x为变量
     /// </summary>
     public static double Evaluate(string expression, double x)
     {
-        if (string.IsNullOrEmpty(expression))
-            return Round(x);
+        ArgumentException.ThrowIfNullOrWhiteSpace(expression);
 
-        var interpreter = new Interpreter();
-        var result = Convert.ToDouble(interpreter.SetVariable("x", x).Eval(expression));
-        return Round(result);
+        try
+        {
+            var interpreter = new Interpreter(); // 每次新建，线程安全
+
+            var parameters = new Parameter[] { new("x", typeof(double), x) };
+            var doubleValue = Convert.ToDouble(interpreter.Eval(expression, parameters));
+
+            // 检查无效的浮点数结果
+            if (double.IsInfinity(doubleValue))
+                throw new ArgumentException($"表达式 '{expression}' 计算失败 (x={x}): 结果超出有效范围（可能是除以零或数值溢出）", nameof(expression));
+            if (double.IsNaN(doubleValue))
+                throw new ArgumentException($"表达式 '{expression}' 计算失败 (x={x}): 结果无效", nameof(expression));
+
+            return RoundToTwoDecimals(doubleValue);
+        }
+        catch (ParseException ex)
+        {
+            // 解析错误与 x 值无关，可以不加
+            throw new ArgumentException($"表达式 '{expression}' 格式无效: {GetFriendlyMessage(ex)}", nameof(expression), ex);
+        }
+        catch (Exception ex) when (ex is InvalidCastException or FormatException)
+        {
+            throw new InvalidOperationException($"表达式 '{expression}' 结果无法转换为数值 (x={x})", ex);
+        }
+    }
+
+    /// <summary>
+    /// 四舍五入到两位小数（使用远离零的舍入方式）
+    /// </summary>
+    public static double RoundToTwoDecimals(double value)
+    {
+        // decimal 范围检查，超出范围时回退到 double 四舍五入
+        if (value is > (double)decimal.MaxValue or < (double)decimal.MinValue)
+            return Math.Round(value, 2, MidpointRounding.AwayFromZero);
+
+        return (double)Math.Round((decimal)value, 2, MidpointRounding.AwayFromZero);
+    }
+
+    private static string GetFriendlyMessage(ParseException ex)
+    {
+        // 根据常见错误提供友好提示
+        if (ex.Message.Contains("Invalid Operation"))
+            return "表达式不完整，请检查运算符后是否缺少操作数";
+        if (ex.Message.Contains("Unknown identifier"))
+            return "包含未知的标识符";
+        return ex.Message;
     }
 
     /// <summary>
@@ -27,26 +71,35 @@ public static class SingleVariableExpressionEvaluator
     /// </summary>
     public static double InverseEvaluate(string expression, double y)
     {
-        expression = expression.Replace(" ", "");
+        var interpreter = new Interpreter();
 
-        return expression switch
-        {
-            var e when e == "x" => y,
-            var e when e.StartsWith("x*") => ParseAndInvert(e[2..], y, (a, b) => (y - b) / a),
-            var e when e.StartsWith("x/") => ParseAndInvert(e[2..], y, (a, b) => (y - b) * a),
-            var e when e.StartsWith("x+") => y - double.Parse(e[2..]),
-            var e when e.StartsWith("x-") => y + double.Parse(e[2..]),
-            _ => throw new NotSupportedException($"不支持的表达式格式: {expression}")
-        };
+        double f0 = EvaluateInternal(interpreter, expression, 0);
+        double f1 = EvaluateInternal(interpreter, expression, 1);
+        double f2 = EvaluateInternal(interpreter, expression, 2); // 第三点验证
+
+        double a = f1 - f0;
+        double b = f0;
+
+        // 验证线性：f(2) 应该等于 2a + b
+        double expectedF2 = 2 * a + b;
+        if (Math.Abs(f2 - expectedF2) > 1e-9)
+            throw new ArgumentException($"表达式 '{expression}' 不是一元一次方程");
+
+        if (Math.Abs(a) < 1e-12)
+            throw new ArgumentException($"该表达式 '{expression}' 不是一元一次方程（x 系数为 0）");
+
+        double x = (y - b) / a;
+        return RoundToTwoDecimals(x);
     }
 
-    private static double ParseAndInvert(string part, double y, Func<double, double, double> inverter)
+    private static double EvaluateInternal(Interpreter interpreter, string expression, double x)
     {
-        var parts = part.Split('+');
-        double a = double.Parse(parts[0]);
-        double b = parts.Length > 1 ? double.Parse(parts[1]) : 0;
-        return inverter(a, b);
-    }
+        var parameters = new[] { new Parameter("x", typeof(double), x) };
+        var result = Convert.ToDouble(interpreter.Eval(expression, parameters));
 
-    private static double Round(double value) => Math.Round(value, 2);
+        if (double.IsNaN(result) || double.IsInfinity(result))
+            throw new InvalidOperationException("表达式计算结果无效");
+
+        return result;
+    }
 }

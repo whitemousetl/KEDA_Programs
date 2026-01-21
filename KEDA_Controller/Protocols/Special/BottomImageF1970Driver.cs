@@ -25,14 +25,14 @@ public class BottomImageF1970Driver : IProtocolDriver
 
     public BottomImageF1970Driver() => _protocolName = GetProtocolName();
 
-    public Task<ProtocolResult?> ReadAsync(WorkstationEntity protocol, string devId, PointEntity point, CancellationToken token)
+    public Task<PointResult?> ReadAsync(ProtocolEntity protocol, string devId, PointEntity point, CancellationToken token)
     {
         throw new NotImplementedException();
     }
 
     public virtual async Task<bool> WriteAsync(WriteTaskEntity writeTask, CancellationToken token)
     {
-        var protocol = new WorkstationEntity
+        var protocol = new ProtocolEntity
         {
             IPAddress = writeTask.IPAddress,
             ProtocolPort = writeTask.ProtocolPort,

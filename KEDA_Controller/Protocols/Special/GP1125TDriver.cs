@@ -17,7 +17,7 @@ namespace KEDA_Controller.Protocols.Special;
 [ProtocolType(ProtocolType.GP1125T)]
 public class GP1125TDriver : IProtocolDriver//托码，标签打印机
 {
-    public Task<ProtocolResult?> ReadAsync(WorkstationEntity protocol, string devId, PointEntity point, CancellationToken token)
+    public Task<PointResult?> ReadAsync(ProtocolEntity protocol, string devId, PointEntity point, CancellationToken token)
     {
         throw new NotImplementedException();
     }

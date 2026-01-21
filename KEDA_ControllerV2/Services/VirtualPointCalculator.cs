@@ -36,8 +36,7 @@ public class VirtualPointCalculator : IVirtualPointCalculator
 
     private static object? EvaluateExpression(string expression, IDictionary<string, object?> equipmentData)
     {
-        var variables = VariablePlaceholderParser.ExtractVariableNames(expression);
-        var normalizedExpression = VariablePlaceholderParser.ReplacePlaceholders(expression, variables);
+        var (variables, normalizedExpression) = VariablePlaceholderParser.Parse(expression);
 
         var interpreter = new Interpreter();
         foreach (var varName in variables)

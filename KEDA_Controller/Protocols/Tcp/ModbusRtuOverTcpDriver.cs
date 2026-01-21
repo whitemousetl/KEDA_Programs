@@ -17,7 +17,7 @@ public class ModbusRtuOverTcpDriver : HslTcpBaseProtocolDriver<ModbusRtuOverTcp>
     {
     }
 
-    protected override ModbusRtuOverTcp CreateConnection(WorkstationEntity protocol, CancellationToken token)
+    protected override ModbusRtuOverTcp CreateConnection(ProtocolEntity protocol, CancellationToken token)
     {
         return new(protocol.IPAddress, protocol.ProtocolPort)
         {

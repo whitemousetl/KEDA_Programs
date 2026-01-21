@@ -13,7 +13,7 @@ public class CJT188OverTcp2004Driver : HslTcpBaseProtocolDriver<CJT188OverTcp>
     public CJT188OverTcp2004Driver(IMqttPublishService mqttPublishService) : base(mqttPublishService)
     {
     }
-    protected override CJT188OverTcp CreateConnection(WorkstationEntity protocol, CancellationToken token)
+    protected override CJT188OverTcp CreateConnection(ProtocolEntity protocol, CancellationToken token)
     {
         return new("1")
         {

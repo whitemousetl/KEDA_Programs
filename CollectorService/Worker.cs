@@ -253,12 +253,19 @@
 using CollectorService.CustomException;
 using CollectorService.Helper;
 using CollectorService.Protocols;
+using CollectorService.Services;
+using KEDA_CommonV2.Enums;
+using KEDA_CommonV2.Model;
+using KEDA_CommonV2.Model.Workstations;
+using KEDA_CommonV2.Model.Workstations.Protocols;
 using KEDA_Share.Entity;
 using KEDA_Share.Enums;
 using KEDA_Share.Repository.Interfaces;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using DeviceStatus = KEDA_Share.Entity.DeviceStatus;
+using IProtocolDriver = CollectorService.Protocols.IProtocolDriver;
+using PointResult = KEDA_Share.Entity.PointResult;
 
 namespace CollectorService;
 
@@ -268,6 +275,7 @@ public class Worker : BackgroundService
     private readonly IWorkstationProvider _workstationProvider;
     private readonly IDeviceStatusRepository _deviceStatusRepository;
     private readonly IDeviceResultRepository _deviceResultRepository;
+    private readonly IMqttPublishManager _mqttPublishManager;
 
     private CancellationTokenSource? _collectCts;
     private long _lastTimestamp = 0;
@@ -276,13 +284,14 @@ public class Worker : BackgroundService
     // 用于管理所有采集任务
     private readonly ConcurrentDictionary<string, Task> _collectorTasks = new();
 
-    public Worker(ILogger<Worker> logger, IWorkstationProvider workstationProvider, IDeviceStatusRepository deviceStatusRepository, IDeviceResultRepository deviceResultRepository, IConfiguration config)
+    public Worker(ILogger<Worker> logger, IWorkstationProvider workstationProvider, IDeviceStatusRepository deviceStatusRepository, IDeviceResultRepository deviceResultRepository, IConfiguration config, IMqttPublishManager mqttPublishManager)
     {
         _logger = logger;
         _workstationProvider = workstationProvider;
         _deviceStatusRepository = deviceStatusRepository;
         _deviceResultRepository = deviceResultRepository;
         _maxRetry = config.GetValue<int>("Collector:MaxRetry", 1);
+        _mqttPublishManager = mqttPublishManager;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -344,7 +353,7 @@ public class Worker : BackgroundService
             // 唯一标识建议用协议类型+IP+端口或协议ID
             var protocolKey = $"{protocol.ProtocolType}_{protocol.GetHashCode()}";
 
-            if (!Enum.TryParse<ProtocolType>(protocol.ProtocolType, out var protocolType))
+            if (!Enum.TryParse<KEDA_Share.Enums.ProtocolType>(protocol.ProtocolType, out var protocolType))
             {
                 _logger.LogWarning($"工作站存在协议 {protocol.ProtocolType} 未实现");
                 continue;
@@ -367,8 +376,29 @@ public class Worker : BackgroundService
 
                     while (!token.IsCancellationRequested)
                     {
+                        var protocolResult = new ProtocolResult()
+                        {
+                            ProtocolId = protocol.ProtocolID,
+                        };
+
+                        List<EquipmentDto> equipments = [];
+
                         foreach (var dev in protocol.Devices)
                         {
+                            var equipmentDto = new EquipmentDto()
+                            {
+                                Id = dev.EquipmentID,
+                                Name = dev.EquipmentName,
+                                EquipmentType = dev.Type == "设备" ? EquipmentType.Equipment : EquipmentType.Instrument,
+                                Parameters = [.. dev.Points.Select(p => new ParameterDto
+                                {
+                                    Label = p.Label,
+                                    DataType = Enum.Parse<KEDA_CommonV2.Enums.DataType>(p.DataType),
+                                })]
+                            };
+
+                            equipments.Add(equipmentDto);
+
                             var deviceStatus = new DeviceStatus
                             {
                                 DeviceId = dev.EquipmentID,
@@ -393,7 +423,9 @@ public class Worker : BackgroundService
 
                             var deviceStopwatch = Stopwatch.StartNew();
 
-                            if(protocolType == ProtocolType.MySqlOnlyOneAddress || protocolType == ProtocolType.Api || protocolType == ProtocolType.ApiWithOnlyOneAddress)
+                            if(protocolType == KEDA_Share.Enums.ProtocolType.MySqlOnlyOneAddress 
+                                || protocolType == KEDA_Share.Enums.ProtocolType.Api 
+                                || protocolType == KEDA_Share.Enums.ProtocolType.ApiWithOnlyOneAddress)
                                 devResult = await driver.ReadAsync(protocol, dev, token);
                             else
                             {
@@ -405,7 +437,7 @@ public class Worker : BackgroundService
                                     var pointResult = new PointResult
                                     {
                                         Label = point.Label,
-                                        DataType = Enum.Parse<DataType>(point.DataType),
+                                        DataType = Enum.Parse<KEDA_Share.Enums.DataType>(point.DataType),
                                     };
                                     try
                                     {
@@ -526,7 +558,26 @@ public class Worker : BackgroundService
 
                             await _deviceStatusRepository.UpsertAsync(deviceStatus, token);
                             await _deviceResultRepository.AddAsync(devResult, token);
+
+                            var sourcePointResults = devResult.PointResults ?? [];
+                            var equipmentResult = new EquipmentResult
+                            {
+                                EquipmentId = dev.EquipmentID,
+                                PointResults = [.. sourcePointResults
+                                    .Select(pr => new KEDA_CommonV2.Model.PointResult
+                                    {
+                                        Label = pr.Label ?? string.Empty,
+                                        Value = pr.Result,
+                                    })]
+                            };
+
+                            protocolResult.EquipmentResults.Add(equipmentResult);
                         }
+
+                        protocolResult.Time = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+
+                       
+                        await _mqttPublishManager.ProcessDataAsync(protocolResult, equipments, token); //把协议结果转换，清洗,发布
 
                         int cycleMs = 1000;
                         if (int.TryParse(protocol.CollectCycle, out var ms) && ms > 0)

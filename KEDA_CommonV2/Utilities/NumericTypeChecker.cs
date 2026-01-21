@@ -34,27 +34,27 @@ public static class NumericTypeChecker
     /// <summary>
     /// 尝试将对象转换为 double
     /// </summary>
-    public static bool TryConvertToDouble(object? value, out double result)
-    {
-        result = 0;
+    //public static bool TryConvertToDouble(object? value, out double result)
+    //{
+    //    result = 0;
 
-        if (value == null)
-            return false;
+    //    if (value == null)
+    //        return false;
 
-        try
-        {
-            if (value is System.Text.Json.JsonElement je && je.ValueKind == System.Text.Json.JsonValueKind.Number)
-            {
-                result = je.GetDouble();
-                return true;
-            }
+    //    try
+    //    {
+    //        if (value is System.Text.Json.JsonElement je && je.ValueKind == System.Text.Json.JsonValueKind.Number)
+    //        {
+    //            result = je.GetDouble();
+    //            return true;
+    //        }
 
-            result = Convert.ToDouble(value);
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
-    }
+    //        result = Convert.ToDouble(value);
+    //        return true;
+    //    }
+    //    catch
+    //    {
+    //        return false;
+    //    }
+    //}
 }

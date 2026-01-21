@@ -48,6 +48,14 @@ public class PointExpressionConverter : IPointExpressionConverter
             _ => System.Convert.ToDouble(value)
         };
 
-        return SingleVariableExpressionEvaluator.Evaluate(expression, numericValue);//工具静态类，一元一次表达式计算
+        try
+        {
+            return SingleVariableExpressionEvaluator.Evaluate(expression, numericValue);
+        }
+        catch (Exception)
+        {
+            // 表达式计算失败，返回四舍五入后的原值作为降级处理
+            return SingleVariableExpressionEvaluator.RoundToTwoDecimals(numericValue);
+        }
     }
 }

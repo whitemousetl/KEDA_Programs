@@ -12,27 +12,23 @@ public class EquipmentJsonConverter : JsonConverter<EquipmentDto>
         using var doc = JsonDocument.ParseValue(ref reader);
         var root = doc.RootElement;
 
-        //存在性校验
-        JsonValidateHelper.EnsurePropertyExists(root, nameof(EquipmentDto.Id));
-        JsonValidateHelper.EnsurePropertyExists(root, nameof(EquipmentDto.EquipmentType));
-        JsonValidateHelper.EnsurePropertyExists(root, nameof(EquipmentDto.Parameters));
+        var namePrefix = "Equipment的";
 
-        //字段类型校验
-        var id = JsonValidateHelper.EnsurePropertyTypeIsRight<string>(root, nameof(EquipmentDto.Id), JsonValueKind.String);
-        var equipmentType = JsonValidateHelper.EnsureEnumIsRight<EquipmentType>(root, nameof(EquipmentDto.EquipmentType));
-        JsonValidateHelper.EnsurePropertyTypeIsRight<List<ParameterDto>>(root, nameof(EquipmentDto.Parameters), JsonValueKind.Array);
+        var id = JsonValidateHelper.EnsurePropertyExistsAndTypeIsRight<string>(root, namePrefix, nameof(EquipmentDto.Id),  JsonValueKind.String);
+
+        var isCollect = JsonValidateHelper.EnsurePropertyExistsAndTypeIsRight<bool>(root, namePrefix, nameof(EquipmentDto.IsCollect),  JsonValueKind.True);
+
+        var parameters = JsonValidateHelper.EnsurePropertyExistsAndTypeIsRight<List<ParameterDto>>(root, namePrefix, nameof(EquipmentDto.Parameters),  JsonValueKind.Array);
+
+        var equipmentType = JsonValidateHelper.EnsurePropertyExistsAndEnumIsRight<EquipmentType>(root, namePrefix, nameof(EquipmentDto.EquipmentType));
 
         //Name如果存在，必须为字符串
-        var name = JsonValidateHelper.GetOptionalValue<string>(root, nameof(WorkstationDto.Name), JsonValueKind.String) ?? string.Empty;
-
-        // 反序列化 Parameters 列表
-        var parameters = root.TryGetProperty(nameof(EquipmentDto.Parameters), out var arr) && arr.ValueKind == JsonValueKind.Array
-            ? arr.Deserialize<List<ParameterDto>>(options) ?? []
-            : [];
+        var name = JsonValidateHelper.ValidateOptionalFields<string?>(root, namePrefix, nameof(WorkstationDto.Name), JsonValueKind.String) ?? string.Empty;
 
         return new EquipmentDto
         {
             Id = id,
+            IsCollect = isCollect,
             Name = name,
             EquipmentType = equipmentType,
             Parameters = parameters

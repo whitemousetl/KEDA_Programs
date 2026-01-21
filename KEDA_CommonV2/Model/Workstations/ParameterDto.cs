@@ -1,6 +1,6 @@
-﻿using HslCommunication.Core;
-using KEDA_CommonV2.Enums;
+﻿using KEDA_CommonV2.Enums;
 using System.Text.Json;
+using HslCommunication.Core;
 
 namespace KEDA_CommonV2.Model.Workstations;
 /// <summary>
@@ -14,19 +14,39 @@ public class ParameterDto
     public string Label { get; set; } = string.Empty;
 
     /// <summary>
+    /// 地址, 虚拟点固定地址VirtualPoint,必须存在
+    /// </summary>
+    public string Address { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 是否监控，必须存在，如果Json不存在或错误，默认false
+    /// </summary>
+    public bool IsMonitor { get; set; } = false;
+
+    /// <summary>
     /// 站号,现场差异，非必须存在
     /// </summary>
     public string StationNo { get; set; } = string.Empty;
 
     /// <summary>
+    /// 协议格式,解析或生成格式，大端序小端序,现场差异，非必须存在
+    /// </summary>
+    public DataFormat? DataFormat { get; set; }
+
+    /// <summary>
+    /// 偏移量，地址从0开始？现场差异，非必须存在
+    /// </summary>
+    public bool? AddressStartWithZero { get; set; }
+
+    /// <summary>
+    /// 仪表类型，CJT188专用,现场差异，非必须存在
+    /// </summary>
+    public InstrumentType? InstrumentType { get; set; }
+
+    /// <summary>
     /// 数据类型
     /// </summary>
     public DataType? DataType { get; set; }
-
-    /// <summary>
-    /// 地址, 虚拟点固定地址VirtualPoint,非必须存在
-    /// </summary>
-    public string Address { get; set; } = string.Empty;
 
     /// <summary>
     /// 长度,非必须存在
@@ -57,21 +77,6 @@ public class ParameterDto
     /// 最大值,非必须存在
     /// </summary>
     public string MaxValue { get; set; } = string.Empty;
-
-    /// <summary>
-    /// 协议格式,解析或生成格式，大端序小端序,现场差异，非必须存在
-    /// </summary>
-    public DataFormat? DataFormat { get; set; }
-
-    /// <summary>
-    /// 偏移量，地址从0开始？现场差异，非必须存在
-    /// </summary>
-    public bool? AddressStartWithZero { get; set; }
-
-    /// <summary>
-    /// 仪表类型，CJT188专用,现场差异，非必须存在
-    /// </summary>
-    public InstrumentType? InstrumentType { get; set; }
 
     /// <summary>
     /// 写入才有值,非必须存在

@@ -27,6 +27,6 @@ public class Worker : BackgroundService
         var configMonitor = scope.ServiceProvider.GetRequiredService<IConfigMonitor>();
         await configMonitor.MonitorAsync(stoppingToken);
 
-        _logger.LogInformation("后台数据处理服务已停止");
+        //_logger.LogInformation("后台数据处理服务已停止");
     }
 }

@@ -1,4 +1,4 @@
-﻿namespace KEDA_CommonV2.Interfaces;
+﻿namespace KEDA_CommonV2.Interfaces.IMqttServices;
 
 public interface IMqttSubscribeService : IAsyncDisposable
 {
@@ -10,3 +10,5 @@ public interface IMqttSubscribeService : IAsyncDisposable
 
     Task RemoveSubscribeTopicAsync(string topicName, CancellationToken token);
 }
+
+

@@ -15,14 +15,17 @@ public class QuestDbEquipmentDataStorageService : IEquipmentDataStorageService
     private readonly EquipmentDataStorageSettings _storageOptions;
     private readonly ConcurrentDictionary<string, HashSet<string>> _tableColumnsCache = new();
     private readonly ConcurrentDictionary<string, SemaphoreSlim> _tableLocks = new();
+    private readonly ISharedConfigHelper _sharedConfigHelper;
 
     public QuestDbEquipmentDataStorageService(
         IOptions<EquipmentDataStorageSettings> storageOptions,
-        ILogger<QuestDbEquipmentDataStorageService> logger)
+        ILogger<QuestDbEquipmentDataStorageService> logger,
+        ISharedConfigHelper sharedConfigHelper)
     {
         _logger = logger;
         _storageOptions = storageOptions.Value;
-        _connectionString = SharedConfigHelper.DatabaseSettings.QuestDb;
+        _sharedConfigHelper = sharedConfigHelper;
+        _connectionString = _sharedConfigHelper.DatabaseSettings.QuestDb;
     }
 
     /// <summary>

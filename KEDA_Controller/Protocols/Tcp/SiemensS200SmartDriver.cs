@@ -17,7 +17,7 @@ public class SiemensS200SmartDriver : HslTcpBaseProtocolDriver<SiemensS7Net>
     {
     }
 
-    protected override SiemensS7Net CreateConnection(WorkstationEntity protocol, CancellationToken token)
+    protected override SiemensS7Net CreateConnection(ProtocolEntity protocol, CancellationToken token)
     {
         return new(SiemensPLCS.S200Smart, protocol.IPAddress)
         {

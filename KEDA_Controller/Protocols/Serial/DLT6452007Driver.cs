@@ -17,7 +17,7 @@ namespace KEDA_Controller.Protocols.Serial;
 [ProtocolType(ProtocolType.DLT645_2007Serial)]
 public class DLT6452007Driver : HslSerialBaseProtocolDriver<DLT645>
 {
-    protected override DLT645 CreateConnection(WorkstationEntity protocol, CancellationToken token)
+    protected override DLT645 CreateConnection(ProtocolEntity protocol, CancellationToken token)
     {
         var conn = new DLT645();
         conn.SerialPortInni(protocol.PortName, protocol.BaudRate, protocol.DataBits, protocol.StopBits, protocol.Parity);

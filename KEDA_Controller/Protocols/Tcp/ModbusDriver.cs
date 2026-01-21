@@ -13,7 +13,7 @@ public class ModbusDriver : HslTcpBaseProtocolDriver<ModbusTcpNet>
     {
     }
 
-    protected override ModbusTcpNet CreateConnection(WorkstationEntity protocol, CancellationToken token)
+    protected override ModbusTcpNet CreateConnection(ProtocolEntity protocol, CancellationToken token)
     {
         return new(protocol.IPAddress, protocol.ProtocolPort)
         {

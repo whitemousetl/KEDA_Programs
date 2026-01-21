@@ -14,6 +14,7 @@ public enum ProtocolType
     /// </summary>
     [Description("ModbusTcpNet")]
     [ProtocolInterfaceType(InterfaceType.LAN)]
+    [ProtocolValidateParameter( requireStationNo:true, requireDataFormat:true, requireDataType:true, requireAddressStartWithZero:true, requireInstrumentType:false )]
     ModbusTcpNet = 0,
 
     /// <summary>
@@ -21,6 +22,7 @@ public enum ProtocolType
     /// </summary>
     [Description("ModbusRtuOverTcp")]
     [ProtocolInterfaceType(InterfaceType.LAN)]
+    [ProtocolValidateParameter(requireStationNo: true, requireDataFormat: true, requireDataType: true, requireAddressStartWithZero: true, requireInstrumentType: false)]
     ModbusRtuOverTcp = 1,
 
     /// <summary>
@@ -28,6 +30,7 @@ public enum ProtocolType
     /// </summary>
     [Description("OmronFinsNet")]
     [ProtocolInterfaceType(InterfaceType.LAN)]
+    [ProtocolValidateParameter(requireStationNo: false, requireDataFormat: false, requireDataType: true, requireAddressStartWithZero: false, requireInstrumentType: false)]
     OmronFinsNet = 2,
 
     /// <summary>
@@ -35,6 +38,7 @@ public enum ProtocolType
     /// </summary>
     [Description("OmronCipNet")]
     [ProtocolInterfaceType(InterfaceType.LAN)]
+    [ProtocolValidateParameter(requireStationNo: false, requireDataFormat: false, requireDataType: true, requireAddressStartWithZero: false, requireInstrumentType: false)]
     OmronCipNet = 3,
 
     /// <summary>
@@ -42,6 +46,7 @@ public enum ProtocolType
     /// </summary>
     [Description("SiemensS200Smart")]
     [ProtocolInterfaceType(InterfaceType.LAN)]
+    [ProtocolValidateParameter(requireStationNo: false, requireDataFormat: false, requireDataType: true, requireAddressStartWithZero: false, requireInstrumentType: false)]
     SiemensS200Smart = 4,
 
     /// <summary>
@@ -49,6 +54,7 @@ public enum ProtocolType
     /// </summary>
     [Description("SiemensS1200")]
     [ProtocolInterfaceType(InterfaceType.LAN)]
+    [ProtocolValidateParameter(requireStationNo: false, requireDataFormat: false, requireDataType: true, requireAddressStartWithZero: false, requireInstrumentType: false)]
     SiemensS1200 = 5,
 
     /// <summary>
@@ -56,6 +62,7 @@ public enum ProtocolType
     /// </summary>
     [Description("SiemensS1500")]
     [ProtocolInterfaceType(InterfaceType.LAN)]
+    [ProtocolValidateParameter(requireStationNo: false, requireDataFormat: false, requireDataType: true, requireAddressStartWithZero: false, requireInstrumentType: false)]
     SiemensS1500 = 6,
 
     /// <summary>
@@ -63,6 +70,7 @@ public enum ProtocolType
     /// </summary>
     [Description("SiemensS200")]
     [ProtocolInterfaceType(InterfaceType.LAN)]
+    [ProtocolValidateParameter(requireStationNo: false, requireDataFormat: false, requireDataType: true, requireAddressStartWithZero: false, requireInstrumentType: false)]
     SiemensS200 = 7,
 
     /// <summary>
@@ -70,6 +78,7 @@ public enum ProtocolType
     /// </summary>
     [Description("SiemensS300")]
     [ProtocolInterfaceType(InterfaceType.LAN)]
+    [ProtocolValidateParameter(requireStationNo: false, requireDataFormat: false, requireDataType: true, requireAddressStartWithZero: false, requireInstrumentType: false)]
     SiemensS300 = 8,
 
     /// <summary>
@@ -77,6 +86,7 @@ public enum ProtocolType
     /// </summary>
     [Description("SiemensS400")]
     [ProtocolInterfaceType(InterfaceType.LAN)]
+    [ProtocolValidateParameter(requireStationNo: false, requireDataFormat: false, requireDataType: true, requireAddressStartWithZero: false, requireInstrumentType: false)]
     SiemensS400 = 9,
 
     /// <summary>
@@ -84,6 +94,7 @@ public enum ProtocolType
     /// </summary>
     [Description("DLT6452007OverTcp")]
     [ProtocolInterfaceType(InterfaceType.LAN)]
+    [ProtocolValidateParameter(requireStationNo: true, requireDataFormat: false, requireDataType: true, requireAddressStartWithZero: false, requireInstrumentType: false)]
     DLT6452007OverTcp = 10,
 
     /// <summary>
@@ -91,6 +102,7 @@ public enum ProtocolType
     /// </summary>
     [Description("CJT1882004OverTcp")]
     [ProtocolInterfaceType(InterfaceType.LAN)]
+    [ProtocolValidateParameter(requireStationNo: true, requireDataFormat: false, requireDataType: true, requireAddressStartWithZero: false, requireInstrumentType: true)]
     CJT1882004OverTcp = 11,
 
     /// <summary>
@@ -98,6 +110,7 @@ public enum ProtocolType
     /// </summary>
     [Description("FxSerialOverTcp")]
     [ProtocolInterfaceType(InterfaceType.LAN)]
+    [ProtocolValidateParameter(requireStationNo: false, requireDataFormat: false, requireDataType: true, requireAddressStartWithZero: false, requireInstrumentType: false)]
     FxSerialOverTcp = 12,
 
     /// <summary>
@@ -105,6 +118,7 @@ public enum ProtocolType
     /// </summary>
     [Description("IEC104")]
     [ProtocolInterfaceType(InterfaceType.LAN)]
+    [ProtocolValidateParameter(requireStationNo: false, requireDataFormat: false, requireDataType: false, requireAddressStartWithZero: false, requireInstrumentType: false)]
     IEC104 = 13,
 
     /// <summary>
@@ -112,6 +126,7 @@ public enum ProtocolType
     /// </summary>
     [Description("OpcUa")]
     [ProtocolInterfaceType(InterfaceType.LAN)]
+    [ProtocolValidateParameter(requireStationNo: false, requireDataFormat: false, requireDataType: false, requireAddressStartWithZero: false, requireInstrumentType: false)]
     OpcUa = 14,
 
     #region Udp
@@ -120,6 +135,7 @@ public enum ProtocolType
     /// </summary>
     [Description("OmronFinsUdp")]
     [ProtocolInterfaceType(InterfaceType.LAN)]
+    [ProtocolValidateParameter(requireStationNo: false, requireDataFormat: false, requireDataType: true, requireAddressStartWithZero: false, requireInstrumentType: false)]
     OmronFinsUdp = 15,
     #endregion
 
@@ -129,6 +145,7 @@ public enum ProtocolType
     /// </summary>
     [Description("FJ1000Jet")]
     [ProtocolInterfaceType(InterfaceType.LAN)]
+    [ProtocolValidateParameter(requireStationNo: false, requireDataFormat: false, requireDataType: false, requireAddressStartWithZero: false, requireInstrumentType: false)]
     FJ1000Jet = 16,
 
     /// <summary>
@@ -136,6 +153,7 @@ public enum ProtocolType
     /// </summary>
     [Description("FJ60W")]
     [ProtocolInterfaceType(InterfaceType.LAN)]
+    [ProtocolValidateParameter(requireStationNo: false, requireDataFormat: false, requireDataType: false, requireAddressStartWithZero: false, requireInstrumentType: false)]
     FJ60W = 17,
 
     /// <summary>
@@ -143,6 +161,7 @@ public enum ProtocolType
     /// </summary>
     [Description("GP1125T")]
     [ProtocolInterfaceType(InterfaceType.LAN)]
+    [ProtocolValidateParameter(requireStationNo: false, requireDataFormat: false, requireDataType: false, requireAddressStartWithZero: false, requireInstrumentType: false)]
     GP1125T = 18,
 
     /// <summary>
@@ -150,6 +169,7 @@ public enum ProtocolType
     /// </summary>
     [Description("BottomImageF1970")]
     [ProtocolInterfaceType(InterfaceType.LAN)]
+    [ProtocolValidateParameter(requireStationNo: false, requireDataFormat: false, requireDataType: false, requireAddressStartWithZero: false, requireInstrumentType: false)]
     BottomImageF1970 = 19,
     #endregion
 
@@ -161,6 +181,7 @@ public enum ProtocolType
     /// </summary>
     [Description("ModbusRtu")]
     [ProtocolInterfaceType(InterfaceType.COM)]
+    [ProtocolValidateParameter(requireStationNo: true, requireDataFormat: true, requireDataType: true, requireAddressStartWithZero: true, requireInstrumentType: false)]
     ModbusRtu = 100,
 
     /// <summary>
@@ -168,6 +189,7 @@ public enum ProtocolType
     /// </summary>
     [Description("DLT6452007Serial")]
     [ProtocolInterfaceType(InterfaceType.COM)]
+    [ProtocolValidateParameter(requireStationNo: true, requireDataFormat: false, requireDataType: true, requireAddressStartWithZero: false, requireInstrumentType: false)]
     DLT6452007Serial = 101,
 
     /// <summary>
@@ -175,6 +197,7 @@ public enum ProtocolType
     /// </summary>
     [Description("CJT1882004Serial")]
     [ProtocolInterfaceType(InterfaceType.COM)]
+    [ProtocolValidateParameter(requireStationNo: true, requireDataFormat: false, requireDataType: true, requireAddressStartWithZero: false, requireInstrumentType: true)]
     CJT1882004Serial = 102,
 
     /// <summary>
@@ -182,6 +205,7 @@ public enum ProtocolType
     /// </summary>
     [Description("FxSerial")]
     [ProtocolInterfaceType(InterfaceType.COM)]
+    [ProtocolValidateParameter(requireStationNo: false, requireDataFormat: false, requireDataType: true, requireAddressStartWithZero: false, requireInstrumentType: false)]
     FxSerial = 103,
     #endregion
 
@@ -191,6 +215,7 @@ public enum ProtocolType
     /// </summary>
     [Description("Api")]
     [ProtocolInterfaceType(InterfaceType.API)]
+    [ProtocolValidateParameter(requireStationNo: false, requireDataFormat: false, requireDataType: false, requireAddressStartWithZero: false, requireInstrumentType: false)]
     Api = 200,
     #endregion
 
@@ -200,6 +225,7 @@ public enum ProtocolType
     /// </summary>
     [Description("MySQL")]
     [ProtocolInterfaceType(InterfaceType.DATABASE)]
+    [ProtocolValidateParameter(requireStationNo: false, requireDataFormat: false, requireDataType: false, requireAddressStartWithZero: false, requireInstrumentType: false)]
     MySQL = 300,
     #endregion
 }

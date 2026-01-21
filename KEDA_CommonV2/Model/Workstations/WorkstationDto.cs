@@ -8,7 +8,7 @@ namespace KEDA_CommonV2.Model.Workstations
     public class WorkstationDto
     {
         /// <summary>
-        /// 边缘Id
+        /// 边缘Id，必须存在
         /// </summary>
         public string Id { get; set; } = string.Empty;
 
@@ -18,12 +18,12 @@ namespace KEDA_CommonV2.Model.Workstations
         public string Name { get; set; } = string.Empty;
 
         /// <summary>
-        /// IP地址
+        /// IP地址，必须存在
         /// </summary>
         public string IpAddress { get; set; } = string.Empty;
 
         /// <summary>
-        /// 协议信息列表
+        /// 协议信息列表，必须存在
         /// </summary>
         public List<ProtocolDto> Protocols { get; set; } = [];
     }

@@ -18,10 +18,4 @@ public enum EquipmentType
     /// </summary>
     [Description("仪表")]
     Instrument = 1,
-
-    /// <summary>
-    /// Unknown
-    /// </summary>
-    [Description("Unknown")]
-    Unknown = 999
 }

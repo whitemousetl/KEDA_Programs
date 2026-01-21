@@ -14,7 +14,7 @@ namespace KEDA_Controller.Protocols.Serial;
 [ProtocolType(ProtocolType.CJT188Serial)]
 public class CJT188Driver : HslSerialBaseProtocolDriver<CJT188>
 {
-    protected override CJT188 CreateConnection(WorkstationEntity protocol, CancellationToken token)
+    protected override CJT188 CreateConnection(ProtocolEntity protocol, CancellationToken token)
     {
         var conn = new CJT188("1");
         conn.SerialPortInni(protocol.PortName, protocol.BaudRate, protocol.DataBits, protocol.StopBits, protocol.Parity);

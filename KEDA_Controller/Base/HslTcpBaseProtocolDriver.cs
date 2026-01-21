@@ -68,7 +68,7 @@ public abstract class HslTcpBaseProtocolDriver<T> : IProtocolDriver where T : De
     }
 
     #region 读方法
-    public virtual async Task<ProtocolResult?> ReadAsync(WorkstationEntity protocol, string devId, PointEntity point, CancellationToken token)//读取正常则正常返回，异常则抛出，让worker处理
+    public virtual async Task<PointResult?> ReadAsync(ProtocolEntity protocol, string devId, PointEntity point, CancellationToken token)//读取正常则正常返回，异常则抛出，让worker处理
     {
         try
         {
@@ -99,9 +99,9 @@ public abstract class HslTcpBaseProtocolDriver<T> : IProtocolDriver where T : De
         }
     }
 
-    protected virtual async Task<ProtocolResult> ReadPointAsync(PointEntity point, CancellationToken token)
+    protected virtual async Task<PointResult> ReadPointAsync(PointEntity point, CancellationToken token)
     {
-        var result = new ProtocolResult();
+        var result = new PointResult();
         result.Address = point.Address;
         result.Label = point.Label;
         result.DataType = point.DataType;
@@ -127,7 +127,7 @@ public abstract class HslTcpBaseProtocolDriver<T> : IProtocolDriver where T : De
     public virtual async Task<bool> WriteAsync(WriteTaskEntity writeTask, CancellationToken token)
     {
         //初始化_conn
-        var protocol = new WorkstationEntity
+        var protocol = new ProtocolEntity
         {
             ProtocolID = writeTask.ProtocolID,
             Interface = writeTask.Interface,
@@ -230,7 +230,7 @@ public abstract class HslTcpBaseProtocolDriver<T> : IProtocolDriver where T : De
 
     #region 读写公共方法，创建协议对象和连接协议
     //子类实现：创建连接对象
-    protected abstract T CreateConnection(WorkstationEntity protocol, CancellationToken token);//一般不抛出异常
+    protected abstract T CreateConnection(ProtocolEntity protocol, CancellationToken token);//一般不抛出异常
 
     //子类可选实现：连接初始化后设置参数
     protected virtual async Task OnConnectionInitializedAsync(CancellationToken token)

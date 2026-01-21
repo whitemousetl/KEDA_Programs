@@ -87,7 +87,7 @@ public class DataProcessingWorker : BackgroundService
                 return false;
             }
 
-            var protocolEntityList = JsonSerializer.Deserialize<List<WorkstationEntity>>(config.ConfigJson);
+            var protocolEntityList = JsonSerializer.Deserialize<List<ProtocolEntity>>(config.ConfigJson);
             if (protocolEntityList == null || !protocolEntityList.Any())
             {
                 _logger.LogWarning("反序列化的协议配置为空");
@@ -188,7 +188,7 @@ public class DataProcessingWorker : BackgroundService
     }
 
     private readonly ConcurrentDictionary<string, DateTime> _lastPublishTimes = new();
-    private async Task ProcessDataAsync(ProtocolResult protocolResult, WorkstationEntity protocol, CancellationToken token)
+    private async Task ProcessDataAsync(ProtocolResult protocolResult, ProtocolEntity protocol, CancellationToken token)
     {
         if (protocolResult?.DeviceResults == null)
         {

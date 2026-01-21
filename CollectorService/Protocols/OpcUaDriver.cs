@@ -75,20 +75,35 @@ public class OpcUaDriver : IProtocolDriver
                 var ip = protocol.IPAddress;
                 var port = int.Parse(protocol.ProtocolPort);
 
-                // 账号密码从Gateway字段获取
-                var gatewayParts = protocol.Gateway?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-                var username = gatewayParts != null && gatewayParts.Length > 0 ? gatewayParts[0] : "";
-                var password = gatewayParts != null && gatewayParts.Length > 1 ? gatewayParts[1] : "";
+                //// 账号密码从Gateway字段获取
+                //var gatewayParts = protocol.Gateway?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                //var username = gatewayParts != null && gatewayParts.Length > 0 ? gatewayParts[0] : "";
+                //var password = gatewayParts != null && gatewayParts.Length > 1 ? gatewayParts[1] : "";
 
                 // 创建一个会话对象，用于连接到 OPC UA 服务器
                 EndpointDescription endpointDescription = CoreClientUtils.SelectEndpoint(config, $"opc.tcp://{ip}:{port}", false);
                 EndpointConfiguration endpointConfiguration = EndpointConfiguration.Create(config);
                 ConfiguredEndpoint endpoint = new ConfiguredEndpoint(null, endpointDescription, endpointConfiguration);
                 UserIdentity userIdentity;
-                if (!string.IsNullOrWhiteSpace(username) && !string.IsNullOrWhiteSpace(password))
-                    userIdentity = new UserIdentity(username, password);
+
+                // 在 Session.Create 调用之前添加日志或验证
+                if (string.IsNullOrWhiteSpace(protocol.Gateway))
+                {
+                    // 使用匿名身份，如果服务器不支持可能会失败
+                    userIdentity = new UserIdentity();
+                }
                 else
-                    userIdentity = new UserIdentity(); // 匿名
+                {
+                    var gatewayParts = protocol.Gateway.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                    if (gatewayParts.Length < 2)
+                        throw new ProtocolFailedException($"{_protocolName}协议配置错误: Gateway格式应为 '用户名,密码'");
+                    userIdentity = new UserIdentity(gatewayParts[0], gatewayParts[1]);
+                }
+
+                //if (!string.IsNullOrWhiteSpace(username) && !string.IsNullOrWhiteSpace(password))
+                //    userIdentity = new UserIdentity(username, password);
+                //else
+                //    userIdentity = new UserIdentity(); // 匿名
 
                 _conn = await Session.Create(config, endpoint, false, false, "DataCollector", 60000, userIdentity, null);
 

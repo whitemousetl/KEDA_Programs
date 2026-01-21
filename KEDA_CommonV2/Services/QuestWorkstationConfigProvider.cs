@@ -17,12 +17,14 @@ public class QuestWorkstationConfigProvider : IWorkstationConfigProvider
     private readonly ILogger<QuestWorkstationConfigProvider> _logger;
     private readonly string _connectionString;
     private readonly string _configTableName;
+    private readonly ISharedConfigHelper _sharedConfigHelper;
 
-    public QuestWorkstationConfigProvider(ILogger<QuestWorkstationConfigProvider> logger)
+    public QuestWorkstationConfigProvider(ILogger<QuestWorkstationConfigProvider> logger, ISharedConfigHelper sharedConfigHelper)
     {
         _logger = logger;
-        _connectionString = SharedConfigHelper.DatabaseSettings.QuestDb;
-        _configTableName = SharedConfigHelper.DatabaseSettings.ConfigTableName;
+        _sharedConfigHelper = sharedConfigHelper;
+        _connectionString = _sharedConfigHelper.DatabaseSettings.QuestDb;
+        _configTableName = _sharedConfigHelper.DatabaseSettings.ConfigTableName;
     }
 
     public async Task<WorkstationConfig?> GetLatestWorkstationConfigEntityAsync(CancellationToken token)
@@ -57,7 +59,7 @@ public class QuestWorkstationConfigProvider : IWorkstationConfigProvider
         if (configEntity == null || string.IsNullOrWhiteSpace(configEntity.ConfigJson))
             return null;
 
-        return JsonSerializer.Deserialize<WorkstationDto>(configEntity.ConfigJson, JsonOptionsProvider.ProtocolJsonOptions);
+        return JsonSerializer.Deserialize<WorkstationDto>(configEntity.ConfigJson, JsonOptionsProvider.WorkstationJsonOptions);
     }
 
     public async Task<ProtocolDto?> GetProtocolByProtocolIdAsync(string protocolId, CancellationToken token)

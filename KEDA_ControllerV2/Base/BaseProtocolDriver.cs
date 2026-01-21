@@ -101,18 +101,20 @@ public abstract class BaseProtocolDriver<T> : IProtocolDriver where T : class
 
     protected virtual async Task<PointResult> ReadPointAsync(ParameterDto point, CancellationToken token)
     {
+        if (!point.DataType.HasValue) throw new InvalidOperationException($"{_protocolName}点位未指定数据类型");
+
         var result = new PointResult
         {
             Address = point.Address,
             Label = point.Label,
-            DataType = point.DataType
+            DataType = point.DataType.Value
         };
 
         if (_conn == null)
             throw new ProtocolIsNullWhenReadException($"{_protocolName}协议为空，请检查",
                 new Exception($"{_protocolName}协议为空，请检查"));
 
-        if (_readFuncs.TryGetValue(point.DataType, out var func))
+        if (_readFuncs.TryGetValue(point.DataType.Value, out var func))
         {
             var (isSuccess, content, message) = await func(this, point, token);
             result.ReadIsSuccess = isSuccess;
@@ -175,7 +177,9 @@ public abstract class BaseProtocolDriver<T> : IProtocolDriver where T : class
             throw new ProtocolIsNullWhenWriteException($"{_protocolName}协议为空，请检查",
                 new Exception($"{_protocolName}协议为空，请检查"));
 
-        if (_writeFuncs.TryGetValue(point.DataType, out var func))
+        if (!point.DataType.HasValue) throw new InvalidOperationException($"{_protocolName}点位未指定数据类型");
+
+        if (_writeFuncs.TryGetValue(point.DataType.Value, out var func))
             return await func(this, point, token);
 
         throw new NotSupportedException($"{_protocolName}协议不支持的数据类型: {point.DataType}");
@@ -200,7 +204,7 @@ public abstract class BaseProtocolDriver<T> : IProtocolDriver where T : class
         SetAddressStartWithZeroIfNeed(point.AddressStartWithZero);
 
         // 设置仪表类型（CJT188专用）
-        SetInstrumentTypeIfNeed((byte)point.InstrumentType);
+        SetInstrumentTypeIfNeed(point.InstrumentType);
     }
 
     /// <summary>
@@ -245,20 +249,24 @@ public abstract class BaseProtocolDriver<T> : IProtocolDriver where T : class
     /// <summary>
     /// 设置字节序
     /// </summary>
-    protected virtual void SetDataFormatNoIfNeed(DataFormat format)
+    protected virtual void SetDataFormatNoIfNeed(DataFormat? format)
     {
         switch (_conn)
         {
             case ModbusTcpNet modbus:
-                modbus.DataFormat = format;
+                if (!format.HasValue)
+                    throw new InvalidOperationException("ModbusTcpNet 协议必须指定 DataFormat");
+                modbus.DataFormat = format.Value;
                 break;
-
             case ModbusRtuOverTcp modbusRtuOverTcp:
-                modbusRtuOverTcp.DataFormat = format;
+                if (!format.HasValue)
+                    throw new InvalidOperationException("ModbusRtuOverTcp 协议必须指定 DataFormat");
+                modbusRtuOverTcp.DataFormat = format.Value;
                 break;
-
             case ModbusRtu modbusRtu:
-                modbusRtu.DataFormat = format;
+                if (!format.HasValue)
+                    throw new InvalidOperationException("ModbusRtu 协议必须指定 DataFormat");
+                modbusRtu.DataFormat = format.Value;
                 break;
         }
     }
@@ -266,20 +274,24 @@ public abstract class BaseProtocolDriver<T> : IProtocolDriver where T : class
     /// <summary>
     /// 设置地址起始位（部分协议支持）
     /// </summary>
-    protected virtual void SetAddressStartWithZeroIfNeed(bool addressStartWithZero)
+    protected virtual void SetAddressStartWithZeroIfNeed(bool? addressStartWithZero)
     {
         switch (_conn)
         {
             case ModbusTcpNet modbus:
-                modbus.AddressStartWithZero = addressStartWithZero;
+                if (!addressStartWithZero.HasValue)
+                    throw new InvalidOperationException("ModbusTcpNet 协议必须指定 AddressStartWithZero");
+                modbus.AddressStartWithZero = addressStartWithZero.Value;
                 break;
-
             case ModbusRtuOverTcp modbusRtuOverTcp:
-                modbusRtuOverTcp.AddressStartWithZero = addressStartWithZero;
+                if (!addressStartWithZero.HasValue)
+                    throw new InvalidOperationException("ModbusRtuOverTcp 协议必须指定 AddressStartWithZero");
+                modbusRtuOverTcp.AddressStartWithZero = addressStartWithZero.Value;
                 break;
-
             case ModbusRtu modbusRtu:
-                modbusRtu.AddressStartWithZero = addressStartWithZero;
+                if (!addressStartWithZero.HasValue)
+                    throw new InvalidOperationException("ModbusRtu 协议必须指定 AddressStartWithZero");
+                modbusRtu.AddressStartWithZero = addressStartWithZero.Value;
                 break;
         }
     }
@@ -287,18 +299,19 @@ public abstract class BaseProtocolDriver<T> : IProtocolDriver where T : class
     /// <summary>
     /// 设置仪表类型（CJT188专用）
     /// </summary>
-    protected virtual void SetInstrumentTypeIfNeed(byte instrumentType)
+    protected virtual void SetInstrumentTypeIfNeed(InstrumentType? instrumentType)
     {
-        if (instrumentType == 0) return; // 0表示未设置
-
         switch (_conn)
         {
             case CJT188OverTcp cjt188OverTcp:
-                cjt188OverTcp.InstrumentType = instrumentType;
+                if (!instrumentType.HasValue)
+                    throw new InvalidOperationException("CJT188OverTcp 协议必须指定 InstrumentType");
+                cjt188OverTcp.InstrumentType = (byte)instrumentType.Value;
                 break;
-
             case CJT188 cjt188:
-                cjt188.InstrumentType = instrumentType;
+                if (!instrumentType.HasValue)
+                    throw new InvalidOperationException("CJT188 协议必须指定 InstrumentType");
+                cjt188.InstrumentType = (byte)instrumentType.Value;
                 break;
         }
     }

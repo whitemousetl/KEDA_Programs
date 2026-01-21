@@ -1,6 +1,8 @@
-﻿namespace KEDA_CommonV2.Configuration;
+﻿using KEDA_CommonV2.ConfigurationInterface;
 
-public class MqttSettings
+namespace KEDA_CommonV2.Configuration;
+
+public class MqttSettings : IMqttSettings
 {
     public string Server { get; set; } = string.Empty;
     public int Port { get; set; }

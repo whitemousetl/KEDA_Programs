@@ -169,7 +169,7 @@ public class DeviceResultRepository : IDeviceResultRepository
         var nowOffset = new DateTimeOffset(now);
         doc["time"] = now.ToString("yyyy-MM-dd HH:mm:ss.fff");
         doc["timestamp"] = new BsonInt64(nowOffset.ToUnixTimeMilliseconds());
-        doc["expireAt"] = now.AddDays(30);
+        doc["expireAt"] = now.AddDays(3);
 
         var fieldCount = doc.ElementCount;
         if (fieldCount == 3 &&

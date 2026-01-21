@@ -12,7 +12,7 @@ namespace KEDA_Controller.Protocols.Udp;
 [ProtocolType(ProtocolType.FinsUdp)]
 public class FinsUdpProtocolDriver : HslUdpBaseProtocolDriver<OmronFinsUdp>
 {
-    protected override OmronFinsUdp CreateConnection(WorkstationEntity protocol, CancellationToken token)
+    protected override OmronFinsUdp CreateConnection(ProtocolEntity protocol, CancellationToken token)
     {
         var conn =  new OmronFinsUdp()
         {

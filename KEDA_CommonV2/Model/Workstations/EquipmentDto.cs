@@ -14,6 +14,11 @@ public class EquipmentDto
     public string Id { get; set; } = string.Empty;
 
     /// <summary>
+    /// 该设备是否采集，必须存在
+    /// </summary>
+    public bool IsCollect {  get; set; }
+
+    /// <summary>
     /// 设备名称，非必须存在
     /// </summary>
     public string Name { get; set; } = string.Empty;

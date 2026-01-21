@@ -18,7 +18,7 @@ public class FinsTcpDriver : HslTcpBaseProtocolDriver<OmronFinsNet>
     {
     }
 
-    protected override OmronFinsNet CreateConnection(WorkstationEntity protocol, CancellationToken token)
+    protected override OmronFinsNet CreateConnection(ProtocolEntity protocol, CancellationToken token)
     {
         return new(protocol.IPAddress, protocol.ProtocolPort)
         {

@@ -1,3 +1,7 @@
+using CollectorService.Services;
+using KEDA_CommonV2.Configuration;
+using KEDA_CommonV2.Interfaces;
+using KEDA_CommonV2.Services;
 using KEDA_Share.Entity;
 using KEDA_Share.Model;
 using KEDA_Share.Repository.Implementations;
@@ -5,6 +9,7 @@ using KEDA_Share.Repository.Interfaces;
 using KEDA_Share.Repository.Mongo;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
+using KEDA_CommonV2.Extensions;
 using Serilog;
 using Serilog.Events;
 
@@ -17,7 +22,7 @@ public class Program
         var projectName = "CollectorService";
 
         Log.Logger = new LoggerConfiguration()
-           .MinimumLevel.Information()
+           .MinimumLevel.Error()
            .MinimumLevel.Override("Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddleware", LogEventLevel.Fatal)
            .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
            .MinimumLevel.Override("System.Net.Http.HttpClient", LogEventLevel.Warning)
@@ -32,6 +37,27 @@ public class Program
         try
         {
             var builder = Host.CreateApplicationBuilder(args);
+
+            // ========== 配置加载顺序 ==========
+            // 1. 首先加载共享配置
+            builder.Configuration.Sources.Clear();
+            builder.Configuration.AddSharedConfiguration(builder.Environment.EnvironmentName);
+
+            // 2. 然后加载本地配置（会覆盖共享配置）
+            builder.Configuration
+                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
+                .AddEnvironmentVariables();
+
+            if (args != null)
+            {
+                builder.Configuration.AddCommandLine(args);
+            }
+            // ==================================
+
+            //初始化配置
+            SharedConfigHelper.Init(builder.Configuration);
+
             builder.Services.AddHostedService<Worker>();
             builder.Services.Configure<MongoSettings>(builder.Configuration.GetSection("Mongo"));
             builder.Services.AddSingleton<IMongoDbContext<Workstation>>(sp =>
@@ -74,6 +100,13 @@ public class Program
             });
 
             builder.Services.AddSingleton<IWorkstationProvider, WorkstationProvider>();
+
+            // 添加缺失的服务注册
+            builder.Services.AddSingleton<IMqttPublishService, MqttPublishService>();
+            builder.Services.AddSingleton<IMqttPublishManager, MqttPublishManager>();
+            builder.Services.AddSingleton<IEquipmentDataProcessor, EquipmentDataProcessor>();
+            builder.Services.AddSingleton<IPointExpressionConverter, PointExpressionConverter>();
+            builder.Services.AddSingleton<IVirtualPointCalculator, VirtualPointCalculator>();
 
             builder.Logging.ClearProviders();
             builder.Logging.AddSerilog();

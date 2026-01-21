@@ -11,7 +11,7 @@
     <PackageReference Include="DynamicExpresso.Core" Version="2.19.3" />
     <PackageReference Include="HslCommunication" Version="12.0.3" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
-    <PackageReference Include="MySqlConnector" Version="2.4.0" />
+    <PackageReference Include="MySqlConnector" Version="2.5.0" />
     <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua" Version="1.5.377.21" />
     <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Client" Version="1.5.377.21" />
     <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Configuration" Version="1.5.377.21" />
@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\KEDA_CommonV2\KEDA_CommonV2.csproj" />
     <ProjectReference Include="..\KEDA_Share\KEDA_Share.csproj" />
   </ItemGroup>
 </Project>

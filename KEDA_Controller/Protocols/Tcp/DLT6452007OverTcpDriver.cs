@@ -17,7 +17,7 @@ public class DLT6452007OverTcpDriver : HslTcpBaseProtocolDriver<DLT645OverTcp>
     public DLT6452007OverTcpDriver(IMqttPublishService mqttPublishService) : base(mqttPublishService)
     {
     }
-    protected override DLT645OverTcp CreateConnection(WorkstationEntity protocol, CancellationToken token)
+    protected override DLT645OverTcp CreateConnection(ProtocolEntity protocol, CancellationToken token)
     {
         return new(protocol.IPAddress, protocol.ProtocolPort)
         {

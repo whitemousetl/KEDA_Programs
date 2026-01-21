@@ -13,7 +13,7 @@ namespace KEDA_Controller.Protocols.Serial;
 [ProtocolType(ProtocolType.ModbusRtuSerial)]
 public class ModbusRtuDriver : HslSerialBaseProtocolDriver<ModbusRtu>
 {
-    protected override ModbusRtu CreateConnection(WorkstationEntity protocol, CancellationToken token)
+    protected override ModbusRtu CreateConnection(ProtocolEntity protocol, CancellationToken token)
     {
         var conn = new ModbusRtu();
         conn.SerialPortInni(protocol.PortName, protocol.BaudRate, protocol.DataBits, protocol.StopBits, protocol.Parity);

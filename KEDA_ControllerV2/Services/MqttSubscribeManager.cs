@@ -7,6 +7,7 @@ using KEDA_CommonV2.Model.MqttResponses;
 using KEDA_CommonV2.Model.Workstations;
 using KEDA_CommonV2.Utilities;
 using KEDA_ControllerV2.Interfaces;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 
 namespace KEDA_ControllerV2.Services;
@@ -20,6 +21,7 @@ public class MqttSubscribeManager : IMqttSubscribeManager
     private readonly IMqttSubscribeService _mqttSubscribeService;
     private readonly IWriteTaskManager _writeTaskManager;
     private readonly IWorkstationConfigProvider _workstationConfigProvider;
+    private readonly JsonSerializerOptions _jsonSerializerOptions = new() { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, };
 
     public MqttSubscribeManager(ILogger<MqttSubscribeManager> logger, IWorkstationConfigProvider workstationConfigProvider, IMqttSubscribeService mqttSubscribeService, IMqttPublishManager mqttPublishManager, IWriteTaskManager writeTaskManager, IProtocolTaskManager protocolTaskManager)
     {
@@ -63,11 +65,15 @@ public class MqttSubscribeManager : IMqttSubscribeManager
 
         try
         {
-            ws = JsonSerializer.Deserialize<WorkstationDto>(payload, JsonOptionsProvider.ProtocolJsonOptions);
+            ws = JsonSerializer.Deserialize<WorkstationDto>(payload, JsonOptionsProvider.WorkstationJsonOptions);
 
             if (ws == null) _logger.LogError("mom下发配置时，反序列化后工作站配置为空");
             else
             {
+                //检查是否是本工作站IP的信息，如果不是则略过
+                var ip = SystemMsg.GetLocalIp();
+                if (!string.IsNullOrWhiteSpace(ws.IpAddress) && ws.IpAddress != ip) return;
+
                 // 检查Point.Label是否唯一
                 var (isUnique, duplicateLabel) = CheckPointLabelUnique(ws);
                 if (!isUnique)
@@ -82,7 +88,14 @@ public class MqttSubscribeManager : IMqttSubscribeManager
                         Message = message,
                         Time = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
                     };
-                    var repeatedResponseJson = JsonSerializer.Serialize(repeatedResponse);
+
+                    var mqttMessage = new MqttMessage<ConfigSaveResponse>
+                    {
+                        Command = _topicOptions.WorkstationConfigResponsePrefix,
+                        Payload = repeatedResponse
+                    };
+
+                    var repeatedResponseJson = JsonSerializer.Serialize(mqttMessage, _jsonSerializerOptions);
                     var repeatedResponseTopic = _topicOptions.WorkstationConfigResponsePrefix + workstationId;
                     await _mqttPublishManager.PublishConfigSavedResultAsync(repeatedResponseTopic, repeatedResponseJson, token);
                     return;
@@ -121,9 +134,16 @@ public class MqttSubscribeManager : IMqttSubscribeManager
             Message = message,
             Time = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
         };
-        var responseJson = JsonSerializer.Serialize(response);
 
-        var responseTopic = _topicOptions.WorkstationConfigResponsePrefix + workstationId;
+        var mqttMessage1 = new MqttMessage<ConfigSaveResponse>
+        {
+            Command = _topicOptions.WorkstationConfigResponsePrefix,
+            Payload = response
+        };
+
+        var responseJson = JsonSerializer.Serialize(mqttMessage1, _jsonSerializerOptions);
+
+        var responseTopic = _topicOptions.WorkstationConfigResponsePrefix;
         await _mqttPublishManager.PublishConfigSavedResultAsync(responseTopic, responseJson, token);
 
         // 持续重试直到成功或取消
@@ -175,7 +195,7 @@ public class MqttSubscribeManager : IMqttSubscribeManager
         WriteTask? writeTaskEntity;
         try
         {
-            writeTaskEntity = JsonSerializer.Deserialize<WriteTask>(payload, JsonOptionsProvider.ProtocolJsonOptions);
+            writeTaskEntity = JsonSerializer.Deserialize<WriteTask>(payload, JsonOptionsProvider.WorkstationJsonOptions);
             if (writeTaskEntity == null)
             {
                 _logger.LogWarning("写任务 payload 反序列化后为 null，已跳过。payload: {Payload}", payload);

@@ -57,10 +57,10 @@ public class ProtocolTaskManager : IProtocolTaskManager
     {
         #region 初始化协议列表：反序列化是否成功，协议列表数量是否为空或0
         //反序列化ConfigJson为ProtocolEntity
-        List<WorkstationEntity>? protocolList = null;
+        List<ProtocolEntity>? protocolList = null;
         try
         {
-            protocolList = JsonSerializer.Deserialize<List<WorkstationEntity>>(config.ConfigJson, options);
+            protocolList = JsonSerializer.Deserialize<List<ProtocolEntity>>(config.ConfigJson, options);
         }
         catch (Exception ex)//协议列表反序列化失败，直接返回
         {
@@ -93,7 +93,7 @@ public class ProtocolTaskManager : IProtocolTaskManager
     /// 协议采集任务主循环
     /// 负责点位数据采集、压缩、存库、MQTT发布
     /// </summary>
-    private async Task ProtocolReadLoop(WorkstationEntity protocol, CancellationToken token)
+    private async Task ProtocolReadLoop(ProtocolEntity protocol, CancellationToken token)
     {
         CreateDriver(protocol, out IProtocolDriver? driver);
         if (driver == null) return;
@@ -155,7 +155,7 @@ public class ProtocolTaskManager : IProtocolTaskManager
 
     }
 
-    private void CreateDriver(WorkstationEntity protocol, out IProtocolDriver? driver)
+    private void CreateDriver(ProtocolEntity protocol, out IProtocolDriver? driver)
     {
         driver = ProtocolDriverFactory.CreateDriver(protocol.ProtocolType, _mqttPublishService);
         if (driver == null)
@@ -167,7 +167,7 @@ public class ProtocolTaskManager : IProtocolTaskManager
         _drivers[protocol.ProtocolID] = driver;// 把协议驱动放在字典中，让写任务调用
     }
 
-    private async Task<DeviceResult> ReadDeviceAsync(DeviceEntity dev, IProtocolDriver driver, WorkstationEntity protocol, CancellationToken token)
+    private async Task<DeviceResult> ReadDeviceAsync(DeviceEntity dev, IProtocolDriver driver, ProtocolEntity protocol, CancellationToken token)
     {
         var deviceResult = new DeviceResult() { EquipmentId = dev.EquipmentId };//设备结果
         var deviceSw = Stopwatch.StartNew();//设备读取计时器
@@ -179,7 +179,7 @@ public class ProtocolTaskManager : IProtocolTaskManager
             if(point.Address == "VirtualPoint")
             {
                 // 虚拟点，直接给默认结果
-                var virtualPointResult = new ProtocolResult
+                var virtualPointResult = new PointResult
                 {
                     Address = point.Address,
                     Label = point.Label,
@@ -193,7 +193,7 @@ public class ProtocolTaskManager : IProtocolTaskManager
                 continue;
             }
             var pointSw = Stopwatch.StartNew();
-            var pointResult = new ProtocolResult { Address = point.Address, Label = point.Label, DataType = point.DataType };
+            var pointResult = new PointResult { Address = point.Address, Label = point.Label, DataType = point.DataType };
             try
             {
                 var result = await driver.ReadAsync(protocol, dev.EquipmentId, point, token);
@@ -262,7 +262,7 @@ public class ProtocolTaskManager : IProtocolTaskManager
             deviceResult.PointResults.Clear();
             foreach (var point in dev.Points)
             {
-                deviceResult.PointResults.Add(new ProtocolResult
+                deviceResult.PointResults.Add(new PointResult
                 {
                     Address = point.Address,
                     Label = point.Label,
@@ -279,7 +279,7 @@ public class ProtocolTaskManager : IProtocolTaskManager
         }
     }
 
-    private void CompleteProtocolStatistics(WorkstationEntity protocol, ProtocolResult protocolResult, Stopwatch protocolSw)
+    private void CompleteProtocolStatistics(ProtocolEntity protocol, ProtocolResult protocolResult, Stopwatch protocolSw)
     {
         protocolResult.EndTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
         protocolResult.ElapsedMs = protocolSw.ElapsedMilliseconds;
@@ -364,7 +364,7 @@ public class ProtocolTaskManager : IProtocolTaskManager
     /// <summary>
     /// 执行完写操作之后，恢复指定协议的读取
     /// </summary>
-    public async Task RestartProtocolAsync(string protocolId, WorkstationEntity protocol, CancellationToken token)
+    public async Task RestartProtocolAsync(string protocolId, ProtocolEntity protocol, CancellationToken token)
     {
         await StopProtocolAsync(protocolId, token);
         var newCts = new CancellationTokenSource();

@@ -13,12 +13,31 @@ public class CJT188Driver : SerialBaseProtocolDriver<CJT188>
     {
         if (protocol is SerialProtocolDto serialProtocol)
         {
+            if (!serialProtocol.StopBits.HasValue)
+                throw new InvalidOperationException($"{_protocolName}协议未指定 StopBits");
+            if (!serialProtocol.Parity.HasValue)
+                throw new InvalidOperationException($"{_protocolName}协议未指定 Parity");
+
+            if (!serialProtocol.BaudRate.HasValue)
+                throw new InvalidOperationException($"{_protocolName}协议未指定 BaudRate");
+            if (!serialProtocol.DataBits.HasValue)
+                throw new InvalidOperationException($"{_protocolName}协议未指定 DataBits");
+
             var conn = new CJT188("1");
-            conn.SerialPortInni(serialProtocol.SerialPortName, (int)serialProtocol.BaudRate, (int)serialProtocol.DataBits, serialProtocol.StopBits, serialProtocol.Parity);
+
+            conn.SerialPortInni(
+                serialProtocol.SerialPortName,
+                (int)serialProtocol.BaudRate.Value,
+                (int)serialProtocol.DataBits.Value,
+                serialProtocol.StopBits.Value,
+                serialProtocol.Parity.Value
+            );
             conn.ReceiveTimeOut = serialProtocol.ReceiveTimeOut;
             return conn;
         }
         else
+        {
             throw new InvalidOperationException($"{_protocolName}协议类型不是 SerialProtocol，无法进行操作。");
+        }
     }
 }

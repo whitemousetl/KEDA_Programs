@@ -10,11 +10,13 @@ public class WriteTaskLogService : IWriteTaskLogService
 {
     private readonly ILogger<WriteTaskLogService> _logger;
     private readonly string _connectionString;
+    private readonly ISharedConfigHelper _sharedConfigHelper;
 
-    public WriteTaskLogService(ILogger<WriteTaskLogService> logger)
+    public WriteTaskLogService(ILogger<WriteTaskLogService> logger, ISharedConfigHelper sharedConfigHelper)
     {
         _logger = logger;
-        _connectionString = SharedConfigHelper.DatabaseSettings.QuestDb;
+        _sharedConfigHelper = sharedConfigHelper;
+        _connectionString = _sharedConfigHelper.DatabaseSettings.QuestDb;
     }
 
     public async Task AddLogAsync(WriteTaskLog log)

@@ -45,6 +45,13 @@ public class NumberBaseConverterTest
     {
         Assert.Throws<FormatException>(() => NumberBaseConverter.HexToDecimal(input));
     }
+
+    // 十六进制转换成十进制 空字符串 预期返回格式异常
+    [Fact]
+    public void HexToDecimal_EmptyString_ThrowsFormatException()
+    {
+        Assert.Throws<FormatException>(() => NumberBaseConverter.HexToDecimal(string.Empty));
+    }
     #endregion
 
     #region DecimalToHex
@@ -82,6 +89,13 @@ public class NumberBaseConverterTest
     public void DecimalToHex_InvalidInput_ThrowsFormatException(object input)
     {
         Assert.Throws<FormatException>(() => NumberBaseConverter.DecimalToHex(input));
-    } 
+    }
+
+    // 十进制转换成十六进制 空字符串 预期返回格式异常
+    [Fact]
+    public void DecimalToHex_EmptyString_ThrowsFormatException()
+    {
+        Assert.Throws<FormatException>(() => NumberBaseConverter.DecimalToHex(string.Empty));
+    }
     #endregion
 }

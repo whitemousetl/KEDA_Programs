@@ -18,7 +18,7 @@ public class FinsCipNetDriver : HslTcpBaseProtocolDriver<OmronCipNet>
     {
     }
 
-    protected override OmronCipNet CreateConnection(WorkstationEntity protocol, CancellationToken token)
+    protected override OmronCipNet CreateConnection(ProtocolEntity protocol, CancellationToken token)
     {
         return new(protocol.IPAddress, protocol.ProtocolPort)
         {

@@ -9,6 +9,7 @@ using System.IO.Ports;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Xml.Linq;
 
 namespace KEDA_CommonV2.Converters.Workstation;
 
@@ -19,112 +20,69 @@ public class ProtocolJsonConverter : JsonConverter<ProtocolDto>
         using var doc = JsonDocument.ParseValue(ref reader);
         var root = doc.RootElement;
 
-        var idPropertyName = nameof(ProtocolDto.Id);
-        var interfaceTypePropertyName = nameof(ProtocolDto.InterfaceType);
-        var protocolTypePropertyName = nameof(ProtocolDto.ProtocolType);
-        var equipmentsPropertyName = nameof(ProtocolDto.Equipments);
+        var namePrefix = "Protocol的";
 
-        //存在性校验
-        JsonValidateHelper.EnsurePropertyExists(root, idPropertyName);
-        JsonValidateHelper.EnsurePropertyExists(root, interfaceTypePropertyName);
-        JsonValidateHelper.EnsurePropertyExists(root, protocolTypePropertyName);
-        JsonValidateHelper.EnsurePropertyExists(root, equipmentsPropertyName);
+        //Id
+        var id = JsonValidateHelper.EnsurePropertyExistsAndTypeIsRight<string>(root, namePrefix, nameof(ProtocolDto.Id),  JsonValueKind.String);
+        //interfaceType
+        var interfaceType = JsonValidateHelper.EnsurePropertyExistsAndEnumIsRight<InterfaceType>(root, namePrefix, nameof(ProtocolDto.InterfaceType));
+        //protocolType
+        var protocolType = JsonValidateHelper.EnsurePropertyExistsAndEnumIsRight<ProtocolType>(root, namePrefix, nameof(ProtocolDto.ProtocolType));
 
-        //字段类型校验
-        JsonValidateHelper.EnsurePropertyTypeIsRight<string>(root, idPropertyName, JsonValueKind.String);
-        var interfaceType = JsonValidateHelper.EnsureEnumIsRight<InterfaceType>(root, interfaceTypePropertyName);
-        var protocolType = JsonValidateHelper.EnsureEnumIsRight<ProtocolType>(root, protocolTypePropertyName);
-        JsonValidateHelper.EnsurePropertyTypeIsRight<List<EquipmentDto>>(root, equipmentsPropertyName, JsonValueKind.Array);
-
-        //非必须存在字段，如果存在，校验其类型
-        JsonValidateHelper.GetOptionalValue<int>(root, nameof(ProtocolDto.CollectCycle), JsonValueKind.Number);
-        JsonValidateHelper.GetOptionalValue<int>(root, nameof(ProtocolDto.ReceiveTimeOut), JsonValueKind.Number);
-        JsonValidateHelper.GetOptionalValue<int>(root, nameof(ProtocolDto.ConnectTimeOut), JsonValueKind.Number);
-        JsonValidateHelper.GetOptionalValue<string>(root, nameof(ProtocolDto.Account), JsonValueKind.String);
-        JsonValidateHelper.GetOptionalValue<string>(root, nameof(ProtocolDto.Password), JsonValueKind.String);
-        JsonValidateHelper.GetOptionalValue<string>(root, nameof(ProtocolDto.Remark), JsonValueKind.String);
-        JsonValidateHelper.GetOptionalValue<string>(root, nameof(ProtocolDto.AdditionalOptions), JsonValueKind.String);
+        namePrefix = protocolType.ToString() + "的";
 
         //字段间关系，根据接口类型限制协议类型，比如接口类型是LAN时，如果协议类型是ModbusRtu，则不被支持
         if (!ProtocolTypeHelper.IsProtocolTypeValidForInterface(interfaceType, protocolType))
             throw new JsonException($"接口类型{interfaceType}下不支持协议类型{protocolType}");
 
+        //equipments
+        var equipments = JsonValidateHelper.EnsurePropertyExistsAndTypeIsRight<List<EquipmentDto>>(root, namePrefix, nameof(ProtocolDto.Equipments), JsonValueKind.Array);
+
+        //非必须存在字段，如果存在，校验其类型
+        JsonValidateHelper.ValidateOptionalFields(
+            root, 
+            namePrefix, 
+            (nameof(ProtocolDto.CollectCycle), JsonValueKind.Number),
+            (nameof(ProtocolDto.ReceiveTimeOut), JsonValueKind.Number),
+            (nameof(ProtocolDto.ConnectTimeOut), JsonValueKind.Number),
+            (nameof(ProtocolDto.Account), JsonValueKind.String),
+            (nameof(ProtocolDto.Password), JsonValueKind.String),
+            (nameof(ProtocolDto.Remark), JsonValueKind.String),
+            (nameof(ProtocolDto.AdditionalOptions), JsonValueKind.String));
+
         // 跨对象校验：直接遍历JSON
-        if (protocolType == ProtocolType.ModbusTcpNet
-            || protocolType == ProtocolType.ModbusRtu
-            || protocolType == ProtocolType.ModbusRtuOverTcp)
-        {
-            var equipments = root.GetProperty(nameof(ProtocolDto.Equipments));
-            foreach (var equipment in equipments.EnumerateArray())
-            {
-                if (!equipment.TryGetProperty(nameof(EquipmentDto.Parameters), out var parameters) || parameters.ValueKind != JsonValueKind.Array)
-                    throw new JsonException("设备缺少参数列表");
-
-                foreach (var parameter in parameters.EnumerateArray())
-                {
-                    // StationNo 必须存在且为字符串
-                    if (!parameter.TryGetProperty(nameof(ParameterDto.StationNo), out var stationNoProp) || stationNoProp.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(stationNoProp.GetString()))
-                        throw new JsonException("Modbus协议下，参数缺少StationNo或类型不正确");
-
-                    // DataFormat 必须存在且为有效枚举
-                    if (!parameter.TryGetProperty(nameof(ParameterDto.DataFormat), out var dataFormatProp) || dataFormatProp.ValueKind != JsonValueKind.Number)
-                        throw new JsonException("Modbus协议下，参数缺少DataFormat或类型不正确");
-
-                    // AddressStartWithZero 必须存在且为布尔
-                    if (!parameter.TryGetProperty(nameof(ParameterDto.AddressStartWithZero), out var addrZeroProp) || (addrZeroProp.ValueKind != JsonValueKind.True && addrZeroProp.ValueKind != JsonValueKind.False))
-                        throw new JsonException("Modbus协议下，参数缺少AddressStartWithZero或类型不正确");
-                }
-            }
-        }
+        CrossObjectValidatePoints(root, protocolType, namePrefix);
 
         // 子类特有字段存在性校验和字段类型校验
         switch (interfaceType)
         {
             case InterfaceType.LAN:
-                //存在性校验
-                JsonValidateHelper.EnsurePropertyExists(root, nameof(LanProtocolDto.IpAddress));
-                JsonValidateHelper.EnsurePropertyExists(root, nameof(LanProtocolDto.ProtocolPort));
-                //字段类型校验
-                JsonValidateHelper.EnsurePropertyTypeIsRight<string>(root, nameof(LanProtocolDto.IpAddress), JsonValueKind.String);
-                JsonValidateHelper.EnsurePropertyTypeIsRight<int>(root, nameof(LanProtocolDto.ProtocolPort), JsonValueKind.Null);
-                //非必须存在字段，如果存在，校验其类型
-                JsonValidateHelper.GetOptionalValue<string>(root, nameof(LanProtocolDto.Gateway), JsonValueKind.String);
+                JsonValidateHelper.EnsurePropertyExistsAndTypeIsRight<string>(root, namePrefix, nameof(LanProtocolDto.IpAddress), JsonValueKind.String);
+                JsonValidateHelper.EnsurePropertyExistsAndTypeIsRight<int>(root, namePrefix, nameof(LanProtocolDto.ProtocolPort), JsonValueKind.Number);
+                JsonValidateHelper.ValidateOptionalFields<string?>(root, namePrefix, nameof(LanProtocolDto.Gateway), JsonValueKind.String);
                 break;
             case InterfaceType.COM:
-                //存在性校验
-                JsonValidateHelper.EnsurePropertyExists(root, nameof(SerialProtocolDto.SerialPortName));
-                JsonValidateHelper.EnsurePropertyExists(root, nameof(SerialProtocolDto.BaudRate));
-                JsonValidateHelper.EnsurePropertyExists(root, nameof(SerialProtocolDto.DataBits));
-                JsonValidateHelper.EnsurePropertyExists(root, nameof(SerialProtocolDto.Parity));
-                JsonValidateHelper.EnsurePropertyExists(root, nameof(SerialProtocolDto.StopBits));
-                //字段类型校验
-                JsonValidateHelper.EnsurePropertyTypeIsRight<string>(root, nameof(SerialProtocolDto.SerialPortName), JsonValueKind.String);
-                JsonValidateHelper.EnsureEnumIsRight<BaudRateType>(root, nameof(SerialProtocolDto.BaudRate));
-                JsonValidateHelper.EnsureEnumIsRight<DataBitsType>(root, nameof(SerialProtocolDto.DataBits));
-                JsonValidateHelper.EnsureEnumIsRight<Parity>(root, nameof(SerialProtocolDto.Parity));
-                JsonValidateHelper.EnsureEnumIsRight<StopBits>(root, nameof(SerialProtocolDto.StopBits));
+                JsonValidateHelper.EnsurePropertyExistsAndTypeIsRight<string>(root, namePrefix, nameof(SerialProtocolDto.SerialPortName), JsonValueKind.String);
+                JsonValidateHelper.EnsurePropertyExistsAndEnumIsRight<BaudRateType>(root, namePrefix, nameof(SerialProtocolDto.BaudRate));
+                JsonValidateHelper.EnsurePropertyExistsAndEnumIsRight<DataBitsType>(root, namePrefix, nameof(SerialProtocolDto.DataBits));
+                JsonValidateHelper.EnsurePropertyExistsAndEnumIsRight<Parity>(root, namePrefix, nameof(SerialProtocolDto.Parity));
+                JsonValidateHelper.EnsurePropertyExistsAndEnumIsRight<StopBits>(root, namePrefix, nameof(SerialProtocolDto.StopBits));
                 break;
             case InterfaceType.API:
-                //存在性校验
-                JsonValidateHelper.EnsurePropertyExists(root, nameof(ApiProtocolDto.AccessApiString));
-                JsonValidateHelper.EnsurePropertyExists(root, nameof(ApiProtocolDto.RequestMethod));
-                //字段类型校验
-                JsonValidateHelper.EnsurePropertyTypeIsRight<string>(root, nameof(ApiProtocolDto.AccessApiString), JsonValueKind.String);
-                JsonValidateHelper.EnsureEnumIsRight<RequestMethod>(root, nameof(ApiProtocolDto.RequestMethod));
-                //非必须存在字段，如果存在，校验其类型
-                JsonValidateHelper.GetOptionalValue<string>(root, nameof(ApiProtocolDto.Gateway), JsonValueKind.String);
+                JsonValidateHelper.EnsurePropertyExistsAndTypeIsRight<string>(root, namePrefix, nameof(ApiProtocolDto.AccessApiString), JsonValueKind.String);
+                JsonValidateHelper.EnsurePropertyExistsAndEnumIsRight<RequestMethod>(root, namePrefix, nameof(ApiProtocolDto.RequestMethod));
+                JsonValidateHelper.ValidateOptionalFields<string?>(root, namePrefix, nameof(ApiProtocolDto.Gateway), JsonValueKind.String);
                 break;
             case InterfaceType.DATABASE:
-                //存在性校验
-                JsonValidateHelper.EnsurePropertyExists(root, nameof(DatabaseProtocolDto.QuerySqlString));
-                //字段类型校验
-                JsonValidateHelper.EnsurePropertyTypeIsRight<string>(root, nameof(DatabaseProtocolDto.QuerySqlString), JsonValueKind.String);
-                //非必须存在字段，如果存在，校验其类型
-                JsonValidateHelper.GetOptionalValue<string>(root, nameof(DatabaseProtocolDto.IpAddress), JsonValueKind.String);
-                JsonValidateHelper.GetOptionalValue<int>(root, nameof(DatabaseProtocolDto.ProtocolPort), JsonValueKind.Number);
-                JsonValidateHelper.GetOptionalValue<string>(root, nameof(DatabaseProtocolDto.DatabaseName), JsonValueKind.String);
-                JsonValidateHelper.GetOptionalValue<string>(root, nameof(DatabaseProtocolDto.DatabaseConnectString), JsonValueKind.String);
-                JsonValidateHelper.GetOptionalValue<string>(root, nameof(DatabaseProtocolDto.Gateway), JsonValueKind.String);
+                JsonValidateHelper.EnsurePropertyExistsAndTypeIsRight<string>(root, namePrefix, nameof(DatabaseProtocolDto.QuerySqlString), JsonValueKind.String);
+                JsonValidateHelper.ValidateOptionalFields(
+                    root, 
+                    namePrefix, 
+                    (nameof(DatabaseProtocolDto.Gateway), JsonValueKind.String),
+                    (nameof(DatabaseProtocolDto.IpAddress), JsonValueKind.String),
+                    (nameof(DatabaseProtocolDto.DatabaseName), JsonValueKind.String),
+                    (nameof(DatabaseProtocolDto.DatabaseConnectString), JsonValueKind.String));
+                JsonValidateHelper.ValidateOptionalFields<int?>(root, namePrefix, nameof(DatabaseProtocolDto.ProtocolPort), JsonValueKind.Number);
                 break;
         }
 
@@ -141,13 +99,13 @@ public class ProtocolJsonConverter : JsonConverter<ProtocolDto>
         return dto;
     }
 
-    private static void CrossObjectValidatePoints(JsonElement root, ProtocolType protocolType)
+    private static void CrossObjectValidatePoints(JsonElement root, ProtocolType protocolType, string namePrefix)
     {
         var equipments = root.GetProperty(nameof(ProtocolDto.Equipments));
 
         // 获取枚举字段上的特性
         var fieldInfo = typeof(ProtocolType).GetField(protocolType.ToString());
-        var attr = fieldInfo?.GetCustomAttribute<ProtocolParameterAttribute>();
+        var attr = fieldInfo?.GetCustomAttribute<ProtocolValidateParameterAttribute>();
 
         if (attr == null) return;
 
@@ -158,22 +116,21 @@ public class ProtocolJsonConverter : JsonConverter<ProtocolDto>
 
             foreach (var parameter in parameters.EnumerateArray())
             {
+                // 站号校验
                 if (attr.RequireStationNo)
-                {
-                    JsonValidateHelper.EnsurePropertyExists(parameter, nameof(ParameterDto.StationNo));
-                    JsonValidateHelper.EnsurePropertyTypeIsRight<string>(parameter, nameof(ParameterDto.StationNo), JsonValueKind.String);
-                }
+                    JsonValidateHelper.EnsurePropertyExistsAndTypeIsRight<string>(parameter, namePrefix, nameof(ParameterDto.StationNo),  JsonValueKind.String);
+                // 数据格式校验
                 if (attr.RequireDataFormat)
-                {
-                    JsonValidateHelper.EnsurePropertyExists(parameter, nameof(ParameterDto.DataFormat));
-                    JsonValidateHelper.EnsureEnumIsRight<DataFormat>(parameter, nameof(ParameterDto.DataFormat));
-                }
+                    JsonValidateHelper.EnsurePropertyExistsAndEnumIsRight<DataFormat>(parameter, namePrefix, nameof(ParameterDto.DataFormat));
+                // 数据类型校验
                 if (attr.RequireDataType)
-                {
-                    JsonValidateHelper.EnsurePropertyExists(parameter, nameof(ParameterDto.DataType));
-                    JsonValidateHelper.EnsureEnumIsRight<DataType>(parameter, nameof(ParameterDto.DataType));
-                }
-                // 可扩展更多参数校验
+                    JsonValidateHelper.EnsurePropertyExistsAndEnumIsRight<DataType>(parameter, namePrefix, nameof(ParameterDto.DataType));
+                // 地址从0开始校验
+                if (attr.RequireAddressStartWithZero)
+                    JsonValidateHelper.EnsurePropertyExistsAndTypeIsRight<bool>(parameter, namePrefix, nameof(ParameterDto.AddressStartWithZero), JsonValueKind.True);
+                // 仪表类型校验
+                if (attr.RequireInstrumentType)
+                    JsonValidateHelper.EnsurePropertyExistsAndEnumIsRight<InstrumentType>(parameter, namePrefix, nameof(ParameterDto.InstrumentType));
             }
         }
     }

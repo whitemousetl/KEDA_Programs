@@ -53,8 +53,9 @@ public static class ConfigurationExtensions
         }
 
         // 需要创建一个新的 MemoryStream，因为嵌入资源流可能不支持 Seek
-        using var memoryStream = new MemoryStream();
+        var memoryStream = new MemoryStream();
         stream.CopyTo(memoryStream);
+        stream.Dispose();
         memoryStream.Position = 0;
 
         builder.AddJsonStream(memoryStream);

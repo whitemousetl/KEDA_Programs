@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace KEDA_Controller.Interfaces;
 public interface IProtocolDriver : IDisposable
 {
-    Task<ProtocolResult?> ReadAsync(WorkstationEntity protocol, string devId, PointEntity point, CancellationToken token);
+    Task<PointResult?> ReadAsync(ProtocolEntity protocol, string devId, PointEntity point, CancellationToken token);
 
     Task<bool> WriteAsync(WriteTaskEntity writeTask, CancellationToken token);
 

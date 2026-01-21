@@ -13,7 +13,7 @@ namespace KEDA_Controller.Protocols.Serial;
 [ProtocolType(ProtocolType.FxSerial)]
 public class FxSerialDriver : HslSerialBaseProtocolDriver<MelsecFxSerial>
 {
-    protected override MelsecFxSerial CreateConnection(WorkstationEntity protocol, CancellationToken token)
+    protected override MelsecFxSerial CreateConnection(ProtocolEntity protocol, CancellationToken token)
     {
         var conn = new MelsecFxSerial();
         conn.SerialPortInni(protocol.PortName, protocol.BaudRate, protocol.DataBits, protocol.StopBits, protocol.Parity);

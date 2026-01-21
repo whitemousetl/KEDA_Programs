@@ -17,7 +17,7 @@ public class FxSerialOverTcpDriver : HslTcpBaseProtocolDriver<MelsecFxSerialOver
     {
     }
 
-    protected override MelsecFxSerialOverTcp CreateConnection(WorkstationEntity protocol, CancellationToken token)
+    protected override MelsecFxSerialOverTcp CreateConnection(ProtocolEntity protocol, CancellationToken token)
     {
         return new(protocol.IPAddress, protocol.ProtocolPort)
         {

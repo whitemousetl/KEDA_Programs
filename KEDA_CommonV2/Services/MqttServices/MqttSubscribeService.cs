@@ -1,5 +1,6 @@
 ﻿using KEDA_CommonV2.Configuration;
 using KEDA_CommonV2.Interfaces;
+using KEDA_CommonV2.Interfaces.IMqttServices;
 using Microsoft.Extensions.Logging;
 using MQTTnet;
 using MQTTnet.Client;
@@ -7,67 +8,48 @@ using System.Collections.Concurrent;
 using System.Text;
 using System.Text.Json;
 
-namespace KEDA_CommonV2.Services;
+namespace KEDA_CommonV2.Services.MqttServices;
 
 public class MqttSubscribeService : IMqttSubscribeService
 {
     private readonly ILogger<MqttSubscribeService> _logger;
-    private readonly string _server;
-    private readonly int _port;
-    private readonly string _username;
-    private readonly string _password;
     private readonly int _reconnectDelaySeconds;
     private readonly int _maxReconnectDelaySeconds;
     private readonly int _messageTimeoutSeconds;
     private readonly bool _autoReconnect;
-    private readonly IMqttClient _client;
     private readonly MqttTopicSettings _topics;
-    private readonly MqttClientOptions _options;
     private readonly ConcurrentDictionary<string, Delegate> _topicHandlers = new();
     private readonly SemaphoreSlim _connectionLock = new(1, 1);
     private readonly CancellationTokenSource _disposeCts = new();
     private int _reconnectAttempts = 0;
     private bool _isDisposed;
+    private readonly ISharedConfigHelper _sharedConfigHelper;
+    private readonly IMqttClientAdapter _clientAdapter;
 
-    public MqttSubscribeService(ILogger<MqttSubscribeService> logger)
+    public MqttSubscribeService(ILogger<MqttSubscribeService> logger, ISharedConfigHelper sharedConfigHelper, IMqttClientAdapter clientAdapter)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _sharedConfigHelper = sharedConfigHelper;
+        _clientAdapter = clientAdapter;
+        _clientAdapter.MessageReceived += OnMessageReceivedAsync;
+        _clientAdapter.Disconnected += OnDisconnectedAsync;
+        _clientAdapter.Connected += OnConnectedAsync;
 
         // 加载配置
-        _server = SharedConfigHelper.MqttSettings.Server;
-        _port = SharedConfigHelper.MqttSettings.Port;
-        _username = SharedConfigHelper.MqttSettings.Username;
-        _password = SharedConfigHelper.MqttSettings.Password;
-        _reconnectDelaySeconds = SharedConfigHelper.MqttSettings.ReconnectDelaySeconds;
-        _maxReconnectDelaySeconds = SharedConfigHelper.MqttSettings.MaxReconnectDelaySeconds;
-        _messageTimeoutSeconds = SharedConfigHelper.MqttSettings.MessageTimeoutSeconds;
-        _autoReconnect = SharedConfigHelper.MqttSettings.AutoReconnect;
-        _topics = SharedConfigHelper.MqttTopicSettings;
+        _reconnectDelaySeconds = _sharedConfigHelper.MqttSettings.ReconnectDelaySeconds;
+        _maxReconnectDelaySeconds = _sharedConfigHelper.MqttSettings.MaxReconnectDelaySeconds;
+        _messageTimeoutSeconds = _sharedConfigHelper.MqttSettings.MessageTimeoutSeconds;
+        _autoReconnect = _sharedConfigHelper.MqttSettings.AutoReconnect;
+        _topics = _sharedConfigHelper.MqttTopicSettings;
 
         // 参数验证
         if (_reconnectDelaySeconds < 1) _reconnectDelaySeconds = 5;
         if (_maxReconnectDelaySeconds < _reconnectDelaySeconds) _maxReconnectDelaySeconds = _reconnectDelaySeconds;
         if (_messageTimeoutSeconds < 1) _messageTimeoutSeconds = 30;
 
-        var factory = new MqttFactory();
-        _client = factory.CreateMqttClient();
-
-        _options = new MqttClientOptionsBuilder()
-            .WithTcpServer(_server, _port)
-            .WithCredentials(_username, _password)
-            .WithCleanSession(true) // 避免历史队列
-            .WithKeepAlivePeriod(TimeSpan.FromSeconds(60))
-            .WithTimeout(TimeSpan.FromSeconds(10))
-            .Build();
-
-        // 注册事件处理器
-        _client.ApplicationMessageReceivedAsync += OnMessageReceivedAsync;
-        _client.DisconnectedAsync += OnDisconnectedAsync;
-        _client.ConnectedAsync += OnConnectedAsync;
-
         _logger.LogInformation(
             "MQTT订阅服务已初始化 [服务器:  {server}:{port}, 重连延迟: {reconnect}s, 最大重连延迟: {maxReconnect}s, 消息超时: {timeout}s]",
-            _server, _port, _reconnectDelaySeconds, _maxReconnectDelaySeconds, _messageTimeoutSeconds);
+           _sharedConfigHelper.MqttSettings.Server, _sharedConfigHelper.MqttSettings.Port, _reconnectDelaySeconds, _maxReconnectDelaySeconds, _messageTimeoutSeconds);
     }
 
     /// <summary>
@@ -76,7 +58,7 @@ public class MqttSubscribeService : IMqttSubscribeService
     private Task OnConnectedAsync(MqttClientConnectedEventArgs e)
     {
         _reconnectAttempts = 0; // 重置重连计数
-        _logger.LogInformation("MQTT客户端已连接到 {server}:{port}", _server, _port);
+        _logger.LogInformation("MQTT客户端已连接到 {server}:{port}", _sharedConfigHelper.MqttSettings.Server, _sharedConfigHelper.MqttSettings.Port);
         return Task.CompletedTask;
     }
 
@@ -218,7 +200,7 @@ public class MqttSubscribeService : IMqttSubscribeService
 
         await EnsureConnectedAsync(token);
 
-        await _client.SubscribeAsync(topicName, MQTTnet.Protocol.MqttQualityOfServiceLevel.AtLeastOnce, token);
+        await _clientAdapter.SubscribeAsync(topicName, token);
 
         _logger.LogInformation("已订阅MQTT主题:  {topic} (类型: {type})", topicName, typeof(string).Name);
     }
@@ -235,9 +217,9 @@ public class MqttSubscribeService : IMqttSubscribeService
 
         if (_topicHandlers.TryRemove(topicName, out _))
         {
-            if (_client.IsConnected)
+            if (_clientAdapter.IsConnected)
             {
-                await _client.UnsubscribeAsync(topicName, token);
+                await _clientAdapter.UnsubscribeAsync(topicName, token);
                 _logger.LogInformation("已取消订阅MQTT主题:  {topic}", topicName);
             }
             else
@@ -256,24 +238,24 @@ public class MqttSubscribeService : IMqttSubscribeService
     /// </summary>
     private async Task EnsureConnectedAsync(CancellationToken token)
     {
-        if (_client.IsConnected) return;
+        if (_clientAdapter.IsConnected) return;
 
         await _connectionLock.WaitAsync(token);
         try
         {
             // 双重检查锁定
-            if (_client.IsConnected) return;
+            if (_clientAdapter.IsConnected) return;
 
-            while (!_client.IsConnected && !token.IsCancellationRequested && !_isDisposed)
+            while (!_clientAdapter.IsConnected && !token.IsCancellationRequested && !_isDisposed)
             {
                 try
                 {
-                    _logger.LogInformation("正在连接到MQTT服务器 {server}:{port}...", _server, _port);
-                    await _client.ConnectAsync(_options, token);
+                    _logger.LogInformation("正在连接到MQTT服务器 {server}:{port}...", _sharedConfigHelper.MqttSettings.Server, _sharedConfigHelper.MqttSettings.Port);
+                    await _clientAdapter.ConnectAsync(_sharedConfigHelper.MqttClientOptions, token);
                     _logger.LogInformation("MQTT连接成功");
 
                     // 重新订阅所有主题
-                    await ResubscribeAllTopicsAsync(token);
+                    //await ResubscribeAllTopicsAsync(token);
                     break;
                 }
                 catch (Exception ex)
@@ -312,7 +294,7 @@ public class MqttSubscribeService : IMqttSubscribeService
         {
             try
             {
-                await _client.SubscribeAsync(kvp.Key, MQTTnet.Protocol.MqttQualityOfServiceLevel.AtLeastOnce, token);
+                await _clientAdapter.SubscribeAsync(kvp.Key, token);
                 _logger.LogDebug("重新订阅主题成功: {topic}", kvp.Key);
                 successCount++;
             }
@@ -335,6 +317,7 @@ public class MqttSubscribeService : IMqttSubscribeService
         {
             throw new ObjectDisposedException(nameof(MqttSubscribeService));
         }
+        return;
     }
 
     /// <summary>
@@ -354,7 +337,7 @@ public class MqttSubscribeService : IMqttSubscribeService
             _disposeCts.Cancel();
 
             // 取消订阅所有主题
-            if (_client.IsConnected && !_topicHandlers.IsEmpty)
+            if (_clientAdapter.IsConnected && !_topicHandlers.IsEmpty)
             {
                 _logger.LogInformation("取消订阅 {count} 个主题...", _topicHandlers.Count);
 
@@ -362,7 +345,7 @@ public class MqttSubscribeService : IMqttSubscribeService
                 {
                     try
                     {
-                        await _client.UnsubscribeAsync(topic);
+                        await _clientAdapter.UnsubscribeAsync(topic, CancellationToken.None);
                     }
                     catch (Exception ex)
                     {
@@ -374,9 +357,9 @@ public class MqttSubscribeService : IMqttSubscribeService
             _topicHandlers.Clear();
 
             // 断开连接
-            if (_client.IsConnected)
+            if (_clientAdapter.IsConnected)
             {
-                await _client.DisconnectAsync();
+                await _clientAdapter.DisconnectAsync(CancellationToken.None);
                 _logger.LogInformation("MQTT客户端已断开连接");
             }
         }
@@ -387,7 +370,7 @@ public class MqttSubscribeService : IMqttSubscribeService
         finally
         {
             // 释放资源
-            _client?.Dispose();
+            _clientAdapter?.DisconnectAsync(CancellationToken.None);
             _connectionLock?.Dispose();
             _disposeCts?.Dispose();
 

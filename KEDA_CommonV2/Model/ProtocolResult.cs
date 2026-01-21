@@ -42,7 +42,7 @@ public class EquipmentResult // 设备读取结果
 
 public class PointResult//采集点读取结果
 {
-    public DataType DataType { get; set; } // 数据类型
+    public DataType? DataType { get; set; } // 数据类型
     public string Label { get; set; } = string.Empty; //标签，采集点名称
     public string Address { get; set; } = string.Empty;//地址
     public object? Value { get; set; } = null;//结果

@@ -21,7 +21,7 @@ public class FJ1000JetDriver : HslTcpBaseProtocolDriver<FreedomTcpNet>//方嘉�
     {
     }
 
-    protected override FreedomTcpNet CreateConnection(WorkstationEntity protocol, CancellationToken token)
+    protected override FreedomTcpNet CreateConnection(ProtocolEntity protocol, CancellationToken token)
     {
         return new(protocol.IPAddress, protocol.ProtocolPort)
         {
@@ -34,7 +34,7 @@ public class FJ1000JetDriver : HslTcpBaseProtocolDriver<FreedomTcpNet>//方嘉�
     public override async Task<bool> WriteAsync(WriteTaskEntity writeTask, CancellationToken token)
     {
         //初始化_conn
-        var protocol = new WorkstationEntity
+        var protocol = new ProtocolEntity
         {
             IPAddress = writeTask.IPAddress,
             ProtocolPort = writeTask.ProtocolPort,
